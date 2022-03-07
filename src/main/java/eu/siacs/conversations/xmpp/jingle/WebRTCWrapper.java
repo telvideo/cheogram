@@ -19,6 +19,7 @@ import com.google.common.util.concurrent.SettableFuture;
 
 import org.webrtc.AudioSource;
 import org.webrtc.AudioTrack;
+import org.webrtc.Camera1Enumerator;
 import org.webrtc.Camera2Enumerator;
 import org.webrtc.CameraEnumerationAndroid;
 import org.webrtc.CameraEnumerator;
@@ -47,14 +48,9 @@ import org.webrtc.voiceengine.WebRtcAudioEffects;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.LinkedList;
 import java.util.List;
-import java.util.Queue;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -67,8 +63,7 @@ public class WebRTCWrapper {
 
     private static final String EXTENDED_LOGGING_TAG = WebRTCWrapper.class.getSimpleName();
 
-    private final ExecutorService executorService = Executors.newSingleThreadExecutor();
-    
+    //we should probably keep this in sync with: https://github.com/signalapp/Signal-Android/blob/master/app/src/main/java/org/thoughtcrime/securesms/ApplicationContext.java#L296
     private static final Set<String> HARDWARE_AEC_BLACKLIST = new ImmutableSet.Builder<String>()
             .add("Pixel")
             .add("Pixel XL")
@@ -110,8 +105,6 @@ public class WebRTCWrapper {
     private static final int CAPTURING_MAX_FRAME_RATE = 30;
 
     private final EventCallback eventCallback;
-    private final AtomicBoolean readyToReceivedIceCandidates = new AtomicBoolean(false);
-    private final Queue<IceCandidate> iceCandidates = new LinkedList<>();
     private final AppRTCAudioManager.AudioManagerEvents audioManagerEvents = new AppRTCAudioManager.AudioManagerEvents() {
         @Override
         public void onAudioDeviceChanged(AppRTCAudioManager.AudioDevice selectedAudioDevice, Set<AppRTCAudioManager.AudioDevice> availableAudioDevices) {
@@ -131,13 +124,13 @@ public class WebRTCWrapper {
         }
 
         @Override
-        public void onConnectionChange(final PeerConnection.PeerConnectionState newState) {
+        public void onConnectionChange(PeerConnection.PeerConnectionState newState) {
             eventCallback.onConnectionChange(newState);
         }
 
         @Override
         public void onIceConnectionChange(PeerConnection.IceConnectionState iceConnectionState) {
-            Log.d(EXTENDED_LOGGING_TAG, "onIceConnectionChange(" + iceConnectionState + ")");
+
         }
 
         @Override
@@ -158,11 +151,7 @@ public class WebRTCWrapper {
 
         @Override
         public void onIceCandidate(IceCandidate iceCandidate) {
-            if (readyToReceivedIceCandidates.get()) {
-                eventCallback.onIceCandidate(iceCandidate);
-            } else {
-                iceCandidates.add(iceCandidate);
-            }
+            eventCallback.onIceCandidate(iceCandidate);
         }
 
         @Override
@@ -187,11 +176,7 @@ public class WebRTCWrapper {
 
         @Override
         public void onRenegotiationNeeded() {
-            Log.d(EXTENDED_LOGGING_TAG, "onRenegotiationNeeded()");
-            final PeerConnection.PeerConnectionState currentState = peerConnection == null ? null : peerConnection.connectionState();
-            if (currentState != null && currentState != PeerConnection.PeerConnectionState.NEW) {
-                eventCallback.onRenegotiationNeeded();
-            }
+
         }
 
         @Override
@@ -294,7 +279,11 @@ public class WebRTCWrapper {
                 .createPeerConnectionFactory();
 
 
-        final PeerConnection.RTCConfiguration rtcConfig = buildConfiguration(iceServers);
+        final PeerConnection.RTCConfiguration rtcConfig = new PeerConnection.RTCConfiguration(iceServers);
+        rtcConfig.tcpCandidatePolicy = PeerConnection.TcpCandidatePolicy.DISABLED; //XEP-0176 doesn't support tcp
+        rtcConfig.continualGatheringPolicy = PeerConnection.ContinualGatheringPolicy.GATHER_CONTINUALLY;
+        rtcConfig.sdpSemantics = PeerConnection.SdpSemantics.UNIFIED_PLAN;
+        rtcConfig.rtcpMuxPolicy = PeerConnection.RtcpMuxPolicy.NEGOTIATE;
         final PeerConnection peerConnection = peerConnectionFactory.createPeerConnection(rtcConfig, peerConnectionObserver);
         if (peerConnection == null) {
             throw new InitializationException("Unable to create PeerConnection");
@@ -326,31 +315,6 @@ public class WebRTCWrapper {
         peerConnection.setAudioPlayout(true);
         peerConnection.setAudioRecording(true);
         this.peerConnection = peerConnection;
-    }
-
-    private static PeerConnection.RTCConfiguration buildConfiguration(final List<PeerConnection.IceServer> iceServers) {
-        final PeerConnection.RTCConfiguration rtcConfig = new PeerConnection.RTCConfiguration(iceServers);
-        rtcConfig.tcpCandidatePolicy = PeerConnection.TcpCandidatePolicy.DISABLED; //XEP-0176 doesn't support tcp
-        rtcConfig.continualGatheringPolicy = PeerConnection.ContinualGatheringPolicy.GATHER_CONTINUALLY;
-        rtcConfig.sdpSemantics = PeerConnection.SdpSemantics.UNIFIED_PLAN;
-        rtcConfig.rtcpMuxPolicy = PeerConnection.RtcpMuxPolicy.NEGOTIATE;
-        rtcConfig.enableImplicitRollback = true;
-        return rtcConfig;
-    }
-
-    void reconfigurePeerConnection(final List<PeerConnection.IceServer> iceServers) {
-        requirePeerConnection().setConfiguration(buildConfiguration(iceServers));
-    }
-
-    void restartIce() {
-        executorService.execute(() -> requirePeerConnection().restartIce());
-    }
-
-    public void setIsReadyToReceiveIceCandidates(final boolean ready) {
-        readyToReceivedIceCandidates.set(ready);
-        while (ready && iceCandidates.peek() != null) {
-            eventCallback.onIceCandidate(iceCandidates.poll());
-        }
     }
 
     synchronized void close() {
@@ -467,36 +431,70 @@ public class WebRTCWrapper {
         videoTrack.setEnabled(enabled);
     }
 
-    synchronized ListenableFuture<SessionDescription> setLocalDescription() {
+    ListenableFuture<SessionDescription> createOffer() {
         return Futures.transformAsync(getPeerConnectionFuture(), peerConnection -> {
             final SettableFuture<SessionDescription> future = SettableFuture.create();
-            peerConnection.setLocalDescription(new SetSdpObserver() {
+            peerConnection.createOffer(new CreateSdpObserver() {
                 @Override
-                public void onSetSuccess() {
-                    final SessionDescription description = peerConnection.getLocalDescription();
-                    Log.d(EXTENDED_LOGGING_TAG, "set local description:");
-                    logDescription(description);
-                    future.set(description);
+                public void onCreateSuccess(SessionDescription sessionDescription) {
+                    future.set(sessionDescription);
                 }
 
                 @Override
-                public void onSetFailure(final String message) {
-                    future.setException(new FailureToSetDescriptionException(message));
+                public void onCreateFailure(String s) {
+                    future.setException(new IllegalStateException("Unable to create offer: " + s));
                 }
-            });
+            }, new MediaConstraints());
             return future;
         }, MoreExecutors.directExecutor());
     }
 
-    private static void logDescription(final SessionDescription sessionDescription) {
+    ListenableFuture<SessionDescription> createAnswer() {
+        return Futures.transformAsync(getPeerConnectionFuture(), peerConnection -> {
+            final SettableFuture<SessionDescription> future = SettableFuture.create();
+            peerConnection.createAnswer(new CreateSdpObserver() {
+                @Override
+                public void onCreateSuccess(SessionDescription sessionDescription) {
+                    future.set(sessionDescription);
+                }
+
+                @Override
+                public void onCreateFailure(String s) {
+                    future.setException(new IllegalStateException("Unable to create answer: " + s));
+                }
+            }, new MediaConstraints());
+            return future;
+        }, MoreExecutors.directExecutor());
+    }
+
+    ListenableFuture<Void> setLocalDescription(final SessionDescription sessionDescription) {
+        Log.d(EXTENDED_LOGGING_TAG, "setting local description:");
         for (final String line : sessionDescription.description.split(eu.siacs.conversations.xmpp.jingle.SessionDescription.LINE_DIVIDER)) {
             Log.d(EXTENDED_LOGGING_TAG, line);
         }
+        return Futures.transformAsync(getPeerConnectionFuture(), peerConnection -> {
+            final SettableFuture<Void> future = SettableFuture.create();
+            peerConnection.setLocalDescription(new SetSdpObserver() {
+                @Override
+                public void onSetSuccess() {
+                    future.set(null);
+                }
+
+                @Override
+                public void onSetFailure(final String s) {
+                    future.setException(new IllegalArgumentException("unable to set local session description: " + s));
+
+                }
+            }, sessionDescription);
+            return future;
+        }, MoreExecutors.directExecutor());
     }
 
-    synchronized ListenableFuture<Void> setRemoteDescription(final SessionDescription sessionDescription) {
+    ListenableFuture<Void> setRemoteDescription(final SessionDescription sessionDescription) {
         Log.d(EXTENDED_LOGGING_TAG, "setting remote description:");
-        logDescription(sessionDescription);
+        for (final String line : sessionDescription.description.split(eu.siacs.conversations.xmpp.jingle.SessionDescription.LINE_DIVIDER)) {
+            Log.d(EXTENDED_LOGGING_TAG, line);
+        }
         return Futures.transformAsync(getPeerConnectionFuture(), peerConnection -> {
             final SettableFuture<Void> future = SettableFuture.create();
             peerConnection.setRemoteDescription(new SetSdpObserver() {
@@ -506,8 +504,9 @@ public class WebRTCWrapper {
                 }
 
                 @Override
-                public void onSetFailure(final String message) {
-                    future.setException(new FailureToSetDescriptionException(message));
+                public void onSetFailure(String s) {
+                    future.setException(new IllegalArgumentException("unable to set remote session description: " + s));
+
                 }
             }, sessionDescription);
             return future;
@@ -518,18 +517,10 @@ public class WebRTCWrapper {
     private ListenableFuture<PeerConnection> getPeerConnectionFuture() {
         final PeerConnection peerConnection = this.peerConnection;
         if (peerConnection == null) {
-            return Futures.immediateFailedFuture(new PeerConnectionNotInitialized());
+            return Futures.immediateFailedFuture(new IllegalStateException("initialize PeerConnection first"));
         } else {
             return Futures.immediateFuture(peerConnection);
         }
-    }
-
-    private PeerConnection requirePeerConnection() {
-        final PeerConnection peerConnection = this.peerConnection;
-        if (peerConnection == null) {
-            throw new PeerConnectionNotInitialized();
-        }
-        return peerConnection;
     }
 
     public boolean applyDtmfTone(String tone) {
@@ -545,8 +536,16 @@ public class WebRTCWrapper {
         requirePeerConnection().addIceCandidate(iceCandidate);
     }
 
+    private CameraEnumerator getCameraEnumerator() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            return new Camera2Enumerator(requireContext());
+        } else {
+            return new Camera1Enumerator();
+        }
+    }
+
     private Optional<CapturerChoice> getVideoCapturer() {
-        final CameraEnumerator enumerator = new Camera2Enumerator(requireContext());
+        final CameraEnumerator enumerator = getCameraEnumerator();
         final Set<String> deviceNames = ImmutableSet.copyOf(enumerator.getDeviceNames());
         for (final String deviceName : deviceNames) {
             if (isFrontFacing(enumerator, deviceName)) {
@@ -565,14 +564,9 @@ public class WebRTCWrapper {
         }
     }
 
-    PeerConnection.PeerConnectionState getState() {
+    public PeerConnection.PeerConnectionState getState() {
         return requirePeerConnection().connectionState();
     }
-
-    public PeerConnection.SignalingState getSignalingState() {
-        return requirePeerConnection().signalingState();
-    }
-
 
     EglBase.Context getEglBaseContext() {
         return this.eglBase.getEglBaseContext();
@@ -584,6 +578,14 @@ public class WebRTCWrapper {
 
     Optional<VideoTrack> getRemoteVideoTrack() {
         return Optional.fromNullable(this.remoteVideoTrack);
+    }
+
+    private PeerConnection requirePeerConnection() {
+        final PeerConnection peerConnection = this.peerConnection;
+        if (peerConnection == null) {
+            throw new PeerConnectionNotInitialized();
+        }
+        return peerConnection;
     }
 
     private Context requireContext() {
@@ -598,18 +600,12 @@ public class WebRTCWrapper {
         return appRTCAudioManager;
     }
 
-    void execute(final Runnable command) {
-        executorService.execute(command);
-    }
-
     public interface EventCallback {
         void onIceCandidate(IceCandidate iceCandidate);
 
         void onConnectionChange(PeerConnection.PeerConnectionState newState);
 
         void onAudioDeviceChanged(AppRTCAudioManager.AudioDevice selectedAudioDevice, Set<AppRTCAudioManager.AudioDevice> availableAudioDevices);
-
-        void onRenegotiationNeeded();
     }
 
     private static abstract class SetSdpObserver implements SdpObserver {
@@ -658,12 +654,6 @@ public class WebRTCWrapper {
             super("initialize PeerConnection first");
         }
 
-    }
-
-    private static class FailureToSetDescriptionException extends IllegalArgumentException {
-        public FailureToSetDescriptionException(String message) {
-            super(message);
-        }
     }
 
     private static class CapturerChoice {
