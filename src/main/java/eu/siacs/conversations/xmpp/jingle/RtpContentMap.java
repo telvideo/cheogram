@@ -1,12 +1,13 @@
 package eu.siacs.conversations.xmpp.jingle;
 
+import android.util.Log;
+
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.Collections2;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -18,6 +19,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import eu.siacs.conversations.Config;
 import eu.siacs.conversations.xmpp.jingle.stanzas.Content;
 import eu.siacs.conversations.xmpp.jingle.stanzas.GenericDescription;
 import eu.siacs.conversations.xmpp.jingle.stanzas.GenericTransportInfo;
@@ -105,10 +107,6 @@ public class RtpContentMap {
     }
 
     void requireDTLSFingerprint() {
-        requireDTLSFingerprint(false);
-    }
-
-    void requireDTLSFingerprint(final boolean requireActPass) {
         if (this.contents.size() == 0) {
             throw new IllegalStateException("No contents available");
         }
@@ -123,16 +121,8 @@ public class RtpContentMap {
                                 "Use of DTLS-SRTP (XEP-0320) is required for content %s",
                                 entry.getKey()));
             }
-            final IceUdpTransportInfo.Setup setup = fingerprint.getSetup();
-            if (setup == null) {
-                throw new SecurityException(
-                        String.format(
-                                "Use of DTLS-SRTP (XEP-0320) is required for content %s but missing setup attribute",
-                                entry.getKey()));
-            }
-            if (requireActPass && setup != IceUdpTransportInfo.Setup.ACTPASS) {
-                throw new SecurityException(
-                        "Initiator needs to offer ACTPASS as setup for DTLS-SRTP (XEP-0320)");
+            if (Strings.isNullOrEmpty(fingerprint.getSetup())) {
+                throw new SecurityException(String.format("Use of DTLS-SRTP (XEP-0320) is required for content %s but missing setup attribute", entry.getKey()));
             }
         }
     }
@@ -164,87 +154,7 @@ public class RtpContentMap {
         }
         final IceUdpTransportInfo newTransportInfo = transportInfo.cloneWrapper();
         newTransportInfo.addChild(candidate);
-        return new RtpContentMap(
-                null,
-                ImmutableMap.of(contentName, new DescriptionTransport(null, newTransportInfo)));
-    }
-
-    RtpContentMap transportInfo() {
-        return new RtpContentMap(
-                null,
-                Maps.transformValues(
-                        contents,
-                        dt -> new DescriptionTransport(null, dt.transport.cloneWrapper())));
-    }
-
-    public IceUdpTransportInfo.Credentials getDistinctCredentials() {
-        final Set<IceUdpTransportInfo.Credentials> allCredentials = getCredentials();
-        final IceUdpTransportInfo.Credentials credentials =
-                Iterables.getFirst(allCredentials, null);
-        if (allCredentials.size() == 1 && credentials != null) {
-            if (Strings.isNullOrEmpty(credentials.password) || Strings.isNullOrEmpty(credentials.ufrag)) {
-                throw new IllegalStateException("Credentials are missing password or ufrag");
-            }
-            return credentials;
-        }
-        throw new IllegalStateException("Content map does not have distinct credentials");
-    }
-
-    public Set<IceUdpTransportInfo.Credentials> getCredentials() {
-        final Set<IceUdpTransportInfo.Credentials> credentials =
-                ImmutableSet.copyOf(
-                        Collections2.transform(
-                                contents.values(), dt -> dt.transport.getCredentials()));
-        if (credentials.isEmpty()) {
-            throw new IllegalStateException("Content map does not have any credentials");
-        }
-        return credentials;
-    }
-
-    public IceUdpTransportInfo.Credentials getCredentials(final String contentName) {
-        final DescriptionTransport descriptionTransport = this.contents.get(contentName);
-        if (descriptionTransport == null) {
-            throw new IllegalArgumentException(
-                    String.format(
-                            "Unable to find transport info for content name %s", contentName));
-        }
-        return descriptionTransport.transport.getCredentials();
-    }
-
-    public IceUdpTransportInfo.Setup getDtlsSetup() {
-        final Set<IceUdpTransportInfo.Setup> setups =
-                ImmutableSet.copyOf(
-                        Collections2.transform(
-                                contents.values(), dt -> dt.transport.getFingerprint().getSetup()));
-        final IceUdpTransportInfo.Setup setup = Iterables.getFirst(setups, null);
-        if (setups.size() == 1 && setup != null) {
-            return setup;
-        }
-        throw new IllegalStateException("Content map doesn't have distinct DTLS setup");
-    }
-
-    public boolean emptyCandidates() {
-        int count = 0;
-        for (DescriptionTransport descriptionTransport : contents.values()) {
-            count += descriptionTransport.transport.getCandidates().size();
-        }
-        return count == 0;
-    }
-
-    public RtpContentMap modifiedCredentials(
-            IceUdpTransportInfo.Credentials credentials, final IceUdpTransportInfo.Setup setup) {
-        final ImmutableMap.Builder<String, DescriptionTransport> contentMapBuilder =
-                new ImmutableMap.Builder<>();
-        for (final Map.Entry<String, DescriptionTransport> content : contents.entrySet()) {
-            final RtpDescription rtpDescription = content.getValue().description;
-            IceUdpTransportInfo transportInfo = content.getValue().transport;
-            final IceUdpTransportInfo modifiedTransportInfo =
-                    transportInfo.modifyCredentials(credentials, setup);
-            contentMapBuilder.put(
-                    content.getKey(),
-                    new DescriptionTransport(rtpDescription, modifiedTransportInfo));
-        }
-        return new RtpContentMap(this.group, contentMapBuilder.build());
+        return new RtpContentMap(null, ImmutableMap.of(contentName, new DescriptionTransport(null, newTransportInfo)));
     }
 
     public static class DescriptionTransport {
