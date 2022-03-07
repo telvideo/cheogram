@@ -111,7 +111,7 @@ dependencies {
     implementation 'com.github.ipld:java-cid:v1.3.1'
     implementation 'com.splitwise:tokenautocomplete:3.0.2'
     implementation 'me.saket:better-link-movement-method:2.2.0'
-    implementation urlFile('https://gateway.pinata.cloud/ipfs/QmeqMiLxHi8AAjXobxr3QTfa1bSSLyAu86YviAqQnjxCjM/libwebrtc.aar', 'libwebrtc.aar')
+    implementation 'org.webrtc:google-webrtc:1.0.32006'
     // INSERT
 }
 
