@@ -1,2 +1,8 @@
-* Minor bug fixes
-* Restore ability to call out via JMP and other services (Playstore version)
+* Rich replies, including reply to image and reply with image
+* Replies of only a single emoji send a reaction to supporting clients
+* Display incoming reactions as replies (better UI later)
+* Swipe to reply
+* Adding a contact to roster from system contacts preserves name and tags
+* Fetch and render vcard4 on Contact Details
+* Ping all online MUCs very occasionally, in case they got disconnected
+* Allow experimental prefix/suffix labels in Command UI forms
