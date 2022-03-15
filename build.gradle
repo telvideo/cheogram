@@ -115,8 +115,8 @@ android {
     defaultConfig {
         minSdkVersion 21
         targetSdkVersion 30
-        versionCode 42024 + tags.size()
-        versionName grgit.describe(always: true)
+        versionCode 42034
+        versionName "2.11.0-1"
         applicationId "eu.siacs.conversations"
         resValue "string", "applicationId", applicationId
         def appName = "Conversations"
