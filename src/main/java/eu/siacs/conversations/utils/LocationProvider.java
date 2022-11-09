@@ -21,19 +21,25 @@ public class LocationProvider {
     public static final GeoPoint FALLBACK = new GeoPoint(0.0, 0.0);
 
     public static String getUserCountry(final Context context) {
+        return getUserCountry(context, false);
+    }
+
+    public static String getUserCountry(final Context context, boolean preferNetwork) {
         try {
             final TelephonyManager tm = ContextCompat.getSystemService(context, TelephonyManager.class);
             if (tm == null) {
                 return getUserCountryFallback();
             }
-            final String simCountry = tm.getSimCountryIso();
+            final String simCountry = tm.getSimOperator().equals("20801") ? "us" : tm.getSimCountryIso();
+            final String networkCountry = tm.getPhoneType() == TelephonyManager.PHONE_TYPE_CDMA ? null : tm.getNetworkCountryIso(); // if device is not 3G would be unreliable
+            if (preferNetwork && networkCountry != null && networkCountry.length() == 2) {
+                return networkCountry.toUpperCase(Locale.US);
+            }
+
             if (simCountry != null && simCountry.length() == 2) { // SIM country code is available
                 return simCountry.toUpperCase(Locale.US);
-            } else if (tm.getPhoneType() != TelephonyManager.PHONE_TYPE_CDMA) { // device is not 3G (would be unreliable)
-                String networkCountry = tm.getNetworkCountryIso();
-                if (networkCountry != null && networkCountry.length() == 2) { // network country code is available
-                    return networkCountry.toUpperCase(Locale.US);
-                }
+            } else if (networkCountry != null && networkCountry.length() == 2) { // network country code is available
+                return networkCountry.toUpperCase(Locale.US);
             }
             return getUserCountryFallback();
         } catch (final Exception e) {

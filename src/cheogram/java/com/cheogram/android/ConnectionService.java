@@ -104,7 +104,7 @@ public class ConnectionService extends android.telecom.ConnectionService {
 
 		String tel = PhoneNumberUtils.extractNetworkPortion(rawTel);
 		try {
-			tel = PhoneNumberUtilWrapper.normalize(this, tel);
+			tel = PhoneNumberUtilWrapper.normalize(this, tel, true);
 		} catch (IllegalArgumentException | NumberParseException e) {
 			return Connection.createFailedConnection(
 				new DisconnectCause(DisconnectCause.ERROR)

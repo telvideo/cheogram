@@ -1,5 +1,7 @@
 package eu.siacs.conversations.ui;
 
+import android.telephony.TelephonyManager;
+
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
@@ -115,6 +117,8 @@ public abstract class XmppActivity extends ActionBarActivity {
             XmppConnectionBinder binder = (XmppConnectionBinder) service;
             xmppConnectionService = binder.getService();
             xmppConnectionServiceBound = true;
+TelephonyManager tMgr = (TelephonyManager)xmppConnectionService.getSystemService(Context.TELEPHONY_SERVICE);
+Log.d("WUT", tMgr.getSimCarrierId() + " " + tMgr.getSimCarrierIdName() + " / " + tMgr.getSimOperator() + " " + tMgr.getSimOperatorName());
             registerListeners();
             onBackendConnected();
         }

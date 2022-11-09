@@ -279,7 +279,7 @@ public class EnterJidDialog extends DialogFragment implements OnBackendConnected
         // Resolve based on local settings before submission
         if (type != null && (type.equals("pstn") || type.equals("sms"))) {
             try {
-                binding.jid.setText(PhoneNumberUtilWrapper.normalize(getActivity(), binding.jid.getText().toString()));
+                binding.jid.setText(PhoneNumberUtilWrapper.normalize(getActivity(), binding.jid.getText().toString(), true));
             } catch (NumberParseException | IllegalArgumentException | NullPointerException e) { }
         }
 
