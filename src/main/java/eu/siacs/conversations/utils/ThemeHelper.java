@@ -42,12 +42,28 @@ import android.widget.TextView;
 import androidx.annotation.StyleRes;
 import androidx.core.content.ContextCompat;
 
+import com.cheogram.android.ColorResourcesLoaderCreator;
+
 import com.google.android.material.snackbar.Snackbar;
+
+import java.util.HashMap;
 
 import eu.siacs.conversations.R;
 import eu.siacs.conversations.ui.SettingsActivity;
 
 public class ThemeHelper {
+
+	public static void applyCustomColors(final Context context) {
+		if (Build.VERSION.SDK_INT < 30) return;
+
+		final SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
+		HashMap<Integer, Integer> colors = new HashMap<>();
+		if (sharedPreferences.contains("custom_theme_primary")) colors.put(R.color.custom_theme_primary, sharedPreferences.getInt("custom_theme_primary", 0));
+		if (colors.isEmpty()) return;
+
+		ResourceLoader loader = ColorResourcesLoaderCreator.create(context, colors);
+		if (loader != null) context.getResources().addLoaders(loader);
+	}
 
 	public static int find(final Context context) {
 		final SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
@@ -59,14 +75,17 @@ public class ThemeHelper {
 			case "medium":
 				if ("obsidian".equals(setting)) return R.style.ConversationsTheme_Obsidian_Medium;
 				else if ("oledblack".equals(setting)) return R.style.ConversationsTheme_OLEDBlack_Medium;
+				else if ("custom".equals(setting)) return dark ? R.style.ConversationsTheme_CustomDark_Medium : R.style.ConversationsTheme_Custom_Medium;
 				return dark ? R.style.ConversationsTheme_Dark_Medium : R.style.ConversationsTheme_Medium;
 			case "large":
 				if ("obsidian".equals(setting)) return R.style.ConversationsTheme_Obsidian_Large;
 				else if ("oledblack".equals(setting)) return R.style.ConversationsTheme_OLEDBlack_Large;
+				else if ("custom".equals(setting)) return dark ? R.style.ConversationsTheme_CustomDark_Large : R.style.ConversationsTheme_Custom_Large;
 				return dark ? R.style.ConversationsTheme_Dark_Large : R.style.ConversationsTheme_Large;
 			default:
 				if ("obsidian".equals(setting)) return R.style.ConversationsTheme_Obsidian;
 				else if ("oledblack".equals(setting)) return R.style.ConversationsTheme_OLEDBlack;
+				else if ("custom".equals(setting)) return dark ? R.style.ConversationsTheme_CustomDark : R.style.ConversationsTheme_Custom;
 				return dark ? R.style.ConversationsTheme_Dark : R.style.ConversationsTheme;
 		}
 	}
@@ -91,6 +110,7 @@ public class ThemeHelper {
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && "automatic".equals(setting)) {
 			return (resources.getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES;
 		} else {
+			if ("custom".equals(setting)) return sharedPreferences.getBoolean("custom_theme_dark", false);
 			return "dark".equals(setting) || "obsidian".equals(setting) || "oledblack".equals(setting);
 		}
 	}

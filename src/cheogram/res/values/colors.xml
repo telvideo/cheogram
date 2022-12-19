@@ -2,4 +2,10 @@
 <resources>
 	<color name="splash_screen_background">#7401cf</color>
 	<color name="splash_screen_status_bar">#7401cf</color>
+	<color name="perpy">#7401CF</color>
+	<color name="yeller">#FFC700</color>
+
+	<color name="custom_theme_primary">@color/perpy</color>
+	<color name="custom_theme_primary_dark">#1E0036</color>
+	<color name="custom_theme_accent">#1E0036</color>
 </resources>

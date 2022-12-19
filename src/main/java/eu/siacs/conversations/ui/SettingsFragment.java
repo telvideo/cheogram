@@ -2,26 +2,27 @@ package eu.siacs.conversations.ui;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.preference.Preference;
-import android.preference.PreferenceCategory;
-import android.preference.PreferenceFragment;
-import android.preference.PreferenceScreen;
 import android.text.TextUtils;
 import android.widget.ListView;
+
+import androidx.preference.PreferenceFragmentCompat;
+import androidx.preference.PreferenceScreen;
+import androidx.preference.Preference;
+import androidx.preference.PreferenceCategory;
+
+import com.rarepebble.colorpicker.ColorPreference;
 
 import eu.siacs.conversations.Config;
 import eu.siacs.conversations.R;
 import eu.siacs.conversations.utils.Compatibility;
 
-public class SettingsFragment extends PreferenceFragment {
+public class SettingsFragment extends PreferenceFragmentCompat {
 
 	private String page = null;
 
 	@Override
-	public void onCreate(Bundle savedInstanceState) {
-		super.onCreate(savedInstanceState);
-
-		addPreferencesFromResource(R.xml.preferences);
+	public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
+		setPreferencesFromResource(R.xml.preferences, rootKey);
 
 		// Remove from standard preferences if the flag ONLY_INTERNAL_STORAGE is false
 		if (!Config.ONLY_INTERNAL_STORAGE) {
@@ -49,6 +50,13 @@ public class SettingsFragment extends PreferenceFragment {
 		if (listView != null) {
 			listView.setDivider(null);
 		}
+	}
+
+	@Override
+	public void onDisplayPreferenceDialog(Preference preference) {
+		if (preference instanceof ColorPreference) {
+			((ColorPreference) preference).showDialog(this, 0);
+		} else super.onDisplayPreferenceDialog(preference);
 	}
 
 	public void setActivityIntent(final Intent intent) {

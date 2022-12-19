@@ -2,11 +2,14 @@ package eu.siacs.conversations.ui;
 
 import android.content.Context;
 import android.content.res.TypedArray;
-import android.preference.DialogPreference;
-import android.preference.Preference;
 import android.util.AttributeSet;
 import android.view.View;
 import android.widget.TimePicker;
+import android.widget.LinearLayout;
+
+import androidx.preference.DialogPreference;
+import androidx.preference.Preference;
+import androidx.preference.PreferenceViewHolder;
 
 import java.text.DateFormat;
 import java.util.Calendar;
@@ -36,30 +39,30 @@ public class TimePreference extends DialogPreference implements Preference.OnPre
 	}
 
 	@Override
-	protected View onCreateDialogView() {
+	public void onBindViewHolder(PreferenceViewHolder holder) {
 		picker = new TimePicker(getContext());
 		picker.setIs24HourView(android.text.format.DateFormat.is24HourFormat(getContext()));
-		return picker;
-	}
 
-	@SuppressWarnings("NullableProblems")
-	@Override
-	protected void onBindDialogView(final View v) {
-		super.onBindDialogView(v);
 		long time = getPersistedLong(DEFAULT_VALUE);
 
 		picker.setCurrentHour((int) ((time % (24 * 60)) / 60));
 		picker.setCurrentMinute((int) ((time % (24 * 60)) % 60));
+
+		View view = holder.itemView;
+		LinearLayout widgetFrameView = ((LinearLayout)view.findViewById(android.R.id.widget_frame));
+		widgetFrameView.setVisibility(View.VISIBLE);
+		widgetFrameView.removeAllViews();
+		widgetFrameView.addView(picker);
 	}
 
-	@Override
+	/*@Override
 	protected void onDialogClosed(final boolean positiveResult) {
 		super.onDialogClosed(positiveResult);
 
 		if (positiveResult) {
 			setTime(picker.getCurrentHour() * 60 + picker.getCurrentMinute());
 		}
-	}
+	}*/
 
 	private static Calendar minutesToCalender(long time) {
 		final Calendar c = Calendar.getInstance();

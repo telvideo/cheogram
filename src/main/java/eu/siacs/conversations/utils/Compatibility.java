@@ -10,13 +10,13 @@ import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.net.ConnectivityManager;
 import android.os.Build;
-import android.preference.Preference;
-import android.preference.PreferenceCategory;
-import android.preference.PreferenceManager;
 import android.util.Log;
 
 import androidx.annotation.BoolRes;
 import androidx.annotation.NonNull;
+import androidx.preference.Preference;
+import androidx.preference.PreferenceCategory;
+import androidx.preference.PreferenceManager;
 import androidx.annotation.RequiresApi;
 import androidx.core.content.ContextCompat;
 

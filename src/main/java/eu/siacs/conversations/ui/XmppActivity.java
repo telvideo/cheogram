@@ -417,6 +417,7 @@ public abstract class XmppActivity extends ActionBarActivity {
         this.isCameraFeatureAvailable = getPackageManager().hasSystemFeature(PackageManager.FEATURE_CAMERA_ANY);
         this.mTheme = findTheme();
         setTheme(this.mTheme);
+        ThemeHelper.applyCustomColors(this);
     }
 
     protected boolean isCameraFeatureAvailable() {

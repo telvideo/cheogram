@@ -1,6 +1,5 @@
 package eu.siacs.conversations.ui;
 
-import android.app.FragmentManager;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -9,19 +8,20 @@ import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.preference.CheckBoxPreference;
-import android.preference.ListPreference;
-import android.preference.Preference;
-import android.preference.PreferenceCategory;
-import android.preference.PreferenceManager;
-import android.preference.PreferenceScreen;
 import android.provider.MediaStore;
 import android.util.Log;
 import android.widget.Toast;
 
+import androidx.fragment.app.FragmentManager;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.core.content.ContextCompat;
+import androidx.preference.CheckBoxPreference;
+import androidx.preference.ListPreference;
+import androidx.preference.Preference;
+import androidx.preference.PreferenceCategory;
+import androidx.preference.PreferenceManager;
+import androidx.preference.PreferenceScreen;
 
 import com.google.common.base.Strings;
 
@@ -44,6 +44,7 @@ import eu.siacs.conversations.ui.util.SettingsUtils;
 import eu.siacs.conversations.ui.util.StyledAttributes;
 import eu.siacs.conversations.utils.GeoHelper;
 import eu.siacs.conversations.utils.TimeFrameUtils;
+import eu.siacs.conversations.utils.ThemeHelper;
 import eu.siacs.conversations.xmpp.Jid;
 
 public class SettingsActivity extends XmppActivity implements OnSharedPreferenceChangeListener {
@@ -69,7 +70,7 @@ public class SettingsActivity extends XmppActivity implements OnSharedPreference
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_settings);
-        FragmentManager fm = getFragmentManager();
+        FragmentManager fm = getSupportFragmentManager();
         mSettingsFragment = (SettingsFragment) fm.findFragmentById(R.id.settings_content);
         if (mSettingsFragment == null
                 || !mSettingsFragment.getClass().equals(SettingsFragment.class)) {
@@ -79,6 +80,7 @@ public class SettingsActivity extends XmppActivity implements OnSharedPreference
         mSettingsFragment.setActivityIntent(getIntent());
         this.mTheme = findTheme();
         setTheme(this.mTheme);
+        ThemeHelper.applyCustomColors(this);
         getWindow()
                 .getDecorView()
                 .setBackgroundColor(
@@ -465,12 +467,11 @@ public class SettingsActivity extends XmppActivity implements OnSharedPreference
             xmppConnectionService.reinitializeMuclumbusService();
         } else if (name.equals(AUTOMATIC_MESSAGE_DELETION)) {
             xmppConnectionService.expireOldMessages(true);
-        } else if (name.equals(THEME)) {
+        } else if (name.equals(THEME) || name.equals("custom_theme_primary")) {
             final int theme = findTheme();
-            if (this.mTheme != theme) {
-                xmppConnectionService.setTheme(theme);
-                recreate();
-            }
+            xmppConnectionService.setTheme(theme);
+            ThemeHelper.applyCustomColors(xmppConnectionService);
+            recreate();
         } else if (name.equals(PREVENT_SCREENSHOTS)) {
             SettingsUtils.applyScreenshotPreventionSetting(this);
         }
