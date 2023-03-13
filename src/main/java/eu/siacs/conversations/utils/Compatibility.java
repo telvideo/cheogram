@@ -47,6 +47,13 @@ public class Compatibility {
                         == PackageManager.PERMISSION_GRANTED;
     }
 
+    public static boolean hasReadSmsPermission(Context context) {
+        return Build.VERSION.SDK_INT < Build.VERSION_CODES.M
+                || ContextCompat.checkSelfPermission(
+                                context, android.Manifest.permission.READ_SMS)
+                        == PackageManager.PERMISSION_GRANTED;
+    }
+
     public static boolean s() {
         return Build.VERSION.SDK_INT >= Build.VERSION_CODES.S;
     }

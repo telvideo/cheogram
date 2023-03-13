@@ -3,6 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.BIND_TELECOM_CONNECTION_SERVICE" />
+    <uses-permission android:name="android.permission.READ_SMS" />
 
     <application tools:ignore="GoogleAppIndexingWarning">
         <!-- INSERT -->
@@ -91,5 +92,10 @@
                 <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\..*\\.ceb" />
             </intent-filter>
         </activity>
+        <activity
+            android:name=".ui.ImportSmsActivity"
+            android:label="@string/sms_import_header"
+            android:launchMode="singleTask"
+        />
     </application>
 </manifest>
