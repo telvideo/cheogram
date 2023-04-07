@@ -9,6 +9,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.security.KeyChain;
 import android.security.KeyChainAliasCallback;
+import android.util.Log;
 import android.util.Pair;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
@@ -22,6 +23,7 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AlertDialog;
+import androidx.core.content.ContextCompat;
 
 import org.openintents.openpgp.util.OpenPgpApi;
 
@@ -37,6 +39,7 @@ import eu.siacs.conversations.services.XmppConnectionService;
 import eu.siacs.conversations.services.XmppConnectionService.OnAccountUpdate;
 import eu.siacs.conversations.ui.adapter.AccountAdapter;
 import eu.siacs.conversations.ui.util.MenuDoubleTabUtil;
+import eu.siacs.conversations.utils.Compatibility;
 import eu.siacs.conversations.xmpp.Jid;
 import eu.siacs.conversations.xmpp.XmppConnection;
 
@@ -49,6 +52,7 @@ public class ManageAccountActivity extends XmppActivity implements OnAccountUpda
 
     private static final int REQUEST_IMPORT_BACKUP = 0x63fb;
     private static final int REQUEST_MICROPHONE = 0x63fb1;
+    private static final int REQUEST_SMS_IMPORT = 0x63fc;
 
     protected Account selectedAccount = null;
     protected Jid selectedAccountJid = null;
@@ -153,6 +157,15 @@ public class ManageAccountActivity extends XmppActivity implements OnAccountUpda
         super.onSaveInstanceState(savedInstanceState);
     }
 
+    private boolean hasPstnGatewayContact() {
+        for (Contact contact : selectedAccount.getRoster().getContacts()) {
+            if (contact.getPresences().anyIdentity("gateway", "pstn")) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     @Override
     public void onCreateContextMenu(ContextMenu menu, View v, ContextMenuInfo menuInfo) {
         super.onCreateContextMenu(menu, v, menuInfo);
@@ -168,6 +181,7 @@ public class ManageAccountActivity extends XmppActivity implements OnAccountUpda
             menu.findItem(R.id.mgmt_account_announce_pgp).setVisible(false);
             menu.findItem(R.id.mgmt_account_publish_avatar).setVisible(false);
         }
+        menu.findItem(R.id.mgmt_account_import_sms).setVisible(hasPstnGatewayContact());
         menu.setHeaderTitle(this.selectedAccount.getJid().asBareJid().toEscapedString());
     }
 
@@ -209,6 +223,15 @@ public class ManageAccountActivity extends XmppActivity implements OnAccountUpda
         return true;
     }
 
+    private boolean checkSmsPermission() {
+        if (Compatibility.hasReadSmsPermission(this)) {
+            return true;
+        }
+        requestPermissions(new String[]{android.Manifest.permission.READ_SMS},
+                           REQUEST_SMS_IMPORT);
+        return false;
+    }
+
     @Override
     public boolean onContextItemSelected(MenuItem item) {
         switch (item.getItemId()) {
@@ -226,6 +249,11 @@ public class ManageAccountActivity extends XmppActivity implements OnAccountUpda
                 return true;
             case R.id.mgmt_account_announce_pgp:
                 publishOpenPGPPublicKey(selectedAccount);
+                return true;
+            case R.id.mgmt_account_import_sms:
+                if (checkSmsPermission()) {
+                    importSmsMessages(selectedAccount);
+                }
                 return true;
             default:
                 return super.onContextItemSelected(item);
@@ -302,10 +330,15 @@ public class ManageAccountActivity extends XmppActivity implements OnAccountUpda
                     case REQUEST_IMPORT_BACKUP:
                         startActivity(new Intent(this, ImportBackupActivity.class));
                         break;
+                    case REQUEST_SMS_IMPORT:
+                        importSmsMessages(selectedAccount);
+                        break;
                 }
             } else {
                 if (requestCode == REQUEST_MICROPHONE) {
                     Toast.makeText(this, "Microphone access was denied", Toast.LENGTH_SHORT).show();
+                } else if (requestCode == REQUEST_SMS_IMPORT) {
+                    Toast.makeText(this, R.string.sms_no_permission, Toast.LENGTH_SHORT).show();
                 } else {
                     Toast.makeText(this, R.string.no_storage_permission, Toast.LENGTH_SHORT).show();
                 }
@@ -437,6 +470,13 @@ public class ManageAccountActivity extends XmppActivity implements OnAccountUpda
         } else {
             this.showInstallPgpDialog();
         }
+    }
+
+    private void importSmsMessages(Account account) {
+        Intent intent = new Intent(getApplicationContext(),
+                ImportSmsActivity.class);
+        intent.putExtra(EXTRA_ACCOUNT, account.getJid().asBareJid().toEscapedString());
+        startActivity(intent);
     }
 
     private void deleteAccount(final Account account) {

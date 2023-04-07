@@ -36,4 +36,17 @@
     <string name="unable_to_moderate">Unable to Moderate</string>
     <string name="block_media">Block Media</string>
     <string name="new_contact">New Contact or Channel</string>
+    <string name="mgmt_account_import_sms">Import SMS messages</string>
+    <string name="sms_import_header">Import SMS/MMS Messages</string>
+    <string name="sms_import_messages_completed">Imported: </string>
+    <string name="sms_import_messages_skipped">Skipped: </string>
+    <string name="sms_import_messages_errors">Errors: </string>
+    <string name="sms_import_title">SMS import complete</string>
+    <string name="sms_import_report">Imported: %1$d, Skipped: %2$d, Errors: %3$d</string>
+    <string name="sms_import_start_import">Start Import</string>
+    <string name="sms_import_already_running">Import already running</string>
+    <string name="sms_no_permission">Import canceled.  Insufficient permission</string>
+    <string name="sms_phone_number_hint">Phone number</string>
+    <string name="sms_phone_number_label">MMS -> Group Chat Filter</string>
+    <string name="sms_import_done">Import Done.</string>
 </resources>

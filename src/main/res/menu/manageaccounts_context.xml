@@ -19,4 +19,8 @@
         android:id="@+id/mgmt_account_delete"
         android:title="@string/mgmt_account_delete"/>
 
+    <item
+        android:id="@+id/mgmt_account_import_sms"
+        android:title="@string/mgmt_account_import_sms"/>
+
 </menu>
