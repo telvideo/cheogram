@@ -1032,8 +1032,24 @@ public class StartConversationActivity extends XmppActivity implements XmppConne
                         });
                     });
                 } else {
-                    startCommand(selectedAccount, Jid.of("cheogram.com/CHEOGRAM%jabber:iq:register"), "jabber:iq:register");
-                    finish();
+                    if (onboardingAccount == null) {
+                        final Account selAccount = selectedAccount;
+                        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+                        builder.setTitle("Setup Phone Service?");
+                        builder.setMessage("Would you like to set up a phone number provider now?");
+                        builder.setPositiveButton(R.string.yes, (dialog, which) -> {
+                            startCommand(selAccount, Jid.of("cheogram.com/CHEOGRAM%jabber:iq:register"), "jabber:iq:register");
+                            finish();
+                        });
+                        builder.setNegativeButton(R.string.no, (dialog, which) -> {
+                        });
+                        final AlertDialog dialog = builder.create();
+                        dialog.setCanceledOnTouchOutside(false);
+                        dialog.show();
+                    } else {
+                        startCommand(selectedAccount, Jid.of("cheogram.com/CHEOGRAM%jabber:iq:register"), "jabber:iq:register");
+                        finish();
+                    }
                     return;
                 }
             }
