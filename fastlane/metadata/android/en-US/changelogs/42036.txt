@@ -1,0 +1,16 @@
+Version 2.12.1-2
+* Custom any colour theme (Android 11+)
+* Collapse empty thread selector while typing
+* Back exits single thread view
+* Offer cheogram.com register on first setup if no PSTN or SMS gateway
+* Offer to set up dialler integration when new PSTN gateway detected
+* Get mic permission when setting up dialler integration
+* Show very wide tables as list of cards
+* Change notification LED colour to perpy
+* Support custom actions defined by list-single var=http://jabber.org/protocol/commands#actions
+* Render a form with only one list-single or boolean as buttons
+* Allow creating an account for yourself using an invite
+* Fix nested scroll on ListView in Command UI
+* Remove RoundedImageView dependency
+* Menu item to save image (or inline image) as sticker
+* Extended addressing ofrom notifications should look like MUC (group text)
