@@ -29,6 +29,7 @@ import android.os.storage.StorageManager;
 import android.os.SystemClock;
 import android.preference.PreferenceManager;
 import android.provider.MediaStore;
+import android.telecom.TelecomManager;
 import android.text.Editable;
 import android.text.SpannableStringBuilder;
 import android.text.TextUtils;
@@ -1898,6 +1899,27 @@ public class ConversationFragment extends XmppFragment
         }
     }
 
+    private boolean placeCallWithSystem(Contact gateway) {
+        if (Build.VERSION.SDK_INT < 23) return false;
+
+        if (!activity.getPreferences().getBoolean("dialler_integration_incoming", true)) return false;
+
+        Bundle callInfo = new Bundle();
+        callInfo.putParcelable(TelecomManager.EXTRA_PHONE_ACCOUNT_HANDLE, gateway.phoneAccountHandle());
+        TelecomManager telecomManager = activity.getSystemService(TelecomManager.class);
+
+        try {
+            telecomManager.placeCall(Uri.parse("tel:" + conversation.getContact().getJid().getLocal()), callInfo);
+        } catch (SecurityException e) {
+            // If the account is not registered or enabled, it could result in a security exception
+            // Just fall back to the built-in UI in this case.
+            Log.w("WUT", e);
+            return false;
+        }
+
+        return true;
+    }
+
     private void triggerRtpSession(final String action) {
         if (activity.xmppConnectionService.getJingleConnectionManager().isBusy() != null) {
             Toast.makeText(getActivity(), R.string.only_one_call_at_a_time, Toast.LENGTH_LONG)
@@ -1905,6 +1927,14 @@ public class ConversationFragment extends XmppFragment
             return;
         }
         final Contact contact = conversation.getContact();
+
+        if (action == RtpSessionActivity.ACTION_MAKE_VOICE_CALL) {
+            Contact gateway = contact.getAccount().getRoster().getContact(contact.getJid().getDomain());
+            if (gateway.getPresences().anyIdentity("gateway", "pstn")) {
+                if (placeCallWithSystem(gateway)) return;
+            }
+        }
+
         if (contact.getPresences().anySupport(Namespace.JINGLE_MESSAGE)) {
             triggerRtpSession(contact.getAccount(), contact.getJid().asBareJid(), action);
         } else {
