@@ -32,9 +32,15 @@ package eu.siacs.conversations.ui;
 import android.app.Activity;
 import android.app.Fragment;
 
+import androidx.lifecycle.Lifecycle;
+import androidx.lifecycle.LifecycleRegistry;
+import androidx.lifecycle.LifecycleOwner;
+
 import eu.siacs.conversations.ui.interfaces.OnBackendConnected;
 
-public abstract class XmppFragment extends Fragment implements OnBackendConnected {
+public abstract class XmppFragment extends Fragment implements OnBackendConnected, LifecycleOwner {
+
+	protected LifecycleRegistry lifecycle = new LifecycleRegistry(this);
 
 	abstract void refresh();
 	public void refreshForNewCaps() { }
@@ -44,5 +50,40 @@ public abstract class XmppFragment extends Fragment implements OnBackendConnecte
 		if (activity != null) {
 			activity.runOnUiThread(runnable);
 		}
+	}
+
+	@Override
+	public void onStart() {
+		super.onStart();
+		lifecycle.handleLifecycleEvent(Lifecycle.Event.ON_START);
+	}
+
+	@Override
+	public void onResume() {
+		super.onResume();
+		lifecycle.handleLifecycleEvent(Lifecycle.Event.ON_RESUME);
+	}
+
+	@Override
+	public void onPause() {
+		lifecycle.handleLifecycleEvent(Lifecycle.Event.ON_PAUSE);
+		super.onPause();
+	}
+
+	@Override
+	public void onStop() {
+		lifecycle.handleLifecycleEvent(Lifecycle.Event.ON_STOP);
+		super.onStop();
+	}
+
+	@Override
+	public void onDestroy() {
+		lifecycle.handleLifecycleEvent(Lifecycle.Event.ON_DESTROY);
+		super.onDestroy();
+	}
+
+	@Override
+	public Lifecycle getLifecycle() {
+		return lifecycle;
 	}
 }

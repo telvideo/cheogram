@@ -1388,7 +1388,11 @@ public class Conversation extends AbstractEntity implements Blockable, Comparabl
                 oldConversation.pagerAdapter.mTabs = null;
             }
 
-            if (mPager == null) return;
+            if (mPager == null) {
+                page1 = null;
+                page2 = null;
+                return;
+            }
             if (sessions != null) show();
 
             if (pager.getChildAt(0) != null) page1 = pager.getChildAt(0);
