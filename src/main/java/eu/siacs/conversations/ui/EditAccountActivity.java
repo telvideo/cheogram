@@ -1097,7 +1097,7 @@ public class EditAccountActivity extends OmemoActivity implements OnAccountUpdat
         }
 
         final boolean togglePassword = mAccount.isOptionSet(Account.OPTION_MAGIC_CREATE) || !mAccount.isOptionSet(Account.OPTION_LOGGED_IN_SUCCESSFULLY);
-        final boolean editPassword = !mAccount.isOptionSet(Account.OPTION_MAGIC_CREATE) || (!mAccount.isOptionSet(Account.OPTION_LOGGED_IN_SUCCESSFULLY) && QuickConversationsService.isConversations()) || mAccount.getLastErrorStatus() == Account.State.UNAUTHORIZED;
+        final boolean editPassword = !mAccount.isOptionSet(Account.OPTION_LOGGED_IN_SUCCESSFULLY) || mAccount.getLastErrorStatus() == Account.State.UNAUTHORIZED;
 
         this.binding.accountPasswordLayout.setPasswordVisibilityToggleEnabled(togglePassword);
 
