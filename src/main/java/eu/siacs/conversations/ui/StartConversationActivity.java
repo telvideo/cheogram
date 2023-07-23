@@ -1021,6 +1021,7 @@ public class StartConversationActivity extends XmppActivity implements XmppConne
                                             xmppConnectionService.markRead(withCheogram);
                                             xmppConnectionService.clearConversationHistory(withCheogram);
                                             xmppConnectionService.deleteAccount(onboardAccount);
+                                            switchToConversation(withCheogram, null, false, null, false, false, "command");
                                         } else {
                                             Log.e(Config.LOGTAG, "Error confirming jid switch, got: " + iq4);
                                         }
