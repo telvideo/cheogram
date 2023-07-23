@@ -53,6 +53,7 @@ import eu.siacs.conversations.xmpp.InvalidJid;
 import eu.siacs.conversations.xmpp.Jid;
 import eu.siacs.conversations.xmpp.OnMessagePacketReceived;
 import eu.siacs.conversations.xmpp.chatstate.ChatState;
+import eu.siacs.conversations.xmpp.forms.Data;
 import eu.siacs.conversations.xmpp.jingle.JingleConnectionManager;
 import eu.siacs.conversations.xmpp.jingle.JingleRtpConnection;
 import eu.siacs.conversations.xmpp.pep.Avatar;
@@ -548,6 +549,19 @@ public class MessageParser extends AbstractParser implements OnMessagePacketRece
             ));
 
             mXmppConnectionService.updateConversationUi();
+        }
+
+        // Basic visibility for voice requests
+        if (body == null && html == null && pgpEncrypted == null && axolotlEncrypted == null && !isMucStatusMessage) {
+            final Element formEl = packet.findChild("x", "jabber:x:data");
+            if (formEl != null) {
+                final Data form = Data.parse(formEl);
+                final String role = form.getValue("muc#role");
+                final String nick = form.getValue("muc#roomnick");
+                if ("http://jabber.org/protocol/muc#request".equals(form.getFormType()) && "participant".equals(role)) {
+                    body = new LocalizedContent("" + nick + " is requesting to speak", "en", 1);
+                }
+            }
         }
 
         if ((body != null || pgpEncrypted != null || (axolotlEncrypted != null && axolotlEncrypted.hasChild("payload")) || !attachments.isEmpty() || html != null) && !isMucStatusMessage) {
