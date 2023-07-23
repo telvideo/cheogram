@@ -264,7 +264,8 @@ public final class MimeUtils {
         add("audio/mp4", "m4a");
         add("audio/mpegurl", "m3u");
         add("audio/ogg", "oga");
-        add("audio/opus", "opus");
+        add("audio/ogg; codecs=opus", "opus"); // opus in ogg container
+        add("audio/opus", "opus"); // audio/opus for containerless opus
         add("audio/prs.sid", "sid");
         add("audio/x-aiff", "aif");
         add("audio/x-aiff", "aiff");

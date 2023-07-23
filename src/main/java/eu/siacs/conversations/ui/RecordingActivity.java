@@ -98,10 +98,17 @@ public class RecordingActivity extends Activity implements View.OnClickListener 
     private boolean startRecording() {
         mRecorder = new MediaRecorder();
         mRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
-        mRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
-        mRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC);
-        mRecorder.setAudioEncodingBitRate(96000);
-        mRecorder.setAudioSamplingRate(22050);
+        if (Build.VERSION.SDK_INT >= 29) {
+            mRecorder.setOutputFormat(MediaRecorder.OutputFormat.OGG);
+            mRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.OPUS);
+            mRecorder.setAudioEncodingBitRate(24000);
+            mRecorder.setAudioSamplingRate(48000);
+        } else {
+            mRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
+            mRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC);
+            mRecorder.setAudioEncodingBitRate(96000);
+            mRecorder.setAudioSamplingRate(22050);
+        }
         setupOutputFile();
         mRecorder.setOutputFile(mOutputFile.getAbsolutePath());
 
@@ -177,7 +184,12 @@ public class RecordingActivity extends Activity implements View.OnClickListener 
 
     private File generateOutputFilename() {
         final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd_HHmmssSSS", Locale.US);
-        final String filename = "RECORDING_" + dateFormat.format(new Date()) + ".m4a";
+        final String filename;
+        if (Build.VERSION.SDK_INT >= 29) {
+            filename = "RECORDING_" + dateFormat.format(new Date()) + ".opus";
+        } else {
+            filename = "RECORDING_" + dateFormat.format(new Date()) + ".m4a";
+        }
         final File parentDirectory;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             parentDirectory =
