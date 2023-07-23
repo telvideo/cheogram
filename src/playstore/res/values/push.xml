@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <string name="app_server">xep0357.cheogram.com</string>
+  <string name="gcm_defaultSenderId" translatable="false">917382633053</string>
+  <string name="google_app_id">1:917382633053:android:3aa274536d734c74d45fb4</string>
+  <string name="project_id" translatable="false">cheogram-android</string>
+  <string name="google_api_key" translatable="false">AIzaSyCMtT7RLQdHs6SxJUl5mk8oOcCZPAbCzJU</string>
+</resources>

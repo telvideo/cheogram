@@ -32,6 +32,7 @@ import androidx.core.content.ContextCompat;
 import androidx.core.content.pm.ShortcutInfoCompat;
 import androidx.core.content.pm.ShortcutManagerCompat;
 import androidx.core.graphics.drawable.IconCompat;
+import androidx.core.util.Consumer;
 import androidx.databinding.DataBindingUtil;
 
 import com.google.common.io.ByteStreams;
@@ -63,7 +64,6 @@ import eu.siacs.conversations.entities.Message;
 import eu.siacs.conversations.persistance.FileBackend;
 import eu.siacs.conversations.services.XmppConnectionService;
 import eu.siacs.conversations.ui.ConversationsActivity;
-import eu.siacs.conversations.utils.Consumer;
 import eu.siacs.conversations.utils.MimeUtils;
 import eu.siacs.conversations.utils.UIHelper;
 import eu.siacs.conversations.xml.Element;

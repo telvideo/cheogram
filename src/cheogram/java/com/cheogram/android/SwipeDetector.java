@@ -4,7 +4,7 @@ import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 
-import eu.siacs.conversations.utils.Consumer;
+import androidx.core.util.Consumer;
 
 // https://stackoverflow.com/a/41766670/8611
 /**

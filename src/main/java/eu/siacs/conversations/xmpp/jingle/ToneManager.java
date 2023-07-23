@@ -160,17 +160,24 @@ class ToneManager {
         if (currentTone != null) {
             currentTone.cancel(true);
         }
-        if (toneGenerator != null) {
-            // catch race condition with already-released generator
-            try {
-                toneGenerator.stopTone();
-            } catch (final RuntimeException e) { }
+        stopTone(toneGenerator);
+    }
+
+    private static void stopTone(final ToneGenerator toneGenerator) {
+        if (toneGenerator == null) {
+            return;
+        }
+        try {
+            toneGenerator.stopTone();
+        } catch (final RuntimeException e) {
+            Log.w(Config.LOGTAG,"tone has already stopped");
         }
     }
 
     public void startTone(final int toneType, final int durationMs) {
         if (this.toneGenerator != null) {
             this.toneGenerator.release();
+
         }
         final AudioManager audioManager = ContextCompat.getSystemService(context, AudioManager.class);
         final boolean ringerModeNormal = audioManager == null || audioManager.getRingerMode() == AudioManager.RINGER_MODE_NORMAL;

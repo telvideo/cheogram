@@ -10,6 +10,7 @@ import android.graphics.drawable.Drawable;
 import android.graphics.Typeface;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.preference.PreferenceManager;
 import android.text.Spannable;
 import android.text.SpannableString;
@@ -1168,7 +1169,7 @@ public class MessageAdapter extends ArrayAdapter<Message> {
     }
 
     public void openDownloadable(Message message) {
-        if (ContextCompat.checkSelfPermission(activity, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU && ContextCompat.checkSelfPermission(activity, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
             ConversationFragment.registerPendingMessage(activity, message);
             ActivityCompat.requestPermissions(activity, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, ConversationsActivity.REQUEST_OPEN_MESSAGE);
             return;

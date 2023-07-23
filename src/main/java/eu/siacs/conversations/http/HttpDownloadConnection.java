@@ -3,6 +3,7 @@ package eu.siacs.conversations.http;
 import android.util.Log;
 
 import androidx.annotation.Nullable;
+import androidx.core.util.Consumer;
 
 import com.google.common.base.Strings;
 import com.google.common.io.ByteStreams;
@@ -24,7 +25,6 @@ import eu.siacs.conversations.entities.Transferable;
 import eu.siacs.conversations.persistance.FileBackend;
 import eu.siacs.conversations.services.AbstractConnectionManager;
 import eu.siacs.conversations.services.XmppConnectionService;
-import eu.siacs.conversations.utils.Consumer;
 import eu.siacs.conversations.utils.CryptoHelper;
 import eu.siacs.conversations.utils.FileWriterException;
 import eu.siacs.conversations.utils.MimeUtils;

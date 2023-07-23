@@ -702,8 +702,8 @@ public class StartConversationActivity extends XmppActivity implements XmppConne
             mSearchEditText.setHint(R.string.search_contacts);
             mSearchEditText.setContentDescription(getString(R.string.search_contacts));
         } else {
-            mSearchEditText.setHint(R.string.search_bookmarks);
-            mSearchEditText.setContentDescription(getString(R.string.search_bookmarks));
+            mSearchEditText.setHint(R.string.search_group_chats);
+            mSearchEditText.setContentDescription(getString(R.string.search_group_chats));
         }
     }
 
@@ -841,16 +841,12 @@ public class StartConversationActivity extends XmppActivity implements XmppConne
                         final AlertDialog.Builder builder = new AlertDialog.Builder(this);
                         final AtomicBoolean requestPermission = new AtomicBoolean(false);
                         builder.setTitle(R.string.sync_with_contacts);
-                        if (QuickConversationsService.isQuicksy()) {
-                            builder.setMessage(Html.fromHtml(getString(R.string.sync_with_contacts_quicksy)));
-                        } else {
-                            builder.setMessage(getString(R.string.sync_with_contacts_long, getString(R.string.app_name)));
-                        }
+                        builder.setMessage(getString(R.string.sync_with_contacts_long, getString(R.string.app_name)));
                         @StringRes int confirmButtonText;
                         if (QuickConversationsService.isConversations()) {
                             confirmButtonText = R.string.next;
                         } else {
-                            confirmButtonText = R.string.confirm;
+                            confirmButtonText = R.string.agree_and_continue;
                         }
                         builder.setPositiveButton(confirmButtonText, (dialog, which) -> {
                             if (requestPermission.compareAndSet(false, true)) {
@@ -860,9 +856,11 @@ public class StartConversationActivity extends XmppActivity implements XmppConne
                         builder.setOnDismissListener(dialog -> {
                             if (QuickConversationsService.isConversations() && requestPermission.compareAndSet(false, true)) {
                                 requestPermissions(new String[]{Manifest.permission.READ_CONTACTS}, REQUEST_SYNC_CONTACTS);
-
                             }
                         });
+                        if (QuickConversationsService.isQuicksy()) {
+                            builder.setNegativeButton(R.string.decline, null);
+                        }
                         builder.setCancelable(QuickConversationsService.isQuicksy());
                         final AlertDialog dialog = builder.create();
                         dialog.setCanceledOnTouchOutside(QuickConversationsService.isQuicksy());
@@ -1550,7 +1548,7 @@ public class StartConversationActivity extends XmppActivity implements XmppConne
                 case 0:
                     return getResources().getString(R.string.contacts);
                 case 1:
-                    return getResources().getString(R.string.bookmarks);
+                    return getResources().getString(R.string.group_chats);
                 default:
                     return super.getPageTitle(position);
             }

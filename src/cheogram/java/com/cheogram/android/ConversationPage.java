@@ -3,7 +3,7 @@ package com.cheogram.android;
 import android.content.Context;
 import android.view.View;
 
-import eu.siacs.conversations.utils.Consumer;
+import androidx.core.util.Consumer;
 
 public interface ConversationPage {
 	public String getTitle();

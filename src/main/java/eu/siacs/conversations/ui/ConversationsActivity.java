@@ -57,6 +57,7 @@ import androidx.annotation.IdRes;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AlertDialog;
+import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.databinding.DataBindingUtil;
 
@@ -243,16 +244,16 @@ public class ConversationsActivity extends XmppActivity implements OnConversatio
         getPreferences().edit().putBoolean(getBatteryOptimizationPreferenceKey(), false).apply();
     }
 
-    private void openBatteryOptimizationDialogIfNeeded() {
+    private boolean openBatteryOptimizationDialogIfNeeded() {
         if (isOptimizingBattery()
                 && android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M
                 && getPreferences().getBoolean(getBatteryOptimizationPreferenceKey(), true)) {
-            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            final AlertDialog.Builder builder = new AlertDialog.Builder(this);
             builder.setTitle(R.string.battery_optimizations_enabled);
             builder.setMessage(getString(R.string.battery_optimizations_enabled_dialog, getString(R.string.app_name)));
             builder.setPositiveButton(R.string.next, (dialog, which) -> {
-                Intent intent = new Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS);
-                Uri uri = Uri.parse("package:" + getPackageName());
+                final Intent intent = new Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS);
+                final Uri uri = Uri.parse("package:" + getPackageName());
                 intent.setData(uri);
                 try {
                     startActivityForResult(intent, REQUEST_BATTERY_OP);
@@ -264,6 +265,14 @@ public class ConversationsActivity extends XmppActivity implements OnConversatio
             final AlertDialog dialog = builder.create();
             dialog.setCanceledOnTouchOutside(false);
             dialog.show();
+            return true;
+        }
+        return false;
+    }
+
+    private void requestNotificationPermissionIfNeeded() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && ActivityCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+            requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS}, REQUEST_POST_NOTIFICATION);
         }
     }
 
@@ -428,6 +437,9 @@ public class ConversationsActivity extends XmppActivity implements OnConversatio
             handlePositiveActivityResult(activityResult.requestCode, activityResult.data);
         } else {
             handleNegativeActivityResult(activityResult.requestCode);
+        }
+        if (activityResult.requestCode == REQUEST_BATTERY_OP) {
+            requestNotificationPermissionIfNeeded();
         }
     }
 

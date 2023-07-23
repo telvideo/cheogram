@@ -5,6 +5,8 @@ import static eu.siacs.conversations.utils.Random.SECURE_RANDOM;
 import android.os.Build;
 import android.util.Log;
 
+import androidx.core.util.Consumer;
+
 import org.apache.http.conn.ssl.StrictHostnameVerifier;
 
 import java.io.IOException;
@@ -31,7 +33,6 @@ import eu.siacs.conversations.entities.DownloadableFile;
 import eu.siacs.conversations.entities.Message;
 import eu.siacs.conversations.services.AbstractConnectionManager;
 import eu.siacs.conversations.services.XmppConnectionService;
-import eu.siacs.conversations.utils.Consumer;
 import eu.siacs.conversations.utils.TLSSocketFactory;
 import okhttp3.HttpUrl;
 import okhttp3.OkHttpClient;
