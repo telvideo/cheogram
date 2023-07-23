@@ -3667,6 +3667,11 @@ public class XmppConnectionService extends Service {
         this.sendMessagePacket(conference.getAccount(), packet);
     }
 
+    public void requestVoice(final Account account, final Jid jid) {
+        MessagePacket packet = this.getMessageGenerator().requestVoice(jid);
+        this.sendMessagePacket(account, packet);
+    }
+
     public void changeAffiliationInConference(final Conversation conference, Jid user, final MucOptions.Affiliation affiliation, final OnAffiliationChanged callback) {
         final Jid jid = user.asBareJid();
         final IqPacket request = this.mIqGenerator.changeAffiliation(conference, jid, affiliation.toString());

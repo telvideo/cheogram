@@ -187,6 +187,19 @@
                         android:background="?attr/color_background_primary"
                         android:contentDescription="@string/send_message"
                         android:src="?attr/ic_send_text_offline" />
+
+                    <Button
+                        android:id="@+id/request_voice"
+                        style="@style/Widget.Conversations.Button.Borderless"
+                        android:visibility="gone"
+                        android:layout_width="wrap_content"
+                        android:layout_height="48dp"
+                        android:layout_marginRight="8dp"
+                        android:layout_alignParentEnd="true"
+                        android:layout_alignParentRight="true"
+                        android:layout_centerVertical="true"
+                        android:background="?attr/color_background_primary"
+                        android:text="Request to Speak" />
                 </RelativeLayout>
                 <com.google.android.material.floatingactionbutton.FloatingActionButton
                     android:id="@+id/scroll_to_bottom_button"

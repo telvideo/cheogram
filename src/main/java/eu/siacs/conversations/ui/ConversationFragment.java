@@ -1304,6 +1304,9 @@ public class ConversationFragment extends XmppFragment
             conversation.setUserSelectedThread(false);
             setupReply(null);
         });
+        binding.requestVoice.setOnClickListener((v) -> {
+            activity.xmppConnectionService.requestVoice(conversation.getAccount(), conversation.getJid());
+        });
 
         binding.scrollToBottomButton.setOnClickListener(this.mScrollButtonListener);
         binding.messagesView.setOnScrollListener(mOnScrollListener);
@@ -3384,6 +3387,7 @@ public class ConversationFragment extends XmppFragment
         this.binding.textinput.setFocusableInTouchMode(canWrite);
         this.binding.textSendButton.setEnabled(canWrite);
         this.binding.textSendButton.setVisibility(canWrite ? View.VISIBLE : View.GONE);
+        this.binding.requestVoice.setVisibility(canWrite ? View.GONE : View.VISIBLE);
         this.binding.textinput.setCursorVisible(canWrite);
         this.binding.textinput.setEnabled(canWrite);
     }
