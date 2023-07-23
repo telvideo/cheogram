@@ -3371,14 +3371,19 @@ public class ConversationFragment extends XmppFragment
         return connection == null ? -1 : connection.getFeatures().getMaxHttpUploadSize();
     }
 
-    private void updateEditablity() {
-        boolean canWrite =
+    private boolean canWrite() {
+        return
                 this.conversation.getMode() == Conversation.MODE_SINGLE
                         || this.conversation.getMucOptions().participating()
                         || this.conversation.getNextCounterpart() != null;
+    }
+
+    private void updateEditablity() {
+        boolean canWrite = canWrite();
         this.binding.textinput.setFocusable(canWrite);
         this.binding.textinput.setFocusableInTouchMode(canWrite);
         this.binding.textSendButton.setEnabled(canWrite);
+        this.binding.textSendButton.setVisibility(canWrite ? View.VISIBLE : View.GONE);
         this.binding.textinput.setCursorVisible(canWrite);
         this.binding.textinput.setEnabled(canWrite);
     }
@@ -3427,6 +3432,7 @@ public class ConversationFragment extends XmppFragment
         } else {
             params.width = identiconWidth;
         }
+        if (!canWrite()) params.width = 0;
         binding.threadIdenticonLayout.setLayoutParams(params);
     }
 

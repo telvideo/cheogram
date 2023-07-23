@@ -38,4 +38,5 @@
     <string name="new_contact">New Contact or Channel</string>
     <string name="pref_broadcast_last_activity_summary">Allow contacts to see when you were last active in the app</string>
     <string name="visitor">Muted</string>
+    <string name="you_are_not_participating">You are muted</string>
 </resources>
