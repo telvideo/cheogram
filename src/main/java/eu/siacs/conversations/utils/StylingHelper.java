@@ -152,7 +152,7 @@ public class StylingHelper {
 					if (beginSpan >= start && endSpan <= end) {
 						continue;
 					}
-					sub.setSpan(clone(parcelableSpan), Math.max(beginSpan - start, 0), Math.min(sub.length() - 1, endSpan), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+					sub.setSpan(clone(parcelableSpan), Math.max(beginSpan - start, 0), Math.min(Math.max(sub.length() - 1, 0), endSpan), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
 				}
 			}
 			return sub;
