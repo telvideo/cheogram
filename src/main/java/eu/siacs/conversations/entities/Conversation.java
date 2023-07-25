@@ -573,6 +573,7 @@ public class Conversation extends AbstractEntity implements Blockable, Comparabl
             for (int i = this.messages.size() - 1; i >= 0; --i) {
                 final Message message = messages.get(i);
                 if (reactor == null && message.getStatus() < Message.STATUS_SEND) continue;
+                if (reactor != null && message.getCounterpart() == null) continue;
                 if (reactor != null && !(message.getCounterpart().equals(reactor) || message.getCounterpart().asBareJid().equals(reactor))) continue;
 
                 final Element r = message.getReactions();
