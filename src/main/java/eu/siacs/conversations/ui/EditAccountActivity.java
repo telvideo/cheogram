@@ -1039,7 +1039,7 @@ public class EditAccountActivity extends OmemoActivity implements OnAccountUpdat
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         final ColorPickerView picker = new ColorPickerView(this);
 
-        picker.setColor(mAccount.getColor(isDarkTheme()));
+        if (mAccount != null) picker.setColor(mAccount.getColor(isDarkTheme()));
         picker.showAlpha(true);
         picker.showHex(true);
         picker.showPreview(true);
