@@ -118,7 +118,7 @@ dependencies {
     implementation 'com.github.woltapp:blurhash:master'
     implementation 'com.caverock:androidsvg-aar:1.4'
     implementation 'org.tomlj:tomlj:1.1.0'
-    implementation 'com.tbuonomo:dotsindicator:5.0'
+    implementation 'com.tbuonomo:dotsindicator:4.2'
     // INSERT
 }
 
