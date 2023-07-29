@@ -47,6 +47,7 @@ import eu.siacs.conversations.crypto.axolotl.AxolotlService;
 import eu.siacs.conversations.crypto.axolotl.FingerprintStatus;
 import eu.siacs.conversations.http.URL;
 import eu.siacs.conversations.services.AvatarService;
+import eu.siacs.conversations.ui.util.MyLinkify;
 import eu.siacs.conversations.ui.util.PresenceSelector;
 import eu.siacs.conversations.ui.util.QuoteHelper;
 import eu.siacs.conversations.utils.CryptoHelper;
@@ -788,7 +789,7 @@ public class Message extends AbstractEntity implements AvatarService.Avatarable 
             return false;
         } else {
             String body, otherBody;
-            if (this.hasFileOnRemoteHost()) {
+            if (this.hasFileOnRemoteHost() && (this.body == null || "".equals(this.body))) {
                 body = getFileParams().url;
                 otherBody = message.body == null ? null : message.body.trim();
             } else {
@@ -1079,6 +1080,16 @@ public class Message extends AbstractEntity implements AvatarService.Avatarable 
         } else {
             throw new IllegalStateException("Attempting to store unedited message");
         }
+    }
+
+    public List<URI> getLinks() {
+        return MyLinkify.extractLinks(new SpannableStringBuilder(getBody())).stream().map((url) -> {
+            try {
+                return new URI(url);
+            } catch (final URISyntaxException e) {
+                return null;
+            }
+        }).filter(x -> x != null).collect(Collectors.toList());
     }
 
     public URI getOob() {

@@ -131,7 +131,7 @@ public class HttpConnectionManager extends AbstractConnectionManager {
         }
     }
 
-    OkHttpClient buildHttpClient(final HttpUrl url, final Account account, boolean interactive) {
+    public OkHttpClient buildHttpClient(final HttpUrl url, final Account account, boolean interactive) {
         return buildHttpClient(url, account, 30, interactive);
     }
 
@@ -181,5 +181,32 @@ public class HttpConnectionManager extends AbstractConnectionManager {
             throw new IOException("No response body found");
         }
         return body.byteStream();
+    }
+
+    public static String extractFilenameFromResponse(okhttp3.Response response) {
+        String filename = null;
+
+        // Try to extract filename from the Content-Disposition header
+        String contentDisposition = response.header("Content-Disposition");
+        if (contentDisposition != null && contentDisposition.contains("filename=")) {
+            String[] parts = contentDisposition.split(";");
+            for (String part : parts) {
+                if (part.trim().startsWith("filename=")) {
+                    filename = part.substring("filename=".length()).trim().replace("\"", "");
+                    break;
+                }
+            }
+        }
+
+        // If filename is not found in the Content-Disposition header, try to get it from the URL
+        if (filename == null || filename.isEmpty()) {
+            HttpUrl httpUrl = response.request().url();
+            List<String> pathSegments = httpUrl.pathSegments();
+            if (!pathSegments.isEmpty()) {
+                filename = pathSegments.get(pathSegments.size() - 1);
+            }
+        }
+
+        return filename;
     }
 }

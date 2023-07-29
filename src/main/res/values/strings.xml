@@ -1010,6 +1010,8 @@
     <string name="pref_up_push_account_summary">The account through which push messages will be received.</string>
     <string name="pref_up_push_server_title">Push Server</string>
     <string name="pref_up_push_server_summary">A user-chosen push server to relay push messages to apps on your device.</string>
+    <string name="pref_send_link_previews">Send link previews</string>
+    <string name="pref_send_link_previews_summary">Attach metadata about links when sending a message</string>
     <string name="no_account_deactivated">None (deactivated)</string>
     <string name="decline">Decline</string>
     <string name="delete_from_server">Remove account from server</string>

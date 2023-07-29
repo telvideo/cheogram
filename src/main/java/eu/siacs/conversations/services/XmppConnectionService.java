@@ -71,6 +71,7 @@ import org.openintents.openpgp.util.OpenPgpServiceConnection;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.net.URI;
 import java.security.Security;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
@@ -185,6 +186,9 @@ import eu.siacs.conversations.xmpp.stanzas.IqPacket;
 import eu.siacs.conversations.xmpp.stanzas.MessagePacket;
 import eu.siacs.conversations.xmpp.stanzas.PresencePacket;
 import me.leolin.shortcutbadger.ShortcutBadger;
+
+import okhttp3.HttpUrl;
+import okhttp3.OkHttpClient;
 
 public class XmppConnectionService extends Service {
 
@@ -1638,10 +1642,10 @@ public class XmppConnectionService extends Service {
     }
 
     public void sendMessage(final Message message) {
-        sendMessage(message, false, false);
+        sendMessage(message, false, false, false);
     }
 
-    private void sendMessage(final Message message, final boolean resend, final boolean delay) {
+    private void sendMessage(final Message message, final boolean resend, final boolean previewedLinks, final boolean delay) {
         final Account account = message.getConversation().getAccount();
         if (account.setShowErrorNotification(true)) {
             databaseBackend.updateAccount(account);
@@ -1676,7 +1680,65 @@ public class XmppConnectionService extends Service {
             message.setCounterpart(message.getConversation().getJid().asBareJid());
         }
 
-        if (account.isOnlineAndConnected() && !inProgressJoin) {
+        boolean waitForPreview = false;
+        if (getPreferences().getBoolean("send_link_previews", true) && !previewedLinks && !message.needsUploading()) {
+            final List<URI> links = message.getLinks();
+            if (!links.isEmpty()) {
+                waitForPreview = true;
+                if (account.isOnlineAndConnected()) {
+                    FILE_ATTACHMENT_EXECUTOR.execute(() -> {
+                        for (URI link : links) {
+                            if ("https".equals(link.getScheme())) {
+                                try {
+                                    HttpUrl url = HttpUrl.parse(link.toString());
+                                    OkHttpClient http = getHttpConnectionManager().buildHttpClient(url, account, false);
+                                    okhttp3.Response response = http.newCall(new okhttp3.Request.Builder().url(url).head().build()).execute();
+                                    final String mimeType = response.header("Content-Type") == null ? "" : response.header("Content-Type");
+                                    final boolean image = mimeType.startsWith("image/");
+                                    final boolean audio = mimeType.startsWith("audio/");
+                                    final boolean video = mimeType.startsWith("video/");
+                                    final boolean pdf = mimeType.equals("application/pdf");
+                                    if (response.isSuccessful() && (image || audio || video || pdf)) {
+                                        Message.FileParams params = message.getFileParams();
+                                        params.url = url.toString();
+                                        if (response.header("Content-Length") != null) params.size = Long.parseLong(response.header("Content-Length"), 10);
+                                        if (!Message.configurePrivateFileMessage(message)) {
+                                            message.setType(image ? Message.TYPE_IMAGE : Message.TYPE_FILE);
+                                        }
+                                        params.setName(HttpConnectionManager.extractFilenameFromResponse(response));
+
+                                        if (link.toString().equals(message.getQuoteableBody())) {
+                                            Element fallback = new Element("fallback", "urn:xmpp:fallback:0").setAttribute("for", Namespace.OOB);
+                                            fallback.addChild("body", "urn:xmpp:fallback:0");
+                                            message.addPayload(fallback);
+                                        } else if (message.getQuoteableBody().indexOf(link.toString()) >= 0) {
+                                            // Part of the real body, not just a fallback
+                                            Element fallback = new Element("fallback", "urn:xmpp:fallback:0").setAttribute("for", Namespace.OOB);
+                                            fallback.addChild("body", "urn:xmpp:fallback:0")
+                                                .setAttribute("start", "0")
+                                                .setAttribute("end", "0");
+                                            message.addPayload(fallback);
+                                        }
+
+                                        getHttpConnectionManager().createNewDownloadConnection(message, false, (file) -> {
+                                            synchronized (message.getConversation()) {
+                                                if (message.getStatus() == Message.STATUS_WAITING) sendMessage(message, true, true, false);
+                                            }
+                                        });
+                                        return;
+                                    }
+                                } catch (final IOException e) {  }
+                            }
+                        }
+                        synchronized (message.getConversation()) {
+                            if (message.getStatus() == Message.STATUS_WAITING) sendMessage(message, true, true, false);
+                        }
+                    });
+                }
+            }
+        }
+
+        if (account.isOnlineAndConnected() && !inProgressJoin && !waitForPreview) {
             switch (message.getEncryption()) {
                 case Message.ENCRYPTION_NONE:
                     if (message.needsUploading()) {
@@ -1822,11 +1884,13 @@ public class XmppConnectionService extends Service {
     }
 
     private void sendUnsentMessages(final Conversation conversation) {
-        conversation.findWaitingMessages(message -> resendMessage(message, true));
+        synchronized (conversation) {
+            conversation.findWaitingMessages(message -> resendMessage(message, true));
+        }
     }
 
     public void resendMessage(final Message message, final boolean delay) {
-        sendMessage(message, true, delay);
+        sendMessage(message, true, false, delay);
     }
 
     public boolean isOnboarding() {

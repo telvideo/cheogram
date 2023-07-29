@@ -36,6 +36,12 @@
             android:title="@string/pref_broadcast_last_activity" />
 
         <CheckBoxPreference
+            android:defaultValue="@bool/send_link_previews"
+            android:key="send_link_previews"
+            android:summary="@string/pref_send_link_previews_summary"
+            android:title="@string/pref_send_link_previews" />
+
+        <CheckBoxPreference
             android:defaultValue="@bool/prevent_screenshots"
             android:key="prevent_screenshots"
             android:summary="@string/pref_prevent_screenshots_summary"
