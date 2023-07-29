@@ -62,6 +62,10 @@ import com.google.common.base.Objects;
 import com.google.common.base.Optional;
 import com.google.common.base.Strings;
 
+import com.kedia.ogparser.OpenGraphCallback;
+import com.kedia.ogparser.OpenGraphParser;
+import com.kedia.ogparser.OpenGraphResult;
+
 import org.conscrypt.Conscrypt;
 import org.jxmpp.stringprep.libidn.LibIdnXmppStringprep;
 import org.openintents.openpgp.IOpenPgpService2;
@@ -91,6 +95,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
@@ -1698,6 +1703,7 @@ public class XmppConnectionService extends Service {
                                     final boolean audio = mimeType.startsWith("audio/");
                                     final boolean video = mimeType.startsWith("video/");
                                     final boolean pdf = mimeType.equals("application/pdf");
+                                    final boolean html = mimeType.startsWith("text/html") || mimeType.startsWith("application/xhtml+xml");
                                     if (response.isSuccessful() && (image || audio || video || pdf)) {
                                         Message.FileParams params = message.getFileParams();
                                         params.url = url.toString();
@@ -1726,8 +1732,43 @@ public class XmppConnectionService extends Service {
                                             }
                                         });
                                         return;
+                                    } else if (response.isSuccessful() && html) {
+                                        Semaphore waiter = new Semaphore(0);
+                                        new OpenGraphParser(new OpenGraphCallback() {
+                                            @Override
+                                            public void onPostResponse(OpenGraphResult result) {
+                                                Element rdf = new Element("Description", "http://www.w3.org/1999/02/22-rdf-syntax-ns#");
+                                                rdf.setAttribute("xmlns:rdf", "http://www.w3.org/1999/02/22-rdf-syntax-ns#");
+                                                rdf.setAttribute("rdf:about", link.toString());
+                                                if (result.getTitle() != null && !"".equals(result.getTitle())) {
+                                                    rdf.addChild("title", "https://ogp.me/ns#").setContent(result.getTitle());
+                                                }
+                                                if (result.getDescription() != null && !"".equals(result.getDescription())) {
+                                                    rdf.addChild("description", "https://ogp.me/ns#").setContent(result.getDescription());
+                                                }
+                                                if (result.getUrl() != null) {
+                                                    rdf.addChild("url", "https://ogp.me/ns#").setContent(result.getUrl());
+                                                }
+                                                if (result.getImage() != null) {
+                                                    rdf.addChild("image", "https://ogp.me/ns#").setContent(result.getImage());
+                                                }
+                                                if (result.getType() != null) {
+                                                    rdf.addChild("type", "https://ogp.me/ns#").setContent(result.getType());
+                                                }
+                                                if (result.getSiteName() != null) {
+                                                    rdf.addChild("site_name", "https://ogp.me/ns#").setContent(result.getSiteName());
+                                                }
+                                                message.addPayload(rdf);
+                                                waiter.release();
+                                            }
+
+                                            public void onError(String error) {
+                                                waiter.release();
+                                            }
+                                        }, false, null).parse(link.toString());
+                                        waiter.acquire();
                                     }
-                                } catch (final IOException e) {  }
+                                } catch (final IOException | InterruptedException e) {  }
                             }
                         }
                         synchronized (message.getConversation()) {

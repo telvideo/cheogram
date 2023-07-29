@@ -119,6 +119,7 @@ dependencies {
     implementation 'com.caverock:androidsvg-aar:1.4'
     implementation 'org.tomlj:tomlj:1.1.0'
     implementation 'com.tbuonomo:dotsindicator:4.2'
+    implementation 'com.github.Priyansh-Kedia:OpenGraphParser:2.5.5'
     // INSERT
 }
 
