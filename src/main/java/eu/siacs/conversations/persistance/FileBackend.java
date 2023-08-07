@@ -40,6 +40,9 @@ import androidx.core.content.FileProvider;
 import androidx.documentfile.provider.DocumentFile;
 import androidx.exifinterface.media.ExifInterface;
 
+import com.caverock.androidsvg.SVG;
+import com.caverock.androidsvg.SVGParseException;
+
 import com.cheogram.android.BobTransfer;
 
 import com.google.common.base.Strings;
@@ -1219,7 +1222,9 @@ public class FileBackend {
                     return thumbnail;
                 }
                 final String mime = file.getMimeType();
-                if ("application/pdf".equals(mime)) {
+                if ("image/svg+xml".equals(mime)) {
+                    thumbnail = getSVG(file, size);
+                } else if ("application/pdf".equals(mime)) {
                     thumbnail = new BitmapDrawable(res, getPdfDocumentPreview(file, size));
                 } else if (mime.startsWith("video/")) {
                     thumbnail = new BitmapDrawable(res, getVideoPreview(file, size));
@@ -1934,6 +1939,9 @@ public class FileBackend {
                         dimensions = getVideoDimensions(file);
                     } else if (pdf) {
                         dimensions = getPdfDocumentDimensions(file);
+                    } else if ("image/svg+xml".equals(mime)) {
+                        SVG svg = SVG.getFromInputStream(new FileInputStream(file));
+                        dimensions = new Dimensions((int) svg.getDocumentHeight(), (int) svg.getDocumentWidth());
                     } else {
                         dimensions = getImageDimensions(file);
                     }
@@ -1941,7 +1949,7 @@ public class FileBackend {
                         fileParams.width = dimensions.width;
                         fileParams.height = dimensions.height;
                     }
-                } catch (final IOException | NotAVideoFile notAVideoFile) {
+                } catch (final IOException | SVGParseException | NotAVideoFile notAVideoFile) {
                     Log.d(
                             Config.LOGTAG,
                             "file with mime type " + file.getMimeType() + " was not a video file");
@@ -2089,11 +2097,58 @@ public class FileBackend {
                     decoder.setCrop(new Rect(left, top, left + newSize, top + newSize));
                 });
             } catch (final IOException e) {
-                return null;
+                return getSVGSquare(getAvatarUri(avatar), size);
             }
         } else {
             Bitmap bm = cropCenter(getAvatarUri(avatar), size, size);
             return bm == null ? null : new BitmapDrawable(bm);
+        }
+    }
+
+    public Drawable getSVGSquare(Uri uri, int size) {
+        try {
+            SVG svg = SVG.getFromInputStream(mXmppConnectionService.getContentResolver().openInputStream(uri));
+            svg.setDocumentPreserveAspectRatio(com.caverock.androidsvg.PreserveAspectRatio.FULLSCREEN);
+            svg.setDocumentWidth("100%");
+            svg.setDocumentHeight("100%");
+
+            float w = svg.getDocumentWidth();
+            float h = svg.getDocumentHeight();
+            float scale = Math.max((float) size / h, (float) size / w);
+            float outWidth = scale * w;
+            float outHeight = scale * h;
+            float left = (size - outWidth) / 2;
+            float top = (size - outHeight) / 2;
+            RectF target = new RectF(left, top, left + outWidth, top + outHeight);
+
+            Bitmap output = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888);
+            Canvas canvas = new Canvas(output);
+            svg.renderToCanvas(canvas, target);
+
+            return new BitmapDrawable(output);
+        } catch (final IOException | SVGParseException e) {
+            return null;
+        }
+    }
+
+    public Drawable getSVG(File file, int size) {
+        try {
+            SVG svg = SVG.getFromInputStream(new FileInputStream(file));
+            svg.setDocumentPreserveAspectRatio(com.caverock.androidsvg.PreserveAspectRatio.TOP);
+
+            float w = svg.getDocumentWidth();
+            float h = svg.getDocumentHeight();
+            Rect r = rectForSize((int) w, (int) h, size);
+            svg.setDocumentWidth("100%");
+            svg.setDocumentHeight("100%");
+
+            Bitmap output = Bitmap.createBitmap(r.width(), r.height(), Bitmap.Config.ARGB_8888);
+            Canvas canvas = new Canvas(output);
+            svg.renderToCanvas(canvas);
+
+            return new BitmapDrawable(output);
+        } catch (final IOException | SVGParseException e) {
+            return null;
         }
     }
 
