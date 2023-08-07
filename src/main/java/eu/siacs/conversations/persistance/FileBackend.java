@@ -1537,7 +1537,12 @@ public class FileBackend {
                 return new Pair(getPepAvatar(bitmap, Bitmap.CompressFormat.PNG, 100), false);
             }
         } catch (Exception e) {
-            return null;
+            try {
+                final SVG svg = SVG.getFromInputStream(mXmppConnectionService.getContentResolver().openInputStream(uri));
+                return new Pair(getPepAvatar(uri, (int) svg.getDocumentWidth(), (int) svg.getDocumentHeight(), "image/svg+xml"), true);
+            } catch (Exception e2) {
+                return null;
+            }
         }
     }
 
@@ -1758,7 +1763,7 @@ public class FileBackend {
                     decoder.setCrop(new Rect(left, top, left + newSize, top + newSize));
                 });
             } catch (final IOException e) {
-                return null;
+                return getSVGSquare(image, size);
             }
         } else {
             Bitmap bitmap = cropCenterSquare(image, size);
@@ -2125,7 +2130,7 @@ public class FileBackend {
             Canvas canvas = new Canvas(output);
             svg.renderToCanvas(canvas, target);
 
-            return new BitmapDrawable(output);
+            return new SVGDrawable(output);
         } catch (final IOException | SVGParseException e) {
             return null;
         }
@@ -2146,7 +2151,7 @@ public class FileBackend {
             Canvas canvas = new Canvas(output);
             svg.renderToCanvas(canvas);
 
-            return new BitmapDrawable(output);
+            return new SVGDrawable(output);
         } catch (final IOException | SVGParseException e) {
             return null;
         }
@@ -2197,5 +2202,9 @@ public class FileBackend {
         public @StringRes int getResId() {
             return resId;
         }
+    }
+
+    public static class SVGDrawable extends BitmapDrawable {
+        public SVGDrawable(Bitmap bm) { super(bm); }
     }
 }

@@ -29,6 +29,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import eu.siacs.conversations.Config;
 import eu.siacs.conversations.R;
 import eu.siacs.conversations.entities.Account;
+import eu.siacs.conversations.persistance.FileBackend;
 import eu.siacs.conversations.services.XmppConnectionService;
 import eu.siacs.conversations.ui.interfaces.OnAvatarPublication;
 import eu.siacs.conversations.utils.PhoneHelper;
@@ -241,7 +242,7 @@ public class PublishProfilePictureActivity extends XmppActivity implements XmppC
     public void cropUri(final Uri uri) {
         if (Build.VERSION.SDK_INT >= 28) {
             loadImageIntoPreview(uri);
-            if (this.avatar.getDrawable() instanceof AnimatedImageDrawable) {
+            if (this.avatar.getDrawable() instanceof AnimatedImageDrawable || this.avatar.getDrawable() instanceof FileBackend.SVGDrawable) {
                 this.avatarUri = uri;
                 return;
             }
