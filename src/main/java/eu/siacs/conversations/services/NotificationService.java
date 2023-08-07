@@ -886,7 +886,7 @@ public class NotificationService {
     private void setNotificationColor(final Builder mBuilder, Account account) {
         int color;
         if (account != null && mXmppConnectionService.getAccounts().size() > 1) {
-		      color = UIHelper.getColorForName(account.getJid().asBareJid().toString());
+		      color = account.getColor(false);
         } else {
             TypedValue typedValue = new TypedValue();
             mXmppConnectionService.getTheme().resolveAttribute(R.attr.colorPrimary, typedValue, true);
