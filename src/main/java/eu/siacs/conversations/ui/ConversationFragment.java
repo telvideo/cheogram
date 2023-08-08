@@ -1306,6 +1306,7 @@ public class ConversationFragment extends XmppFragment
         });
         binding.requestVoice.setOnClickListener((v) -> {
             activity.xmppConnectionService.requestVoice(conversation.getAccount(), conversation.getJid());
+            binding.requestVoice.setVisibility(View.GONE);
         });
 
         binding.scrollToBottomButton.setOnClickListener(this.mScrollButtonListener);
