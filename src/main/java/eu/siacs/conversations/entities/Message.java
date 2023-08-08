@@ -1083,7 +1083,10 @@ public class Message extends AbstractEntity implements AvatarService.Avatarable 
     }
 
     public List<URI> getLinks() {
-        return MyLinkify.extractLinks(new SpannableStringBuilder(getBody())).stream().map((url) -> {
+        SpannableStringBuilder text = new SpannableStringBuilder(
+            getBody().replaceAll("^>.*", "") // Remove quotes
+        );
+        return MyLinkify.extractLinks(text).stream().map((url) -> {
             try {
                 return new URI(url);
             } catch (final URISyntaxException e) {
