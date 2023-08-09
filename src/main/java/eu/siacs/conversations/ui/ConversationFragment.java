@@ -1427,7 +1427,7 @@ public class ConversationFragment extends XmppFragment
                             emojiPopup.showAsDropDown(binding.textinput);
                         }
                     }
-                }, 300L);
+                }, 400L);
             }
 
             @Override
