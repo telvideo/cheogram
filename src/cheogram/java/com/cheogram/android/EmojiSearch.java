@@ -1,6 +1,6 @@
 package com.cheogram.android;
-import android.util.Log;
 
+import android.app.Activity;
 import android.content.Context;
 import android.graphics.drawable.Drawable;
 import android.text.Spannable;
@@ -35,6 +35,7 @@ import org.json.JSONObject;
 
 import eu.siacs.conversations.R;
 import eu.siacs.conversations.databinding.EmojiSearchRowBinding;
+import eu.siacs.conversations.utils.ReplacingSerialSingleThreadExecutor;
 
 public class EmojiSearch {
 	protected final Set<Emoji> emoji = new TreeSet<>();
@@ -95,7 +96,7 @@ public class EmojiSearch {
 		return lst;
 	}
 
-	public EmojiSearchAdapter makeAdapter(Context context) {
+	public EmojiSearchAdapter makeAdapter(Activity context) {
 		return new EmojiSearchAdapter(context);
 	}
 
@@ -197,7 +198,9 @@ public class EmojiSearch {
 	}
 
 	public class EmojiSearchAdapter extends ArrayAdapter<Emoji> {
-		public EmojiSearchAdapter(Context context) {
+		ReplacingSerialSingleThreadExecutor executor = new ReplacingSerialSingleThreadExecutor("EmojiSearchAdapter");
+
+		public EmojiSearchAdapter(Activity context) {
 			super(context, 0);
 		}
 
@@ -218,9 +221,14 @@ public class EmojiSearch {
 		}
 
 		public void search(final String q) {
-			clear();
-			addAll(find(q));
-			notifyDataSetChanged();
+			executor.execute(() -> {
+				final List<Emoji> results = find(q);
+				((Activity) getContext()).runOnUiThread(() -> {
+					clear();
+					addAll(results);
+					notifyDataSetChanged();
+				});
+			});
 		}
 	}
 }
