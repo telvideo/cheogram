@@ -2,6 +2,8 @@ package com.cheogram.android;
 import android.util.Log;
 
 import android.content.Context;
+import android.graphics.drawable.Drawable;
+import android.text.Spannable;
 import android.text.SpannableStringBuilder;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -48,7 +50,11 @@ public class EmojiSearch {
 		}
 	}
 
-	public List<Emoji> find(final String q) {
+	public synchronized void addEmoji(final Emoji one) {
+		emoji.add(one);
+	}
+
+	public synchronized List<Emoji> find(final String q) {
 		final Set<Emoji> emoticon = new TreeSet<>();
 		for (Emoji e : emoji) {
 			if (e.emoticonMatch(q)) {
@@ -75,6 +81,17 @@ public class EmojiSearch {
 
 		List<Emoji> lst = new ArrayList<>(emoticon);
 		lst.addAll(Lists.transform(result, (r) -> r.getReferent()));
+
+		List<Emoji> scanList = new ArrayList<>(lst);
+		int inserted = 0;
+		for (int i = 0; i < scanList.size(); i++) {
+			for (Emoji e : emoji) {
+				if (e.shortcodeMatch(scanList.get(i).uniquePart())) {
+					inserted ++;
+					lst.add(i + inserted, e);
+				}
+			}
+		}
 		return lst;
 	}
 
@@ -89,6 +106,12 @@ public class EmojiSearch {
 		protected final List<String> emoticon = new ArrayList<>();
 		protected final List<String> shortcodes = new ArrayList<>();
 		protected final String fuzzyFind;
+
+		public Emoji(final String unicode, final int order, final String fuzzyFind) {
+			this.unicode = unicode;
+			this.order = order;
+			this.fuzzyFind = fuzzyFind;
+		}
 
 		public Emoji(JSONObject o) throws JSONException {
 			unicode = o.getString("unicode");
@@ -116,18 +139,60 @@ public class EmojiSearch {
 			return false;
 		}
 
+		public boolean shortcodeMatch(final String q) {
+			for (final String shortcode : shortcodes) {
+				if (shortcode.equals(q)) return true;
+			}
+
+			return false;
+		}
+
 		public SpannableStringBuilder toInsert() {
 			return new SpannableStringBuilder(unicode);
 		}
 
+		public String uniquePart() {
+			return unicode;
+		}
+
+		@Override
 		public int compareTo(Emoji o) {
 			if (equals(o)) return 0;
-			if (order == o.order) return -1;
+			if (order == o.order) return uniquePart().compareTo(o.uniquePart());
 			return order - o.order;
 		}
 
-		public boolean equals(Emoji o) {
-			return toInsert().equals(o.toInsert());
+		@Override
+		public boolean equals(Object o) {
+			if (!(o instanceof Emoji)) return false;
+
+			return uniquePart().equals(((Emoji) o).uniquePart());
+		}
+	}
+
+	public static class CustomEmoji extends Emoji {
+		protected final String source;
+		protected final Drawable icon;
+
+		public CustomEmoji(final String shortcode, final String source, final Drawable icon) {
+			super(null, 10, shortcode);
+			shortcodes.add(shortcode);
+			this.source = source;
+			this.icon = icon;
+			if (icon == null) {
+				throw new IllegalArgumentException("icon must not be null");
+			}
+		}
+
+		public SpannableStringBuilder toInsert() {
+			SpannableStringBuilder builder = new SpannableStringBuilder(":" + shortcodes.get(0) + ":");
+			builder.setSpan(new InlineImageSpan(icon, source), 0, builder.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+			return builder;
+		}
+
+		@Override
+		public String uniquePart() {
+			return source;
 		}
 	}
 
@@ -139,7 +204,15 @@ public class EmojiSearch {
 		@Override
 		public View getView(int position, View view, ViewGroup parent) {
 			EmojiSearchRowBinding binding = DataBindingUtil.inflate(LayoutInflater.from(parent.getContext()), R.layout.emoji_search_row, parent, false);
-			binding.unicode.setText(getItem(position).toInsert());
+			if (getItem(position) instanceof CustomEmoji) {
+				binding.nonunicode.setText(getItem(position).toInsert());
+				binding.nonunicode.setVisibility(View.VISIBLE);
+				binding.unicode.setVisibility(View.GONE);
+			} else {
+				binding.unicode.setText(getItem(position).toInsert());
+				binding.unicode.setVisibility(View.VISIBLE);
+				binding.nonunicode.setVisibility(View.GONE);
+			}
 			binding.shortcode.setText(getItem(position).shortcodes.get(0));
 			return binding.getRoot();
 		}

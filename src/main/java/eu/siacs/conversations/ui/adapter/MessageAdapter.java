@@ -384,7 +384,7 @@ public class MessageAdapter extends ArrayAdapter<Message> {
         viewHolder.messageBody.setTextIsSelectable(false);
     }
 
-    private void displayEmojiMessage(final ViewHolder viewHolder, final String body, final boolean darkBackground) {
+    private void displayEmojiMessage(final ViewHolder viewHolder, final SpannableStringBuilder body, final boolean darkBackground) {
         viewHolder.download_button.setVisibility(View.GONE);
         viewHolder.audioPlayer.setVisibility(View.GONE);
         viewHolder.image.setVisibility(View.GONE);
@@ -394,10 +394,10 @@ public class MessageAdapter extends ArrayAdapter<Message> {
         } else {
             viewHolder.messageBody.setTextAppearance(getContext(), R.style.TextAppearance_Conversations_Body1_Emoji);
         }
-        Spannable span = new SpannableString(body);
-        float size = Emoticons.isEmoji(body) ? 3.0f : 2.0f;
-        span.setSpan(new RelativeSizeSpan(size), 0, body.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-        viewHolder.messageBody.setText(span);
+        ImageSpan[] imageSpans = body.getSpans(0, body.length(), ImageSpan.class);
+        float size = imageSpans.length == 1 || Emoticons.isEmoji(body.toString()) ? 3.0f : 2.0f;
+        body.setSpan(new RelativeSizeSpan(size), 0, body.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+        viewHolder.messageBody.setText(body);
     }
 
     private void applyQuoteSpan(SpannableStringBuilder body, int start, int end, boolean darkBackground) {
@@ -481,6 +481,31 @@ public class MessageAdapter extends ArrayAdapter<Message> {
         return startsWithQuote;
     }
 
+    private SpannableStringBuilder getSpannableBody(final Message message) {
+        Drawable fallbackImg = ResourcesCompat.getDrawable(activity.getResources(), activity.getThemeResource(R.attr.ic_attach_photo, R.drawable.ic_attach_photo), null);
+        return message.getMergedBody((cid) -> {
+            try {
+                DownloadableFile f = activity.xmppConnectionService.getFileForCid(cid);
+                if (f == null || !f.canRead()) {
+                    if (!message.trusted() && !message.getConversation().canInferPresence()) return null;
+
+                    try {
+                        new BobTransfer(BobTransfer.uri(cid), message.getConversation().getAccount(), message.getCounterpart(), activity.xmppConnectionService).start();
+                    } catch (final NoSuchAlgorithmException | URISyntaxException e) { }
+                    return null;
+                }
+
+                Drawable d = activity.xmppConnectionService.getFileBackend().getThumbnail(f, activity.getResources(), (int) (metrics.density * 288), true);
+                if (d == null) {
+                    new ThumbnailTask().execute(f);
+                }
+                return d;
+            } catch (final IOException e) {
+                return fallbackImg;
+            }
+        }, fallbackImg);
+    }
+
     private void displayTextMessage(final ViewHolder viewHolder, final Message message, boolean darkBackground, int type) {
         viewHolder.download_button.setVisibility(View.GONE);
         viewHolder.image.setVisibility(View.GONE);
@@ -499,32 +524,7 @@ public class MessageAdapter extends ArrayAdapter<Message> {
         if (message.getBody() != null && !message.getBody().equals("")) {
             viewHolder.messageBody.setVisibility(View.VISIBLE);
             final String nick = UIHelper.getMessageDisplayName(message);
-            Drawable fallbackImg = ResourcesCompat.getDrawable(activity.getResources(), activity.getThemeResource(R.attr.ic_attach_photo, R.drawable.ic_attach_photo), null);
-            fallbackImg.setBounds(FileBackend.rectForSize(fallbackImg.getIntrinsicWidth(), fallbackImg.getIntrinsicHeight(), (int) (metrics.density * 32)));
-            SpannableStringBuilder body = message.getMergedBody((cid) -> {
-                try {
-                    DownloadableFile f = activity.xmppConnectionService.getFileForCid(cid);
-                    if (f == null || !f.canRead()) {
-                        if (!message.trusted() && !message.getConversation().canInferPresence()) return null;
-
-                        try {
-                            new BobTransfer(BobTransfer.uri(cid), message.getConversation().getAccount(), message.getCounterpart(), activity.xmppConnectionService).start();
-                        } catch (final NoSuchAlgorithmException | URISyntaxException e) { }
-                        return null;
-                    }
-
-                    Drawable d = activity.xmppConnectionService.getFileBackend().getThumbnail(f, activity.getResources(), (int) (metrics.density * 288), true);
-                    if (d == null) {
-                        new ThumbnailTask().execute(f);
-                    } else {
-                        d = d.getConstantState().newDrawable();
-                        d.setBounds(FileBackend.rectForSize(d.getIntrinsicWidth(), d.getIntrinsicHeight(), (int) (metrics.density * 32)));
-                    }
-                    return d;
-                } catch (final IOException e) {
-                    return fallbackImg;
-                }
-            }, fallbackImg);
+            SpannableStringBuilder body = getSpannableBody(message);
             boolean hasMeCommand = message.hasMeCommand();
             if (hasMeCommand) {
                 body = body.replace(0, Message.ME_COMMAND.length(), nick + " ");
@@ -1090,7 +1090,7 @@ public class MessageAdapter extends ArrayAdapter<Message> {
                             darkBackground, type);
                 }
             } else if (message.bodyIsOnlyEmojis() && message.getType() != Message.TYPE_PRIVATE) {
-                displayEmojiMessage(viewHolder, message.getBody().trim(), darkBackground);
+                displayEmojiMessage(viewHolder, getSpannableBody(message), darkBackground);
             } else {
                 displayTextMessage(viewHolder, message, darkBackground, type);
             }
