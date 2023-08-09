@@ -56,6 +56,7 @@ import androidx.core.app.RemoteInput;
 import androidx.core.content.ContextCompat;
 import androidx.core.util.Consumer;
 
+import com.cheogram.android.EmojiSearch;
 import com.cheogram.android.WebxdcUpdate;
 
 import com.google.common.base.Objects;
@@ -515,6 +516,7 @@ public class XmppConnectionService extends Service {
     private LruCache<String, Drawable> mDrawableCache;
     private final BroadcastReceiver mInternalEventReceiver = new InternalEventReceiver();
     private final BroadcastReceiver mInternalScreenEventReceiver = new InternalEventReceiver();
+    private EmojiSearch emojiSearch = null;
 
     private static String generateFetchKey(Account account, final Avatar avatar) {
         return account.getJid().asBareJid() + "_" + avatar.owner + "_" + avatar.sha1sum;
@@ -716,6 +718,10 @@ public class XmppConnectionService extends Service {
                 callback.success(message);
             }
         });
+    }
+
+    public EmojiSearch emojiSearch() {
+        return emojiSearch;
     }
 
     public Conversation find(Bookmark bookmark) {
@@ -1262,6 +1268,7 @@ public class XmppConnectionService extends Service {
     @Override
     public void onCreate() {
         LibIdnXmppStringprep.setup();
+        emojiSearch = new EmojiSearch(this);
         setTheme(ThemeHelper.find(this));
         ThemeHelper.applyCustomColors(this);
         if (Compatibility.runsTwentySix()) {

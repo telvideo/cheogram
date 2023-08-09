@@ -120,6 +120,7 @@ dependencies {
     implementation 'org.tomlj:tomlj:1.1.0'
     implementation 'com.tbuonomo:dotsindicator:4.2'
     implementation 'com.github.Priyansh-Kedia:OpenGraphParser:2.5.5'
+    implementation 'me.xdrop:fuzzywuzzy:1.4.0'
     // INSERT
 }
 
