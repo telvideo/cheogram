@@ -1405,7 +1405,7 @@ public class ConversationFragment extends XmppFragment
             s.replace(lastColon, s.length(), toInsert, 0, toInsert.length());
         });
         setupEmojiSearch();
-        emojiPopup = new PopupWindow(emojiSearchBinding.getRoot(), WindowManager.LayoutParams.MATCH_PARENT, 400);
+        emojiPopup = new PopupWindow(emojiSearchBinding.getRoot(), WindowManager.LayoutParams.MATCH_PARENT, (int) (activity.getResources().getDisplayMetrics().density * 150));
         Handler emojiDebounce = new Handler(Looper.getMainLooper());
         binding.textinput.addTextChangedListener(new TextWatcher() {
             @Override
