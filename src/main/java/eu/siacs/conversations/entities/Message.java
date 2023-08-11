@@ -993,7 +993,7 @@ public class Message extends AbstractEntity implements AvatarService.Avatarable 
                 Html.FROM_HTML_MODE_COMPACT,
                 (source) -> {
                    try {
-                       if (thumbnailer == null) return fallbackImg;
+                       if (thumbnailer == null || source == null) return fallbackImg;
                        Cid cid = BobTransfer.cid(new URI(source));
                        if (cid == null) return fallbackImg;
                        Drawable thumbnail = thumbnailer.getThumbnail(cid);
