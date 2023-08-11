@@ -3720,7 +3720,7 @@ public class ConversationFragment extends XmppFragment
     }
 
     protected void sendMessage(Message message) {
-        activity.xmppConnectionService.sendMessage(message);
+        new Thread(() -> activity.xmppConnectionService.sendMessage(message)).start();
         messageSent();
     }
 
