@@ -1311,7 +1311,13 @@ public class FileBackend {
             if (bitmap != null) return bitmap;
         }
 
-        bitmap = Bitmap.createBitmap(drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight(), Bitmap.Config.ARGB_8888);
+        Rect bounds = drawable.getBounds();
+        int width = drawable.getIntrinsicWidth();
+        if (width < 1) width = bounds == null || bounds.right < 1 ? 256 : bounds.right;
+        int height = drawable.getIntrinsicHeight();
+        if (height < 1) height = bounds == null || bounds.bottom < 1 ? 256 : bounds.bottom;
+
+        bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
         Canvas canvas = new Canvas(bitmap);
         drawable.setBounds(0, 0, canvas.getWidth(), canvas.getHeight());
         drawable.draw(canvas);
