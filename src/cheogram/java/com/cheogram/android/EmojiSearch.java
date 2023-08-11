@@ -18,15 +18,15 @@ import com.google.common.io.CharStreams;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.lang.Comparable;
-import java.util.Arrays;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.PriorityQueue;
 import java.util.Set;
 import java.util.TreeSet;
 
 import me.xdrop.fuzzywuzzy.FuzzySearch;
-import me.xdrop.fuzzywuzzy.algorithms.WeightedRatio;
 import me.xdrop.fuzzywuzzy.model.BoundExtractedResult;
 
 import org.json.JSONArray;
@@ -56,48 +56,51 @@ public class EmojiSearch {
 	}
 
 	public synchronized List<Emoji> find(final String q) {
-		final Set<Emoji> emoticon = new TreeSet<>();
+		final ResultPQ pq = new ResultPQ();
 		for (Emoji e : emoji) {
 			if (e.emoticonMatch(q)) {
-				emoticon.add(e);
+				pq.addTopK(e, 999999, 10);
 			}
+			int shortcodeScore = e.shortcodes.isEmpty() ? 0 : Collections.max(Lists.transform(e.shortcodes, (shortcode) -> FuzzySearch.ratio(q, shortcode)));
+			int tagScore = e.tags.isEmpty() ? 0 : Collections.max(Lists.transform(e.tags, (tag) -> FuzzySearch.ratio(q, tag))) - 2;
+			pq.addTopK(e, Math.max(shortcodeScore, tagScore), 10);
 		}
 
-		WeightedRatio wr = new WeightedRatio();
-		List<BoundExtractedResult<Emoji>> result = FuzzySearch.extractTop(
-			q,
-			emoji,
-			(e) -> e.fuzzyFind,
-			(query, s) -> {
-				int score = 0;
-				String[] kinds = s.split(">");
-				for (int i = 0; i < kinds.length; i++) {
-					int nscore = Collections.max(Lists.transform(Arrays.asList(kinds[i].split("~")), (x) -> wr.apply(query, x))) - (i * 2);
-					if (nscore > score) score = nscore;
-				}
-				return score;
-			},
-			10
-		);
-
-		List<Emoji> lst = new ArrayList<>(emoticon);
-		lst.addAll(Lists.transform(result, (r) -> r.getReferent()));
-
-		List<Emoji> scanList = new ArrayList<>(lst);
-		int inserted = 0;
-		for (int i = 0; i < scanList.size(); i++) {
+		for (BoundExtractedResult<Emoji> r : new ArrayList<>(pq)) {
 			for (Emoji e : emoji) {
-				if (e.shortcodeMatch(scanList.get(i).uniquePart())) {
-					inserted ++;
-					lst.add(i + inserted, e);
+				if (e.shortcodeMatch(r.getReferent().uniquePart())) {
+					// hack see https://stackoverflow.com/questions/76880072/imagespan-with-emojicompat
+					e.shortcodes.clear();
+					e.shortcodes.addAll(r.getReferent().shortcodes);
+
+					pq.addTopK(e, r.getScore() - 1, 10);
 				}
 			}
 		}
-		return lst;
+
+		List<Emoji> result = new ArrayList<>();
+		for (int i = 0; i < 10; i++) {
+			BoundExtractedResult<Emoji> e = pq.poll();
+			if (e != null) result.add(e.getReferent());
+		}
+		Collections.reverse(result);
+		return result;
 	}
 
 	public EmojiSearchAdapter makeAdapter(Activity context) {
 		return new EmojiSearchAdapter(context);
+	}
+
+	public static class ResultPQ extends PriorityQueue<BoundExtractedResult<Emoji>> {
+		public void addTopK(Emoji e, int score, int k) {
+			BoundExtractedResult r = new BoundExtractedResult(e, null, score, 0);
+			if (size() < k) {
+				add(r);
+			} else if (r.compareTo(peek()) > 0) {
+				poll();
+				add(r);
+			}
+		}
 	}
 
 	public static class Emoji implements Comparable<Emoji> {
@@ -106,12 +109,10 @@ public class EmojiSearch {
 		protected final List<String> tags = new ArrayList<>();
 		protected final List<String> emoticon = new ArrayList<>();
 		protected final List<String> shortcodes = new ArrayList<>();
-		protected final String fuzzyFind;
 
-		public Emoji(final String unicode, final int order, final String fuzzyFind) {
+		public Emoji(final String unicode, final int order) {
 			this.unicode = unicode;
 			this.order = order;
-			this.fuzzyFind = fuzzyFind;
 		}
 
 		public Emoji(JSONObject o) throws JSONException {
@@ -129,7 +130,6 @@ public class EmojiSearch {
 			for (int i = 0; i < rawShortcodes.length(); i++) {
 				shortcodes.add(rawShortcodes.getString(i));
 			}
-			fuzzyFind = String.join("~", shortcodes) + ">" + String.join("~", tags);
 		}
 
 		public boolean emoticonMatch(final String q) {
@@ -176,7 +176,7 @@ public class EmojiSearch {
 		protected final Drawable icon;
 
 		public CustomEmoji(final String shortcode, final String source, final Drawable icon, final String tag) {
-			super(null, 10, shortcode + ">" + tag);
+			super(null, 10);
 			shortcodes.add(shortcode);
 			if (tag != null) tags.add(tag);
 			this.source = source;
