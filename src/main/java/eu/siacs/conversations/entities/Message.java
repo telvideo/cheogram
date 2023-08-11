@@ -387,12 +387,18 @@ public class Message extends AbstractEntity implements AvatarService.Avatarable 
     }
 
     public String replyId() {
-        return conversation.getMode() == Conversation.MODE_MULTI ? getServerMsgId() : getRemoteMsgId();
-	 }
+        if (conversation.getMode() == Conversation.MODE_MULTI) return getServerMsgId();
+        final String remote = getRemoteMsgId();
+        if (remote == null && getStatus() > STATUS_RECEIVED) return getUuid();
+        return remote;
+    }
 
     public Message reply() {
         Message m = new Message(conversation, QuoteHelper.quote(MessageUtils.prepareQuote(this)) + "\n", ENCRYPTION_NONE);
         m.setThread(getThread());
+        final String replyId = replyId();
+        if (replyId == null) return m;
+
         m.addPayload(
             new Element("reply", "urn:xmpp:reply:0")
                 .setAttribute("to", getCounterpart())
