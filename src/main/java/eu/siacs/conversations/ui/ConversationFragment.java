@@ -1407,6 +1407,7 @@ public class ConversationFragment extends XmppFragment
         setupEmojiSearch();
         emojiPopup = new PopupWindow(emojiSearchBinding.getRoot(), WindowManager.LayoutParams.MATCH_PARENT, (int) (activity.getResources().getDisplayMetrics().density * 150));
         Handler emojiDebounce = new Handler(Looper.getMainLooper());
+        final Pattern notEmojiSearch = Pattern.compile("[^\\w\\(\\)\\+'\\-]");
         binding.textinput.addTextChangedListener(new TextWatcher() {
             @Override
             public void afterTextChanged(Editable s) {
@@ -1418,7 +1419,7 @@ public class ConversationFragment extends XmppFragment
                         return;
                     }
                     final String q = s.toString().substring(lastColon + 1);
-                    if (q.matches(".*[^\\w\\(\\)\\+'\\-].*")) {
+                    if (notEmojiSearch.matcher(q).find()) {
                         emojiPopup.dismiss();
                     } else {
                         EmojiSearch.EmojiSearchAdapter adapter = ((EmojiSearch.EmojiSearchAdapter) emojiSearchBinding.emoji.getAdapter());
