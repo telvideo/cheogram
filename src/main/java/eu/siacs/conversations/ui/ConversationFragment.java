@@ -101,6 +101,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import eu.siacs.conversations.Config;
@@ -1395,14 +1396,18 @@ public class ConversationFragment extends XmppFragment
             return true;
         });
 
+        final Pattern lastColonPattern = Pattern.compile("(?<!\\w):");
         emojiSearchBinding = DataBindingUtil.inflate(inflater, R.layout.emoji_search, null, false);
         emojiSearchBinding.emoji.setOnItemClickListener((parent, view, position, id) -> {
             EmojiSearch.EmojiSearchAdapter adapter = ((EmojiSearch.EmojiSearchAdapter) emojiSearchBinding.emoji.getAdapter());
             Editable toInsert = adapter.getItem(position).toInsert();
             toInsert.append(" ");
             Editable s = binding.textinput.getText();
-            int lastColon = s.toString().lastIndexOf(':');
-            s.replace(lastColon, s.length(), toInsert, 0, toInsert.length());
+
+            Matcher lastColonMatcher = lastColonPattern.matcher(s);
+            int lastColon = -1;
+            while(lastColonMatcher.find()) lastColon = lastColonMatcher.end();
+            if (lastColon > 0) s.replace(lastColon - 1, s.length(), toInsert, 0, toInsert.length());
         });
         setupEmojiSearch();
         emojiPopup = new PopupWindow(emojiSearchBinding.getRoot(), WindowManager.LayoutParams.MATCH_PARENT, (int) (activity.getResources().getDisplayMetrics().density * 150));
@@ -1413,12 +1418,14 @@ public class ConversationFragment extends XmppFragment
             public void afterTextChanged(Editable s) {
                 emojiDebounce.removeCallbacksAndMessages(null);
                 emojiDebounce.postDelayed(() -> {
-                    int lastColon = s.toString().lastIndexOf(':');
+                    Matcher lastColonMatcher = lastColonPattern.matcher(s);
+                    int lastColon = -1;
+                    while(lastColonMatcher.find()) lastColon = lastColonMatcher.end();
                     if (lastColon < 0) {
                         emojiPopup.dismiss();
                         return;
                     }
-                    final String q = s.toString().substring(lastColon + 1);
+                    final String q = s.toString().substring(lastColon);
                     if (notEmojiSearch.matcher(q).find()) {
                         emojiPopup.dismiss();
                     } else {
