@@ -630,7 +630,10 @@ public class IqGenerator extends AbstractGenerator {
                 data.setAttribute("cid", bobCid);
                 data.setAttribute("type", f.getMimeType());
                 ByteArrayOutputStream b64 = new ByteArrayOutputStream((int) f.getSize() * 2);
-                ByteStreams.copy(new FileInputStream(f), new Base64OutputStream(b64, Base64.NO_WRAP));
+                Base64OutputStream b64wrap = new Base64OutputStream(b64, Base64.NO_WRAP);
+                ByteStreams.copy(new FileInputStream(f), b64wrap);
+                b64wrap.flush();
+                b64wrap.close();
                 data.setContent(b64.toString("utf-8"));
                 return response;
             }
