@@ -175,9 +175,10 @@ public class EmojiSearch {
 		protected final String source;
 		protected final Drawable icon;
 
-		public CustomEmoji(final String shortcode, final String source, final Drawable icon) {
-			super(null, 10, shortcode);
+		public CustomEmoji(final String shortcode, final String source, final Drawable icon, final String tag) {
+			super(null, 10, shortcode + ">" + tag);
 			shortcodes.add(shortcode);
+			if (tag != null) tags.add(tag);
 			this.source = source;
 			this.icon = icon;
 			if (icon == null) {
