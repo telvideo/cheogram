@@ -644,7 +644,7 @@ public class ContactDetailsActivity extends OmemoActivity implements OnAccountUp
                 final Uri uri = items.getUri(pos);
                 if (uri == null) return;
 
-                if (uri.getScheme().equals("xmpp")) {
+                if ("xmpp".equals(uri.getScheme())) {
                     switchToConversation(xmppConnectionService.findOrCreateConversation(account, Jid.of(uri.getSchemeSpecificPart()), false, true));
                 } else {
                     Intent intent = new Intent(Intent.ACTION_VIEW, uri);
