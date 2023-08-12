@@ -35,6 +35,7 @@ import android.text.SpannableStringBuilder;
 import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.text.style.ImageSpan;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
@@ -1331,6 +1332,9 @@ public class ConversationFragment extends XmppFragment
 
         binding.textinput.setOnEditorActionListener(mEditorActionListener);
         binding.textinput.setRichContentListener(new String[] {"image/*"}, mEditorContentListener);
+        DisplayMetrics displayMetrics = new DisplayMetrics();
+        activity.getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
+        if (displayMetrics.heightPixels > 0) binding.textinput.setMaxHeight(displayMetrics.heightPixels / 4);
 
         binding.textSendButton.setOnClickListener(this.mSendButtonListener);
         binding.contextPreviewCancel.setOnClickListener((v) -> {
@@ -1410,7 +1414,8 @@ public class ConversationFragment extends XmppFragment
             if (lastColon > 0) s.replace(lastColon - 1, s.length(), toInsert, 0, toInsert.length());
         });
         setupEmojiSearch();
-        emojiPopup = new PopupWindow(emojiSearchBinding.getRoot(), WindowManager.LayoutParams.MATCH_PARENT, (int) (activity.getResources().getDisplayMetrics().density * 150));
+        int popupHeight = (int) displayMetrics.density * 200;
+        emojiPopup = new PopupWindow(emojiSearchBinding.getRoot(), WindowManager.LayoutParams.MATCH_PARENT, Math.min(popupHeight, displayMetrics.heightPixels > 0 ? displayMetrics.heightPixels / 5 : popupHeight));
         Handler emojiDebounce = new Handler(Looper.getMainLooper());
         final Pattern notEmojiSearch = Pattern.compile("[^\\w\\(\\)\\+'\\-]");
         binding.textinput.addTextChangedListener(new TextWatcher() {
