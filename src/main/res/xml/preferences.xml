@@ -356,6 +356,11 @@
             </PreferenceCategory>
             <PreferenceCategory android:title="@string/pref_input_options">
                 <CheckBoxPreference
+                    android:defaultValue="@bool/follow_thread_in_channel"
+                    android:key="follow_thread_in_channel"
+                    android:summary="@string/pref_follow_thread_in_channel_summary"
+                    android:title="@string/pref_follow_thread_in_channel" />
+                <CheckBoxPreference
                     android:defaultValue="@bool/start_searching"
                     android:key="start_searching"
                     android:summary="@string/pref_start_search_summary"

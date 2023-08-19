@@ -2502,6 +2502,10 @@ public class ConversationFragment extends XmppFragment
             if (message == null) {
                 newThread();
             } else {
+                if (conversation.getMode() == Conversation.MODE_MULTI) {
+                    if (!activity.xmppConnectionService.getBooleanPreference("follow_thread_in_channel", R.bool.follow_thread_in_channel)) return;
+                }
+
                 setThread(message.getThread());
             }
         }
