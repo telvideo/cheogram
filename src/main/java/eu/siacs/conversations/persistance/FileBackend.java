@@ -215,7 +215,8 @@ public class FileBackend {
     public static boolean isPathBlacklisted(String path) {
         final String androidDataPath =
                 Environment.getExternalStorageDirectory().getAbsolutePath() + "/Android/data/";
-        return path.startsWith(androidDataPath);
+        final File f = new File(path);
+        return path.startsWith(androidDataPath) || !f.canRead();
     }
 
     private static Paint createAntiAliasingPaint() {
