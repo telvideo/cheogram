@@ -635,9 +635,10 @@ public class Conversation extends AbstractEntity implements Blockable, Comparabl
         Set<String> extraIds = new HashSet<>();
         for (ListIterator<Message> iterator = messages.listIterator(messages.size()); iterator.hasPrevious(); ) {
             Message m = iterator.previous();
-            if (m.wasMergedIntoPrevious() || (getLockThread() && !extraIds.contains(m.replyId()) && (m.getThread() == null || !m.getThread().getContent().equals(getThread().getContent())))) {
+            final Element mthread = m.getThread();
+            if (m.wasMergedIntoPrevious() || (getLockThread() && !extraIds.contains(m.replyId()) && (mthread == null || !mthread.getContent().equals(getThread() == null ? "" : getThread().getContent())))) {
                 iterator.remove();
-            } else if (getLockThread() && m.getThread() != null) {
+            } else if (getLockThread() && mthread != null) {
                 Element reply = m.getReply();
                 if (reply != null && reply.getAttribute("id") != null) extraIds.add(reply.getAttribute("id"));
                 Element reactions = m.getReactions();
