@@ -4517,10 +4517,10 @@ public class XmppConnectionService extends Service {
     }
 
     public boolean markMessage(final Conversation conversation, final String uuid, final int status, final String serverMessageId) {
-        return markMessage(conversation, uuid, status, serverMessageId, null);
+        return markMessage(conversation, uuid, status, serverMessageId, null, null);
     }
 
-    public boolean markMessage(final Conversation conversation, final String uuid, final int status, final String serverMessageId, final LocalizedContent body) {
+    public boolean markMessage(final Conversation conversation, final String uuid, final int status, final String serverMessageId, final LocalizedContent body, final Element html) {
         if (uuid == null) {
             return false;
         } else {
@@ -4533,6 +4533,7 @@ public class XmppConnectionService extends Service {
                         && message.isTypeText()
                         && isBodyModified(message, body)) {
                     message.setBody(body.content);
+                    message.setHtml(html);
                     if (body.count > 1) {
                         message.setBodyLanguage(body.language);
                     }

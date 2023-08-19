@@ -563,6 +563,12 @@ public class Message extends AbstractEntity implements AvatarService.Avatarable 
         }
     }
 
+    public synchronized void setHtml(Element html) {
+        final Element oldHtml = getHtml(true);
+        if (oldHtml != null) this.payloads.remove(oldHtml);
+        if (html != null) addPayload(html);
+    }
+
     public synchronized void setBody(String body) {
         this.body = body;
         this.isGeoUri = null;
