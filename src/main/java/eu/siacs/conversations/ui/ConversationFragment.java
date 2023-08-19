@@ -1500,8 +1500,21 @@ public class ConversationFragment extends XmppFragment
         if (message.isPrivateMessage()) privateMessageWith(message.getCounterpart());
         setThread(message.getThread());
         conversation.setUserSelectedThread(true);
-        if (message.getThread() == null && conversation.getMode() == Conversation.MODE_MULTI) newThread();
+        if (!forkNullThread(message)) newThread();
         setupReply(message);
+    }
+
+    private boolean forkNullThread(Message message) {
+        if (message.getThread() != null || conversation.getMode() != Conversation.MODE_MULTI) return true;
+        for (final Message m : conversation.findReplies(message.getServerMsgId())) {
+            final Element thread = m.getThread();
+            if (thread != null) {
+                setThread(thread);
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private void setupReply(Message message) {
@@ -4188,8 +4201,12 @@ public class ConversationFragment extends XmppFragment
 
     @Override
     public void onContactPictureClicked(Message message) {
-        if (message.isPrivateMessage()) privateMessageWith(message.getCounterpart());
         setThread(message.getThread());
+        if (message.isPrivateMessage()) {
+            privateMessageWith(message.getCounterpart());
+            return;
+        }
+        forkNullThread(message);
         conversation.setUserSelectedThread(true);
 
         final boolean received = message.getStatus() <= Message.STATUS_RECEIVED;
