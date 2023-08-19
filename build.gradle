@@ -146,6 +146,13 @@ android {
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    splits {
+        abi {
+            universalApk true
+            enable true
+        }
+    }
+
     configurations {
         implementation.exclude group: 'org.jetbrains' , module:'annotations'
     }

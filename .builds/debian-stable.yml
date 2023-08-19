@@ -43,6 +43,6 @@ tasks:
     echo keystore.alias=cheogram >> signing.properties
     ./gradlew bundleCheogramPlaystoreRelease
 - assets: |
-    mv cheogram-android/build/outputs/apk/cheogramFree/debug/*.apk cheogram.apk
-    mv cheogram-android/build/outputs/apk/cheogramPlaystore/debug/*.apk cheogram_google_play.apk
+    mv cheogram-android/build/outputs/apk/cheogramFree/debug/*universal*.apk cheogram.apk
+    mv cheogram-android/build/outputs/apk/cheogramPlaystore/debug/*universal*.apk cheogram_google_play.apk
     mv cheogram-android/build/outputs/bundle/cheogramPlaystoreRelease/*.aab cheogram_google_play.aab
