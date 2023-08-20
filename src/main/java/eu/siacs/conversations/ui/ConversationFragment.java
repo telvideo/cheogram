@@ -1338,6 +1338,7 @@ public class ConversationFragment extends XmppFragment
 
         binding.textSendButton.setOnClickListener(this.mSendButtonListener);
         binding.contextPreviewCancel.setOnClickListener((v) -> {
+            setThread(null);
             conversation.setUserSelectedThread(false);
             setupReply(null);
         });
@@ -1379,6 +1380,7 @@ public class ConversationFragment extends XmppFragment
             conversation.setLockThread(false);
             backPressedLeaveSingleThread.setEnabled(false);
             if (wasLocked) {
+                setThread(null);
                 conversation.setUserSelectedThread(false);
                 refresh();
                 updateThreadFromLastMessage();
@@ -1899,6 +1901,7 @@ public class ConversationFragment extends XmppFragment
         conversation.setLockThread(false);
         backPressedLeaveSingleThread.setEnabled(false);
         if (wasLocked) {
+            setThread(null);
             conversation.setUserSelectedThread(false);
             refresh();
             updateThreadFromLastMessage();
@@ -3440,6 +3443,7 @@ public class ConversationFragment extends XmppFragment
     }
 
     protected void messageSent() {
+        setThread(null);
         conversation.setUserSelectedThread(false);
         mSendingPgpMessage.set(false);
         this.binding.textinput.setText("");
