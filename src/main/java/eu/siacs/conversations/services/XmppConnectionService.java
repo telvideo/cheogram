@@ -1994,6 +1994,25 @@ public class XmppConnectionService extends Service {
         sendMessage(message, true, false, delay);
     }
 
+    public Pair<Account,Account> onboardingIncomplete() {
+        if (getAccounts().size() != 2) return null;
+        Account onboarding = null;
+        Account newAccount = null;
+        for (final Account account : getAccounts()) {
+            if (account.getJid().getDomain().equals(Config.ONBOARDING_DOMAIN)) {
+                onboarding = account;
+            } else {
+                newAccount = account;
+            }
+        }
+
+        if (onboarding != null && newAccount != null) {
+            return new Pair<>(onboarding, newAccount);
+        }
+
+        return null;
+    }
+
     public boolean isOnboarding() {
         return getAccounts().size() == 1 && getAccounts().get(0).getJid().getDomain().equals(Config.ONBOARDING_DOMAIN);
     }

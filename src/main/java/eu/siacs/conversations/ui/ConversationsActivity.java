@@ -48,6 +48,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.util.Log;
+import android.util.Pair;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -62,6 +63,7 @@ import androidx.core.content.ContextCompat;
 import androidx.databinding.DataBindingUtil;
 
 import com.cheogram.android.DownloadDefaultStickers;
+import com.cheogram.android.FinishOnboarding;
 
 import com.google.common.collect.ImmutableList;
 
@@ -223,6 +225,10 @@ public class ConversationsActivity extends XmppActivity implements OnConversatio
     }
 
     private void showDialogsIfMainIsOverview() {
+        Pair<Account, Account> incomplete = null;
+        if (xmppConnectionService != null && (incomplete = xmppConnectionService.onboardingIncomplete()) != null) {
+            FinishOnboarding.finish(xmppConnectionService, this, incomplete.first, incomplete.second);
+        }
         if (xmppConnectionService == null || xmppConnectionService.isOnboarding()) {
             return;
         }
