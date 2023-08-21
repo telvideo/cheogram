@@ -572,7 +572,9 @@ public final class MimeUtils {
         }
         // sometimes this works (as with the commit content api)
         if (mimeType == null) {
-            mimeType = uri.getQueryParameter("mimeType");
+            try {
+                mimeType = uri.getQueryParameter("mimeType");
+            } catch (final Throwable throwable) { }
         }
         return mimeType;
     }
