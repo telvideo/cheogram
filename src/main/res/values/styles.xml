@@ -123,6 +123,10 @@
         <item name="android:textStyle">bold</item>
     </style>
 
+    <style name="TextAppearance.Conversations.Caption.Bold" parent="TextAppearance.Conversations.Caption">
+        <item name="android:textStyle">bold</item>
+    </style>
+
     <style name="TextAppearance.Conversations.Caption.Warning" parent="TextAppearance.Conversations.Caption">
         <item name="android:textColor">@color/red_a700</item>
     </style>

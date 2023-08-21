@@ -923,7 +923,7 @@ public class MessageAdapter extends ArrayAdapter<Message> {
             }
         }
 
-        boolean darkBackground = type == RECEIVED && (!isInValidSession || mUseGreenBackground) || activity.isDarkTheme();
+        boolean darkBackground = (type == RECEIVED && mUseGreenBackground) || activity.isDarkTheme();
 
         if (type == DATE_SEPARATOR) {
             if (UIHelper.today(message.getTimeSent())) {
@@ -1116,13 +1116,13 @@ public class MessageAdapter extends ArrayAdapter<Message> {
                 viewHolder.commands_list.setOnItemClickListener(null);
             }
 
+            if (!mUseGreenBackground) {
+                viewHolder.message_box.getBackground().setColorFilter(
+                    StyledAttributes.getColor(activity, mUseGreenBackground ? R.attr.message_bubble_received_bg : R.attr.color_background_primary),
+                    PorterDuff.Mode.SRC_ATOP
+                );
+            }
             if (isInValidSession) {
-                if (!mUseGreenBackground) {
-                    viewHolder.message_box.getBackground().setColorFilter(
-                        StyledAttributes.getColor(activity, mUseGreenBackground ? R.attr.message_bubble_received_bg : R.attr.color_background_primary),
-                        PorterDuff.Mode.SRC_ATOP
-                    );
-                }
                 viewHolder.encryption.setVisibility(View.GONE);
             } else {
                 viewHolder.encryption.setVisibility(View.VISIBLE);
@@ -1141,6 +1141,14 @@ public class MessageAdapter extends ArrayAdapter<Message> {
                 viewHolder.subject.setVisibility(View.VISIBLE);
                 viewHolder.subject.setText(message.getSubject());
             }
+        }
+
+        if (darkBackground) {
+            if (viewHolder.subject != null) viewHolder.subject.setTextAppearance(getContext(), R.style.TextAppearance_Conversations_Caption_OnDark_Bold);
+            if (viewHolder.encryption != null) viewHolder.encryption.setTextAppearance(getContext(), R.style.TextAppearance_Conversations_Caption_OnDark_Bold);
+        } else {
+            if (viewHolder.subject != null) viewHolder.subject.setTextAppearance(getContext(), R.style.TextAppearance_Conversations_Caption_Bold);
+            if (viewHolder.encryption != null) viewHolder.encryption.setTextAppearance(getContext(), R.style.TextAppearance_Conversations_Caption_Bold);
         }
 
         displayStatus(viewHolder, message, type, darkBackground);
