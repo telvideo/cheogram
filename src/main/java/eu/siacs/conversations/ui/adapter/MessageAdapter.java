@@ -689,7 +689,7 @@ public class MessageAdapter extends ArrayAdapter<Message> {
 
     private void displayWebxdcMessage(ViewHolder viewHolder, final Message message, final boolean darkBackground, final int type) {
         Cid webxdcCid = message.getFileParams().getCids().get(0);
-        WebxdcPage webxdc = new WebxdcPage(webxdcCid, message, activity.xmppConnectionService);
+        WebxdcPage webxdc = new WebxdcPage(activity, webxdcCid, message, activity.xmppConnectionService);
         displayTextMessage(viewHolder, message, darkBackground, type);
         viewHolder.image.setVisibility(View.GONE);
         viewHolder.audioPlayer.setVisibility(View.GONE);

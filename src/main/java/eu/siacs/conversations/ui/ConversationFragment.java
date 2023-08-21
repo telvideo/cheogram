@@ -3213,7 +3213,7 @@ public class ConversationFragment extends XmppFragment
             if (message == null) return;
 
             Cid webxdcCid = message.getFileParams().getCids().get(0);
-            WebxdcPage webxdc = new WebxdcPage(webxdcCid, message, activity.xmppConnectionService);
+            WebxdcPage webxdc = new WebxdcPage(activity, webxdcCid, message, activity.xmppConnectionService);
             Conversation conversation = (Conversation) message.getConversation();
             if (!conversation.switchToSession("webxdc\0" + message.getUuid())) {
                 conversation.startWebxdc(webxdc);
