@@ -57,5 +57,61 @@ window.webxdc = (() => {
 			element.click();
 			return promise;
 		},
+
+		sendToChat: async (message) => {
+			const data = {};
+			if (!message.file && !message.text) {
+				return Promise.reject("sendToChat() error: file or text missing");
+			}
+			const blobToBase64 = (file) => {
+				const dataStart = ";base64,";
+				return new Promise((resolve, reject) => {
+					const reader = new FileReader();
+					reader.readAsDataURL(file);
+					reader.onload = () => {
+						let data = reader.result;
+						resolve(data.slice(data.indexOf(dataStart) + dataStart.length));
+					};
+					reader.onerror = () => reject(reader.error);
+				});
+			};
+			if (message.text) {
+				data.text = message.text;
+			}
+
+			if (message.file) {
+				let base64content;
+				if (!message.file.name) {
+					return Promise.reject("sendToChat() error: file name missing");
+				}
+				if (
+					Object.keys(message.file).filter((key) =>
+						["blob", "base64", "plainText"].includes(key)
+					).length > 1
+				) {
+					return Promise.reject("sendToChat() error: only one of blob, base64 or plainText allowed");
+				}
+
+				if (message.file.blob instanceof Blob) {
+					base64content = await blobToBase64(message.file.blob);
+				} else if (typeof message.file.base64 === "string") {
+					base64content = message.file.base64;
+				} else if (typeof message.file.plainText === "string") {
+					base64content = await blobToBase64(
+						new Blob([message.file.plainText])
+					);
+				} else {
+					return Promise.reject("sendToChat() error: none of blob, base64 or plainText set correctly");
+				}
+				data.base64 = base64content;
+				data.name = message.file.name;
+			}
+
+			const errorMsg = InternalJSApi.sendToChat(JSON.stringify(data));
+			if (errorMsg) {
+				return Promise.reject(errorMsg);
+			}
+		},
+
 	};
 })();

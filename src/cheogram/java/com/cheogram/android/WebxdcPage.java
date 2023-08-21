@@ -421,5 +421,36 @@ public class WebxdcPage implements ConversationPage {
 			builder.append("]");
 			return builder.toString();
 		}
+
+		@JavascriptInterface
+		public String sendToChat(String message) {
+			try {
+				JSONObject jsonObject = new JSONObject(message);
+
+				String text = null;
+				String data = null;
+				String name = null;
+				if (jsonObject.has("base64")) {
+						data = jsonObject.getString("base64");
+				}
+				if (jsonObject.has("name")) {
+						name = jsonObject.getString("name");
+				}
+				if (jsonObject.has("text")) {
+						text = jsonObject.getString("text");
+				}
+
+				Intent intent = new Intent(xmppConnectionService, ConversationsActivity.class);
+				intent.setAction(ConversationsActivity.ACTION_VIEW_CONVERSATION);
+				intent.putExtra(ConversationsActivity.EXTRA_CONVERSATION, ((Conversation) source.getConversation()).getUuid());
+				if (text != null) intent.putExtra(Intent.EXTRA_TEXT, text);
+				if (data != null) intent.putExtra(Intent.EXTRA_STREAM, Uri.parse("data:application/octet-stream;base64," + data));
+				activity.get().startActivity(intent);
+				return null;
+			} catch (Exception e) {
+				e.printStackTrace();
+				return e.toString();
+			}
+		}
 	}
 }
