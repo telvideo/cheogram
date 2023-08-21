@@ -1359,6 +1359,7 @@ public class ConversationFragment extends XmppFragment
         binding.messagesView.setAdapter(messageListAdapter);
 
         registerForContextMenu(binding.messagesView);
+        registerForContextMenu(binding.textSendButton);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             this.binding.textinput.setCustomInsertionActionModeCallback(
@@ -1552,6 +1553,28 @@ public class ConversationFragment extends XmppFragment
     public void onCreateContextMenu(ContextMenu menu, View v, ContextMenuInfo menuInfo) {
         // This should cancel any remaining click events that would otherwise trigger links
         v.dispatchTouchEvent(MotionEvent.obtain(0, 0, MotionEvent.ACTION_CANCEL, 0f, 0f, 0));
+
+        if (v == binding.textSendButton) {
+            super.onCreateContextMenu(menu, v, menuInfo);
+            try {
+                java.lang.reflect.Method m = menu.getClass().getSuperclass().getDeclaredMethod("setOptionalIconsVisible", Boolean.TYPE);
+                m.setAccessible(true);
+                m.invoke(menu, true);
+            } catch (Exception e) {
+                Log.w("WUT", "" + e);
+                e.printStackTrace();
+            }
+            Menu tmpMenu = new PopupMenu(activity, null).getMenu();
+            activity.getMenuInflater().inflate(R.menu.fragment_conversation, tmpMenu);
+            MenuItem attachMenu = tmpMenu.findItem(R.id.action_attach_file);
+            for (int i = 0; i < attachMenu.getSubMenu().size(); i++) {
+                MenuItem item = attachMenu.getSubMenu().getItem(i);
+                MenuItem newItem = menu.add(item.getGroupId(), item.getItemId(), item.getOrder(), item.getTitle());
+                newItem.setIcon(item.getIcon());
+            }
+            return;
+        }
+
         synchronized (this.messageList) {
             super.onCreateContextMenu(menu, v, menuInfo);
             AdapterView.AdapterContextMenuInfo acmi = (AdapterContextMenuInfo) menuInfo;
@@ -1814,7 +1837,7 @@ public class ConversationFragment extends XmppFragment
                 refresh();
                 return true;
             default:
-                return super.onContextItemSelected(item);
+                return onOptionsItemSelected(item);
         }
     }
 
