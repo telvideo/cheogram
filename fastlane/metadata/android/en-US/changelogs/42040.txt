@@ -1,0 +1,8 @@
+* Per-account colours when multiple accounts
+* Per-account quiet hours (applies to messages and calls both)
+* Send and decode thumbhash thumbnails for media messages
+* Tap on phone numbers and urls in Command UI as links
+* Set display name to that of contact (not self) for incoming call
+* Fix conversation style notifications from group chats
+* Require device unlock rather than account password to change password
+* Reply to a PM should also be a PM
