@@ -116,22 +116,24 @@ public class ConferenceDetailsActivity extends XmppActivity implements OnConvers
             String[] choices = {
                     getString(R.string.notify_on_all_messages),
                     getString(R.string.notify_only_when_highlighted),
+                    getString(R.string.notify_only_when_highlighted_or_replied),
                     getString(R.string.notify_never)
             };
             final AtomicInteger choice;
             if (mConversation.getLongAttribute(Conversation.ATTRIBUTE_MUTED_TILL, 0) == Long.MAX_VALUE) {
-                choice = new AtomicInteger(2);
+                choice = new AtomicInteger(3);
             } else {
-                choice = new AtomicInteger(mConversation.alwaysNotify() ? 0 : 1);
+                choice = new AtomicInteger(mConversation.alwaysNotify() ? 0 : (mConversation.notifyReplies() ? 2 : 1));
             }
             builder.setSingleChoiceItems(choices, choice.get(), (dialog, which) -> choice.set(which));
             builder.setNegativeButton(R.string.cancel, null);
             builder.setPositiveButton(R.string.ok, (dialog, which) -> {
-                if (choice.get() == 2) {
+                if (choice.get() == 3) {
                     mConversation.setMutedTill(Long.MAX_VALUE);
                 } else {
                     mConversation.setMutedTill(0);
                     mConversation.setAttribute(Conversation.ATTRIBUTE_ALWAYS_NOTIFY, String.valueOf(choice.get() == 0));
+                    mConversation.setAttribute(Conversation.ATTRIBUTE_NOTIFY_REPLIES, String.valueOf(choice.get() == 2));
                 }
                 xmppConnectionService.updateConversation(mConversation);
                 updateView();
@@ -606,6 +608,9 @@ public class ConferenceDetailsActivity extends XmppActivity implements OnConvers
         } else if (mConversation.alwaysNotify()) {
             this.binding.notificationStatusText.setText(R.string.notify_on_all_messages);
             this.binding.notificationStatusButton.setImageResource(ic_notifications);
+        } else if (mConversation.notifyReplies()) {
+            this.binding.notificationStatusText.setText(R.string.notify_only_when_highlighted_or_replied);
+            this.binding.notificationStatusButton.setImageResource(ic_notifications_none);
         } else {
             this.binding.notificationStatusText.setText(R.string.notify_only_when_highlighted);
             this.binding.notificationStatusButton.setImageResource(ic_notifications_none);

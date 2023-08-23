@@ -160,6 +160,7 @@ public class Conversation extends AbstractEntity implements Blockable, Comparabl
 
     public static final String ATTRIBUTE_MUTED_TILL = "muted_till";
     public static final String ATTRIBUTE_ALWAYS_NOTIFY = "always_notify";
+    public static final String ATTRIBUTE_NOTIFY_REPLIES = "notify_replies";
     public static final String ATTRIBUTE_LAST_CLEAR_HISTORY = "last_clear_history";
     public static final String ATTRIBUTE_FORMERLY_PRIVATE_NON_ANONYMOUS = "formerly_private_non_anonymous";
     public static final String ATTRIBUTE_PINNED_ON_TOP = "pinned_on_top";
@@ -1079,6 +1080,10 @@ public class Conversation extends AbstractEntity implements Blockable, Comparabl
 
     public boolean alwaysNotify() {
         return mode == MODE_SINGLE || getBooleanAttribute(ATTRIBUTE_ALWAYS_NOTIFY, Config.ALWAYS_NOTIFY_BY_DEFAULT || isPrivateAndNonAnonymous());
+    }
+
+    public boolean notifyReplies() {
+        return alwaysNotify() || getBooleanAttribute(ATTRIBUTE_NOTIFY_REPLIES, false);
     }
 
     public boolean setAttribute(String key, boolean value) {
