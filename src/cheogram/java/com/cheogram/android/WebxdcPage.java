@@ -18,13 +18,15 @@ import android.view.LayoutInflater;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ArrayAdapter;
 import android.webkit.JavascriptInterface;
+import android.webkit.ValueCallback;
+import android.webkit.WebChromeClient;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebResourceResponse;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.widget.ArrayAdapter;
 import android.widget.TextView;
 
 import androidx.annotation.RequiresApi;
@@ -64,6 +66,7 @@ import eu.siacs.conversations.entities.Message;
 import eu.siacs.conversations.persistance.FileBackend;
 import eu.siacs.conversations.services.XmppConnectionService;
 import eu.siacs.conversations.ui.ConversationsActivity;
+import eu.siacs.conversations.ui.XmppActivity;
 import eu.siacs.conversations.utils.MimeUtils;
 import eu.siacs.conversations.utils.UIHelper;
 import eu.siacs.conversations.xml.Element;
@@ -77,10 +80,12 @@ public class WebxdcPage implements ConversationPage {
 	protected String baseUrl;
 	protected Message source;
 	protected WebxdcUpdate lastUpdate = null;
+	protected WeakReference<XmppActivity> activity;
 
-	public WebxdcPage(Cid cid, Message source, XmppConnectionService xmppConnectionService) {
+	public WebxdcPage(final XmppActivity activity, Cid cid, Message source, XmppConnectionService xmppConnectionService) {
 		this.xmppConnectionService = xmppConnectionService;
 		this.source = source;
+		this.activity = new WeakReference(activity);
 		File f = xmppConnectionService.getFileForCid(cid);
 		try {
 			if (f != null) zip = new ZipFile(xmppConnectionService.getFileForCid(cid));
@@ -252,6 +257,20 @@ public class WebxdcPage implements ConversationPage {
 			}
 		});
 
+		binding.webview.setWebChromeClient(new WebChromeClient() {
+			@Override
+			public boolean onShowFileChooser(WebView webView, ValueCallback<Uri[]> filePathCallback, WebChromeClient.FileChooserParams fileChooserParams) {
+				// WebxdcActivity.this.filePathCallback = filePathCallback;
+				Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+				intent.addCategory(Intent.CATEGORY_OPENABLE);
+				intent.setType("*/*");
+				intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, fileChooserParams.getMode() == FileChooserParams.MODE_OPEN_MULTIPLE);
+				final XmppActivity activity = WebxdcPage.this.activity.get();
+				if (activity != null) activity.startActivityWithCallback(Intent.createChooser(intent, "Choose a file"), filePathCallback);
+				return activity != null;
+			}
+		});
+
 		// disable "safe browsing" as this has privacy issues,
 		// eg. at least false positives are sent to the "Safe Browsing Lookup API".
 		// as all URLs opened in the WebView are local anyway,
@@ -401,6 +420,37 @@ public class WebxdcPage implements ConversationPage {
 			}
 			builder.append("]");
 			return builder.toString();
+		}
+
+		@JavascriptInterface
+		public String sendToChat(String message) {
+			try {
+				JSONObject jsonObject = new JSONObject(message);
+
+				String text = null;
+				String data = null;
+				String name = null;
+				if (jsonObject.has("base64")) {
+						data = jsonObject.getString("base64");
+				}
+				if (jsonObject.has("name")) {
+						name = jsonObject.getString("name");
+				}
+				if (jsonObject.has("text")) {
+						text = jsonObject.getString("text");
+				}
+
+				Intent intent = new Intent(xmppConnectionService, ConversationsActivity.class);
+				intent.setAction(ConversationsActivity.ACTION_VIEW_CONVERSATION);
+				intent.putExtra(ConversationsActivity.EXTRA_CONVERSATION, ((Conversation) source.getConversation()).getUuid());
+				if (text != null) intent.putExtra(Intent.EXTRA_TEXT, text);
+				if (data != null) intent.putExtra(Intent.EXTRA_STREAM, Uri.parse("data:application/octet-stream;base64," + data));
+				activity.get().startActivity(intent);
+				return null;
+			} catch (Exception e) {
+				e.printStackTrace();
+				return e.toString();
+			}
 		}
 	}
 }
