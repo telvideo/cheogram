@@ -137,7 +137,7 @@ public abstract class AbstractParser {
 		return parseItem(conference,item,null,null,new Element("hats", "urn:xmpp:hats:0"));
 	}
 
-	public static MucOptions.User parseItem(Conversation conference, Element item, Jid fullJid, final String nickname, final Element hatsEl) {
+	public static MucOptions.User parseItem(Conversation conference, Element item, Jid fullJid, final String nicknameIn, final Element hatsEl) {
 		final String local = conference.getJid().getLocal();
 		final String domain = conference.getJid().getDomain().toEscapedString();
 		String affiliation = item.getAttribute("affiliation");
@@ -152,9 +152,11 @@ public abstract class AbstractParser {
 		}
 		Jid realJid = item.getAttributeAsJid("jid");
 		if (fullJid != null) nick = fullJid.getResource();
+		String nickname = null;
+		if (nick != null && nicknameIn != null) nickname = nick.equals(nicknameIn) ? nick : null;
 		try {
-			if (nickname != null && nick != null && !nick.equals(nickname) && gnu.inet.encoding.Punycode.decode(nick).equals(nickname)) {
-				nick = nickname;
+			if (nickname == null && nicknameIn != null && nick != null && gnu.inet.encoding.Punycode.decode(nick).equals(nicknameIn)) {
+				nickname = nicknameIn;
 			}
 		} catch (final gnu.inet.encoding.PunycodeException | ArrayIndexOutOfBoundsException e) { }
 		Set<MucOptions.Hat> hats = new TreeSet<>();
@@ -163,7 +165,7 @@ public abstract class AbstractParser {
 				hats.add(new MucOptions.Hat(hat));
 			}
 		}
-		MucOptions.User user = new MucOptions.User(conference.getMucOptions(), fullJid, nick, hats);
+		MucOptions.User user = new MucOptions.User(conference.getMucOptions(), fullJid, nickname, hatsEl == null ? null : hats);
 		if (InvalidJid.isValid(realJid)) {
 			user.setRealJid(realJid);
 		}

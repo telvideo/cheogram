@@ -283,6 +283,9 @@ public class MucOptions {
         synchronized (this.users) {
             if (old != null) {
                 users.remove(old);
+                if (old.nick != null && user.nick == null && old.getName().equals(user.getName())) user.nick = old.nick;
+                if (old.hats != null && user.hats == null) user.hats = old.hats;
+                if (old.avatar != null && user.avatar == null) user.avatar = old.avatar;
             }
             boolean fullJidIsSelf = isOnline && user.getFullJid() != null && user.getFullJid().equals(self.getFullJid());
             if ((!membersOnly() || user.getAffiliation().ranks(Affiliation.MEMBER))
@@ -821,17 +824,17 @@ public class MucOptions {
         private Affiliation affiliation = Affiliation.NONE;
         private Jid realJid;
         private Jid fullJid;
-        private String nick;
+        protected String nick;
         private long pgpKeyId = 0;
-        private Avatar avatar;
+        protected Avatar avatar;
         private final MucOptions options;
         private ChatState chatState = Config.DEFAULT_CHAT_STATE;
-        private final Set<Hat> hats;
+        protected Set<Hat> hats;
 
         public User(MucOptions options, Jid fullJid, final String nick, final Set<Hat> hats) {
             this.options = options;
             this.fullJid = fullJid;
-            this.nick = nick == null ? getName() : nick;
+            this.nick = nick;
             this.hats = hats;
         }
 
@@ -840,7 +843,7 @@ public class MucOptions {
         }
 
         public String getNick() {
-            return nick;
+            return nick == null ? getName() : nick;
         }
 
         public Role getRole() {
@@ -860,7 +863,7 @@ public class MucOptions {
         }
 
         public Set<Hat> getHats() {
-            return this.hats;
+            return this.hats == null ? new HashSet<>() : hats;
         }
 
         public long getPgpKeyId() {
