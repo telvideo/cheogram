@@ -1035,7 +1035,7 @@ public class MessageAdapter extends ArrayAdapter<Message> {
         final Transferable transferable = message.getTransferable();
         final boolean unInitiatedButKnownSize = MessageUtils.unInitiatedButKnownSize(message);
         if (unInitiatedButKnownSize || message.isDeleted() || (transferable != null && transferable.getStatus() != Transferable.STATUS_UPLOADING)) {
-            if (unInitiatedButKnownSize || transferable != null && transferable.getStatus() == Transferable.STATUS_OFFER) {
+            if (unInitiatedButKnownSize || message.isDeleted() || transferable != null && transferable.getStatus() == Transferable.STATUS_OFFER) {
                 displayDownloadableMessage(viewHolder, message, activity.getString(R.string.download_x_file, UIHelper.getFileDescriptionString(activity, message)), darkBackground, type);
             } else if (transferable != null && transferable.getStatus() == Transferable.STATUS_OFFER_CHECK_FILESIZE) {
                 displayDownloadableMessage(viewHolder, message, activity.getString(R.string.check_x_filesize, UIHelper.getFileDescriptionString(activity, message)), darkBackground, type);
