@@ -905,6 +905,7 @@ public class ConversationFragment extends XmppFragment
         if (body == null) body = new SpannableStringBuilder("");
         final Conversation conversation = this.conversation;
         if (body.length() == 0 || conversation == null) {
+            binding.textSendButton.showContextMenu(0, 0);
             return;
         }
         if (trustKeysIfNeeded(conversation, REQUEST_TRUST_KEYS_TEXT)) {
