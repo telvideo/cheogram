@@ -602,6 +602,7 @@ public class Conversation extends AbstractEntity implements Blockable, Comparabl
 
     public Set<Message> findReplies(String id) {
         Set<Message> replies = new HashSet<>();
+        if (id == null) return replies;
 
         synchronized (this.messages) {
             for (int i = this.messages.size() - 1; i >= 0; --i) {
