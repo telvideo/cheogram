@@ -586,6 +586,20 @@ public class Conversation extends AbstractEntity implements Blockable, Comparabl
         return null;
     }
 
+    public List<Message> findMessagesBy(MucOptions.User user) {
+        List<Message> result = new ArrayList<>();
+        synchronized (this.messages) {
+            for (Message m : this.messages) {
+                // occupant id?
+                final Jid trueCp = m.getTrueCounterpart();
+                if (m.getCounterpart().equals(user.getFullJid()) || (trueCp != null && trueCp.equals(user.getRealJid()))) {
+                    result.add(m);
+                }
+            }
+        }
+        return result;
+    }
+
     public Set<String> findReactionsTo(String id, Jid reactor) {
         Set<String> reactionEmoji = new HashSet<>();
         Message reactM = findMessageReactingTo(id, reactor);

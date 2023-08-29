@@ -12,14 +12,17 @@ import android.view.MenuItem;
 import android.view.View;
 
 import androidx.appcompat.app.AlertDialog;
+import androidx.databinding.DataBindingUtil;
 
 import java.util.ArrayList;
 
 import eu.siacs.conversations.Config;
 import eu.siacs.conversations.R;
+import eu.siacs.conversations.databinding.DialogQuickeditBinding;
 import eu.siacs.conversations.entities.Account;
 import eu.siacs.conversations.entities.Contact;
 import eu.siacs.conversations.entities.Conversation;
+import eu.siacs.conversations.entities.Message;
 import eu.siacs.conversations.entities.MucOptions;
 import eu.siacs.conversations.entities.MucOptions.User;
 import eu.siacs.conversations.services.XmppConnectionService;
@@ -160,6 +163,23 @@ public final class MucDetailsContextMenuHelper {
         return onContextItemSelected(item, user, activity, null);
     }
 
+    public static void maybeModerateRecent(XmppActivity activity, Conversation conversation, User user) {
+        if (!conversation.getMucOptions().getSelf().getRole().ranks(MucOptions.Role.MODERATOR) || !conversation.getMucOptions().hasFeature("urn:xmpp:message-moderate:0")) return;
+
+        DialogQuickeditBinding binding = DataBindingUtil.inflate(activity.getLayoutInflater(), R.layout.dialog_quickedit, null, false);
+        binding.inputEditText.setText("Spam");
+        new AlertDialog.Builder(activity)
+            .setTitle(R.string.moderate_recent)
+            .setMessage("Do you want to moderate all recent messages from this user?")
+            .setView(binding.getRoot())
+            .setPositiveButton(R.string.yes, (dialog, whichButton) -> {
+                for (Message m : conversation.findMessagesBy(user)) {
+                    activity.xmppConnectionService.moderateMessage(conversation.getAccount(), m, binding.inputEditText.getText().toString());
+                }
+            })
+            .setNegativeButton(R.string.no, null).show();
+    }
+
     public static boolean onContextItemSelected(MenuItem item, User user, XmppActivity activity, final String fingerprint) {
         final Conversation conversation = user.getConversation();
         final XmppConnectionService.OnAffiliationChanged onAffiliationChanged = activity instanceof XmppConnectionService.OnAffiliationChanged ? (XmppConnectionService.OnAffiliationChanged) activity : null;
@@ -207,6 +227,7 @@ public final class MucDetailsContextMenuHelper {
                                 if (user.getRole() != MucOptions.Role.NONE) {
                                     activity.xmppConnectionService.changeRoleInConference(conversation, user.getName(), MucOptions.Role.NONE);
                                 }
+                                maybeModerateRecent(activity, conversation, user);
                                 break;
                             case ACTION_GRANT_MEMBERSHIP:
                             case ACTION_REMOVE_ADMIN:
