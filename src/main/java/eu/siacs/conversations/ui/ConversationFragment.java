@@ -4174,6 +4174,7 @@ public class ConversationFragment extends XmppFragment
                         userByRealJid != null
                                 ? userByRealJid
                                 : conversation.getMucOptions().findUserByFullJid(cp);
+                if (user == null) return;
                 popupMenu.inflate(R.menu.muc_details_context);
                 final Menu menu = popupMenu.getMenu();
                 MucDetailsContextMenuHelper.configureMucDetailsContextMenu(
