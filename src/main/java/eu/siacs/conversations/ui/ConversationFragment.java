@@ -1815,7 +1815,6 @@ public class ConversationFragment extends XmppFragment
                         File f = activity.xmppConnectionService.getFileBackend().getFile(selectedMessage);
                         activity.xmppConnectionService.blockMedia(f);
                         activity.xmppConnectionService.getFileBackend().deleteFile(selectedMessage);
-                        selectedMessage.setDeleted(true);
                         activity.xmppConnectionService.evictPreview(f);
                         activity.xmppConnectionService.updateMessage(selectedMessage, false);
                         activity.onConversationsListItemUpdated();
@@ -2679,7 +2678,6 @@ public class ConversationFragment extends XmppFragment
                         }
                     }
                     if (activity.xmppConnectionService.getFileBackend().deleteFile(message)) {
-                        message.setDeleted(true);
                         activity.xmppConnectionService.evictPreview(activity.xmppConnectionService.getFileBackend().getFile(message));
                         activity.xmppConnectionService.updateMessage(message, false);
                         activity.onConversationsListItemUpdated();

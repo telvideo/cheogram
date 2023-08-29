@@ -532,6 +532,7 @@ public class FileBackend {
     public boolean deleteFile(Message message) {
         File file = getFile(message);
         if (file.delete()) {
+            message.setDeleted(true);
             updateMediaScanner(file);
             return true;
         } else {

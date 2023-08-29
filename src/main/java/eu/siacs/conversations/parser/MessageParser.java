@@ -783,7 +783,6 @@ public class MessageParser extends AbstractParser implements OnMessagePacketRece
                                 }
                                 replacedMessage.clearPayloads();
                                 replacedMessage.setFileParams(null);
-                                replacedMessage.setDeleted(true);
                                 replacedMessage.addPayload(replaceElement);
                             }
                             if (replacedMessage.getServerMsgId() == null || message.getServerMsgId() != null) {
