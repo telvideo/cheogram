@@ -1,5 +1,4 @@
 package eu.siacs.conversations.entities;
-import android.util.Log;
 
 import android.content.ContentValues;
 import android.database.Cursor;
