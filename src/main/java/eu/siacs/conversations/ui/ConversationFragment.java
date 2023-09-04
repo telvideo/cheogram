@@ -920,8 +920,8 @@ public class ConversationFragment extends XmppFragment
                 while (body.length() > 0 && Character.isWhitespace(body.charAt(0))) body.delete(0, 1);
             }
             if (conversation.getReplyTo() != null) {
-                if (Emoticons.isEmoji(body.toString())) {
-                    message = conversation.getReplyTo().react(body.toString());
+                if (Emoticons.isEmoji(body.toString().replaceAll("\\s", ""))) {
+                    message = conversation.getReplyTo().react(body.toString().replaceAll("\\s", ""));
                 } else {
                     message = conversation.getReplyTo().reply();
                     message.appendBody(body);
