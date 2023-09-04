@@ -1756,7 +1756,7 @@ public class XmppConnectionService extends Service {
                             if ("https".equals(link.getScheme())) {
                                 try {
                                     HttpUrl url = HttpUrl.parse(link.toString());
-                                    OkHttpClient http = getHttpConnectionManager().buildHttpClient(url, account, false);
+                                    OkHttpClient http = getHttpConnectionManager().buildHttpClient(url, account, 5, false);
                                     okhttp3.Response response = http.newCall(new okhttp3.Request.Builder().url(url).head().build()).execute();
                                     final String mimeType = response.header("Content-Type") == null ? "" : response.header("Content-Type");
                                     final boolean image = mimeType.startsWith("image/");
