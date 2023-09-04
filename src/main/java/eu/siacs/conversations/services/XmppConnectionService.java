@@ -1792,7 +1792,7 @@ public class XmppConnectionService extends Service {
                                             }
                                         });
                                         return;
-                                    } else if (response.isSuccessful() && html) {
+                                    } else if (response.isSuccessful() && html && !useTorToConnect()) {
                                         Semaphore waiter = new Semaphore(0);
                                         new OpenGraphParser(new OpenGraphCallback() {
                                             @Override
