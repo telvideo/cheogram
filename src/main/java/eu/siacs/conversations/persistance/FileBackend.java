@@ -2159,7 +2159,8 @@ public class FileBackend {
             svg.renderToCanvas(canvas, target);
 
             return new SVGDrawable(output);
-        } catch (final IOException | SVGParseException e) {
+        } catch (final IOException | SVGParseException | IllegalArgumentException e) {
+            Log.w(Config.LOGTAG, "Could not parse SVG: " + e);
             return null;
         }
     }
@@ -2180,7 +2181,8 @@ public class FileBackend {
             svg.renderToCanvas(canvas);
 
             return new SVGDrawable(output);
-        } catch (final IOException | SVGParseException e) {
+        } catch (final IOException | SVGParseException | IllegalArgumentException e) {
+            Log.w(Config.LOGTAG, "Could not parse SVG: " + e);
             return null;
         }
     }
