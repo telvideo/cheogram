@@ -879,6 +879,7 @@
     <string name="no_users_hint_channel">This public channel has no participants. Invite your contacts or use the share button to distribute its Jabber ID.</string>
     <string name="no_users_hint_group_chat">This private group chat has no participants.</string>
     <string name="manage_permission">Manage privileges</string>
+    <string name="manage_permission_with_nick">Manage privileges for %s</string>
     <string name="search_participants">Search participants</string>
     <string name="file_too_large">File too large</string>
     <string name="attach">Attach</string>

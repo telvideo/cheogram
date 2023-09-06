@@ -31,6 +31,7 @@ import eu.siacs.conversations.ui.ConversationFragment;
 import eu.siacs.conversations.ui.ConversationsActivity;
 import eu.siacs.conversations.ui.MucUsersActivity;
 import eu.siacs.conversations.ui.XmppActivity;
+import eu.siacs.conversations.utils.UIHelper;
 import eu.siacs.conversations.xmpp.Jid;
 
 
@@ -216,7 +217,7 @@ public final class MucDetailsContextMenuHelper {
                 Pair<CharSequence[], Integer[]> choices = getPermissionsChoices(activity, conversation, user);
                 int[] selected = new int[] { -1 };
                 new AlertDialog.Builder(activity)
-                    .setTitle(R.string.manage_permission)
+                    .setTitle(activity.getString(R.string.manage_permission_with_nick, UIHelper.getDisplayName(user)))
                     .setSingleChoiceItems(choices.first, -1, (dialog, whichItem) -> {
                         selected[0] = whichItem;
                     })
