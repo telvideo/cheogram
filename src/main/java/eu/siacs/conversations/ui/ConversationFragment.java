@@ -1358,6 +1358,7 @@ public class ConversationFragment extends XmppFragment
         messageListAdapter.setOnContactPictureClicked(this);
         messageListAdapter.setOnContactPictureLongClicked(this);
         messageListAdapter.setOnInlineImageLongClicked(this);
+        messageListAdapter.setConversationFragment(this);
         binding.messagesView.setAdapter(messageListAdapter);
 
         registerForContextMenu(binding.messagesView);
@@ -1483,11 +1484,12 @@ public class ConversationFragment extends XmppFragment
         messageListAdapter.setOnContactPictureClicked(null);
         messageListAdapter.setOnContactPictureLongClicked(null);
         messageListAdapter.setOnInlineImageLongClicked(null);
+        messageListAdapter.setConversationFragment(null);
         binding.conversationViewPager.setAdapter(null);
         if (conversation != null) conversation.setupViewPager(null, null, false, null);
     }
 
-    private void quoteText(String text) {
+    public void quoteText(String text) {
         if (binding.textinput.isEnabled()) {
             binding.textinput.insertAsQuote(text);
             binding.textinput.requestFocus();

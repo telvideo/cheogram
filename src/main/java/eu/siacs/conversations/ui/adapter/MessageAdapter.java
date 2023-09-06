@@ -43,6 +43,7 @@ import androidx.core.content.ContextCompat;
 import androidx.core.content.res.ResourcesCompat;
 
 import com.cheogram.android.BobTransfer;
+import com.cheogram.android.MessageTextActionModeCallback;
 import com.cheogram.android.SwipeDetector;
 import com.cheogram.android.WebxdcPage;
 import com.cheogram.android.WebxdcUpdate;
@@ -117,6 +118,7 @@ public class MessageAdapter extends ArrayAdapter<Message> {
     private final AudioPlayer audioPlayer;
     private List<String> highlightedTerm = null;
     private final DisplayMetrics metrics;
+    private ConversationFragment mConversationFragment = null;
     private OnContactPictureClicked mOnContactPictureClickedListener;
     private OnContactPictureClicked mOnMessageBoxClickedListener;
     private OnContactPictureClicked mOnMessageBoxSwipedListener;
@@ -167,6 +169,14 @@ public class MessageAdapter extends ArrayAdapter<Message> {
 
     public void setOnMessageBoxSwiped(OnContactPictureClicked listener) {
         this.mOnMessageBoxSwipedListener = listener;
+    }
+
+    public void setConversationFragment(ConversationFragment frag) {
+        mConversationFragment = frag;
+    }
+
+    public void quoteText(String text) {
+        if (mConversationFragment != null) mConversationFragment.quoteText(text);
     }
 
     public Activity getActivity() {
@@ -908,6 +918,10 @@ public class MessageAdapter extends ArrayAdapter<Message> {
             if (viewHolder == null) {
                 return view;
             }
+        }
+
+        if (viewHolder.messageBody != null) {
+            viewHolder.messageBody.setCustomSelectionActionModeCallback(new MessageTextActionModeCallback(this, viewHolder.messageBody));
         }
 
         if (viewHolder.thread_identicon != null) {
