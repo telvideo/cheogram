@@ -9,7 +9,11 @@ import android.preference.PreferenceManager;
 import android.text.Editable;
 import android.text.InputFilter;
 import android.text.InputType;
+import android.text.Spannable;
 import android.text.Spanned;
+import android.text.SpannableStringBuilder;
+import android.text.TextWatcher;
+import android.text.style.ImageSpan;
 import android.util.AttributeSet;
 import android.view.KeyEvent;
 import android.view.inputmethod.EditorInfo;
@@ -20,6 +24,8 @@ import androidx.core.view.inputmethod.EditorInfoCompat;
 import androidx.core.view.inputmethod.InputConnectionCompat;
 import androidx.core.view.inputmethod.InputContentInfoCompat;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -49,10 +55,12 @@ public class EditMessage extends AppCompatEditText {
 
     public EditMessage(Context context, AttributeSet attrs) {
         super(context, attrs);
+        addTextChangedListener(new Watcher());
     }
 
     public EditMessage(Context context) {
         super(context);
+        addTextChangedListener(new Watcher());
     }
 
     @Override
@@ -78,7 +86,6 @@ public class EditMessage extends AppCompatEditText {
     public int getAutofillType() {
         return AUTOFILL_TYPE_NONE;
     }
-
 
     @Override
     public void onTextChanged(CharSequence text, int start, int lengthBefore, int lengthAfter) {
@@ -205,5 +212,48 @@ public class EditMessage extends AppCompatEditText {
         void onTextChanged();
 
         boolean onTabPressed(boolean repeated);
+    }
+
+    public static class Watcher implements TextWatcher {
+        protected List<ImageSpan> spansToRemove = new ArrayList<>();
+
+        @Override
+        public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                if (s instanceof SpannableStringBuilder && ((SpannableStringBuilder) s).getTextWatcherDepth() > 1) return;
+            }
+
+            if (!(s instanceof Spannable)) return;
+            Spannable text = (Spannable) s;
+
+            if (count > 0 && text != null) { // something deleted
+                int end = start + count;
+                ImageSpan[] spans = text.getSpans(start, end, ImageSpan.class);
+                synchronized(spansToRemove) {
+                    for (ImageSpan span : spans) {
+                        if (text.getSpanStart(span) < end && start < text.getSpanEnd(span)) {
+                            spansToRemove.add(span);
+                        }
+                    }
+                }
+            }
+        }
+
+        @Override
+        public void afterTextChanged(Editable s) {
+            List<ImageSpan> toRemove;
+            synchronized(spansToRemove) {
+                toRemove = new ArrayList<>(spansToRemove);
+                spansToRemove.clear();
+            }
+            for (ImageSpan span : toRemove) {
+                if (s.getSpanStart(span) > -1 && s.getSpanEnd(span) > -1) {
+                    s.removeSpan(span);
+                }
+            }
+        }
+
+        @Override
+        public void onTextChanged(CharSequence s, int start, int count, int after) { }
     }
 }
