@@ -918,13 +918,14 @@ public class Message extends AbstractEntity implements AvatarService.Avatarable 
                         message.getEncryption() != Message.ENCRYPTION_PGP &&
                         message.getEncryption() != Message.ENCRYPTION_DECRYPTION_FAILED &&
                         this.getType() == message.getType() &&
-                        this.getSubject() != null &&
                         isStatusMergeable(this.getStatus(), message.getStatus()) &&
                         isEncryptionMergeable(this.getEncryption(),message.getEncryption()) &&
                         this.getCounterpart() != null &&
                         this.getCounterpart().equals(message.getCounterpart()) &&
                         this.edited() == message.edited() &&
                         (message.getTimeSent() - this.getTimeSent()) <= (Config.MESSAGE_MERGE_WINDOW * 1000) &&
+                        (this.getSubject() == null || this.getSubject().equals(message.getSubject())) &&
+                        (this.getThread() == null || (message.getThread() != null && this.getThread().toString().equals(message.getThread().toString()))) &&
                         this.getBody().length() + message.getBody().length() <= Config.MAX_DISPLAY_MESSAGE_CHARS &&
                         !message.isGeoUri() &&
                         !this.isGeoUri() &&
