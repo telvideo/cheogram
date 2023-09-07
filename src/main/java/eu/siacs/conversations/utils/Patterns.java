@@ -337,9 +337,10 @@ public class Patterns {
             + "\\,\\;\\?\\&\\=]|(?:\\%[a-fA-F0-9]{2})){1,64}(?:\\:(?:[a-zA-Z0-9\\$\\-\\_"
             + "\\.\\+\\!\\*\\'\\(\\)\\,\\;\\?\\&\\=]|(?:\\%[a-fA-F0-9]{2})){1,25})?\\@";
     private static final String PORT_NUMBER = "\\:\\d{1,5}";
-    private static final String PATH_AND_QUERY = "\\/(?:(?:[" + LABEL_CHAR
-            + "\\;\\/\\?\\:\\@\\&\\=\\#\\~"  // plus optional query params
-            + "\\-\\.\\+\\!\\*\\'\\(\\)\\,\\_\\$])|(?:\\%[a-fA-F0-9]{2}))*";
+    private static final String PATH_CHAR = "(?:(?:[" + LABEL_CHAR
+            + "\\;\\/\\?\\:\\@\\&\\=\\#\\~"
+            + "\\-\\.\\+\\!\\*\\'\\(\\)\\,\\_\\$])|(?:\\%[a-fA-F0-9]{2}))";
+    private static final String PATH_AND_QUERY = "\\/" + PATH_CHAR + "*";
     /**
      *  Regular expression pattern to match most part of RFC 3987
      *  Internationalized URLs, aka IRIs.
@@ -464,6 +465,13 @@ public class Patterns {
             "(\\+[0-9]+[\\- \\.]*)?"        // +<digits><sdd>*
                     + "(\\([0-9]+\\)[\\- \\.]*)?"   // (<digits>)<sdd>*
                     + "([0-9][0-9\\- \\.]+[0-9])"); // <digit><digit|sdd>+<digit>
+
+    public static final Pattern TEL_URI =
+        Pattern.compile("tel:(?:(?:\\+\\d+)|(?:\\d+;phone-context=" + PATH_CHAR + "+))");
+
+    public static final Pattern SMS_URI =
+        Pattern.compile("sms:(?:(?:\\+\\d+)|(?:\\d+;phone-context=" + PATH_CHAR + "+))");
+
     /**
      *  Convenience method to take all of the non-null matching groups in a
      *  regex Matcher and return them as a concatenated string.
