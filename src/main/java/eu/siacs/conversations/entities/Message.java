@@ -927,6 +927,7 @@ public class Message extends AbstractEntity implements AvatarService.Avatarable 
                         (this.getSubject() == null || this.getSubject().equals(message.getSubject())) &&
                         (this.getThread() == null || (message.getThread() != null && this.getThread().toString().equals(message.getThread().toString()))) &&
                         this.getBody().length() + message.getBody().length() <= Config.MAX_DISPLAY_MESSAGE_CHARS &&
+                        this.getModerated() == null &&
                         !message.isGeoUri() &&
                         !this.isGeoUri() &&
                         !message.isOOb() &&
@@ -1044,7 +1045,7 @@ public class Message extends AbstractEntity implements AvatarService.Avatarable 
         Message current = this;
         while (current.mergeable(current.next())) {
             current = current.next();
-            if (current == null) {
+            if (current == null || current.getModerated() != null) {
                 break;
             }
             body.append("\n\n");
@@ -1087,6 +1088,7 @@ public class Message extends AbstractEntity implements AvatarService.Avatarable 
 
     public boolean wasMergedIntoPrevious() {
         Message prev = this.prev();
+        if (getModerated() != null && prev.getModerated() != null) return true;
         return prev != null && prev.mergeable(this);
     }
 
