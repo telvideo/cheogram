@@ -1767,7 +1767,11 @@ public class ConversationFragment extends XmppFragment
                 return true;
             case R.id.moderate_message:
                 activity.quickEdit("Spam", (reason) -> {
-                    activity.xmppConnectionService.moderateMessage(conversation.getAccount(), selectedMessage, reason);
+                    Message message = selectedMessage;
+                    do {
+                        activity.xmppConnectionService.moderateMessage(conversation.getAccount(), message, reason);
+                        message = message.mergeable(message.next()) ? message.next() : null;
+                    } while (message != null);
                     return null;
                 }, R.string.moderate_reason, false, false, true);
                 return true;
