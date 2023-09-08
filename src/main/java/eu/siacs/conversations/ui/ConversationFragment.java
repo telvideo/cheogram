@@ -1572,7 +1572,6 @@ public class ConversationFragment extends XmppFragment
                 m.setAccessible(true);
                 m.invoke(menu, true);
             } catch (Exception e) {
-                Log.w("WUT", "" + e);
                 e.printStackTrace();
             }
             Menu tmpMenu = new PopupMenu(activity, null).getMenu();
