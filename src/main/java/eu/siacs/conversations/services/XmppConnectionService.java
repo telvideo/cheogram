@@ -66,6 +66,7 @@ import com.google.common.base.Optional;
 import com.google.common.base.Strings;
 import com.google.common.io.Files;
 
+import com.kedia.ogparser.JsoupProxy;
 import com.kedia.ogparser.OpenGraphCallback;
 import com.kedia.ogparser.OpenGraphParser;
 import com.kedia.ogparser.OpenGraphResult;
@@ -1792,9 +1793,9 @@ public class XmppConnectionService extends Service {
                                             }
                                         });
                                         return;
-                                    } else if (response.isSuccessful() && html && !useTorToConnect()) {
+                                    } else if (response.isSuccessful() && html) {
                                         Semaphore waiter = new Semaphore(0);
-                                        new OpenGraphParser(new OpenGraphCallback() {
+                                        OpenGraphParser.Builder openGraphBuilder = new OpenGraphParser.Builder(new OpenGraphCallback() {
                                             @Override
                                             public void onPostResponse(OpenGraphResult result) {
                                                 Element rdf = new Element("Description", "http://www.w3.org/1999/02/22-rdf-syntax-ns#");
@@ -1825,7 +1826,14 @@ public class XmppConnectionService extends Service {
                                             public void onError(String error) {
                                                 waiter.release();
                                             }
-                                        }, false, null).parse(link.toString());
+                                        })
+                                            .showNullOnEmpty(false)
+                                            .maxBodySize(4000)
+                                            .timeout(5000);
+                                        if (useTorToConnect()) {
+                                            openGraphBuilder = openGraphBuilder.jsoupProxy(new JsoupProxy("127.0.0.1", 8118));
+                                        }
+                                        openGraphBuilder.build().parse(link.toString());
                                         waiter.acquire();
                                     }
                                 } catch (final IOException | InterruptedException e) {  }
