@@ -47,6 +47,7 @@
     <bool name="prevent_screenshots">false</bool>
     <bool name="dialler_integration_incoming">true</bool>
     <bool name="follow_thread_in_channel">false</bool>
+    <bool name="message_autocomplete">true</bool>
     <string name="default_push_server">up.conversations.im</string>
     <string name="default_push_account">none</string>
 </resources>

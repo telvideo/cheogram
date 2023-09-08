@@ -380,6 +380,11 @@
                     android:key="scroll_to_bottom"
                     android:summary="@string/pref_scroll_to_bottom_summary"
                     android:title="@string/pref_scroll_to_bottom" />
+                <CheckBoxPreference
+                    android:defaultValue="@bool/message_autocomplete"
+                    android:key="message_autocomplete"
+                    android:summary="@string/pref_message_autocomplete_summary"
+                    android:title="@string/pref_message_autocomplete" />
             </PreferenceCategory>
             <PreferenceCategory android:key="expert_media" android:title="Media">
                 <Preference

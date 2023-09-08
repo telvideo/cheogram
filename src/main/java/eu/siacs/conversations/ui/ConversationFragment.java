@@ -1460,8 +1460,15 @@ public class ConversationFragment extends XmppFragment
     }
 
     protected void setupEmojiSearch() {
-        if (emojiSearch == null && activity != null && activity.xmppConnectionService != null) {
-            emojiSearch = activity.xmppConnectionService.emojiSearch();
+        if (activity != null && activity.xmppConnectionService != null) {
+            if (!activity.xmppConnectionService.getBooleanPreference("message_autocomplete", R.bool.message_autocomplete)) {
+                emojiSearch = null;
+                if (emojiSearchBinding != null) emojiSearchBinding.emoji.setAdapter(null);
+                return;
+            }
+            if (emojiSearch == null) {
+                emojiSearch = activity.xmppConnectionService.emojiSearch();
+            }
         }
         if (emojiSearch == null || emojiSearchBinding == null) return;
 
