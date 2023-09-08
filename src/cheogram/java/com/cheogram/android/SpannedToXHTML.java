@@ -30,13 +30,23 @@ import eu.siacs.conversations.xml.Element;
 import eu.siacs.conversations.xml.TextNode;
 
 public class SpannedToXHTML {
-	public static Element append(Element out, Spanned text) {
+	private static SpannableStringBuilder cleanSpans(Spanned text) {
 		SpannableStringBuilder newText = new SpannableStringBuilder(text);
 		SuggestionSpan[] spans = newText.getSpans(0, newText.length(), SuggestionSpan.class);
 		for (SuggestionSpan span : spans) {
 			newText.removeSpan(span);
 		}
 		BaseInputConnection.removeComposingSpans(newText);
+		return newText;
+	}
+
+	public static boolean isPlainText(Spanned text) {
+		SpannableStringBuilder cleanText = cleanSpans(text);
+		return cleanText.nextSpanTransition(0, cleanText.length(), CharacterStyle.class) >= cleanText.length();
+	}
+
+	public static Element append(Element out, Spanned text) {
+		SpannableStringBuilder newText = cleanSpans(text);
 		withinParagraph(out, newText, 0, newText.length());
 		return out;
 	}

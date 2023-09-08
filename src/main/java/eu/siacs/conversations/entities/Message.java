@@ -554,11 +554,12 @@ public class Message extends AbstractEntity implements AvatarService.Avatarable 
 
     public synchronized void setBody(Spanned span) {
         setBody(span.toString());
-        final Element body = getOrMakeHtml();
-        body.clearChildren();
-        SpannedToXHTML.append(body, span);
-        if (body.getContent().equals(span.toString())) {
+        if (SpannedToXHTML.isPlainText(span)) {
             this.payloads.remove(getHtml(true));
+        } else {
+            final Element body = getOrMakeHtml();
+            body.clearChildren();
+            SpannedToXHTML.append(body, span);
         }
     }
 
@@ -576,10 +577,9 @@ public class Message extends AbstractEntity implements AvatarService.Avatarable 
     }
 
     public synchronized void appendBody(Spanned append) {
-        final Element body = getOrMakeHtml();
-        SpannedToXHTML.append(body, append);
-        if (body.getContent().equals(this.body + append.toString())) {
-            this.payloads.remove(getHtml());
+        if (!SpannedToXHTML.isPlainText(append) || getHtml() != null) {
+            final Element body = getOrMakeHtml();
+            SpannedToXHTML.append(body, append);
         }
         appendBody(append.toString());
     }
