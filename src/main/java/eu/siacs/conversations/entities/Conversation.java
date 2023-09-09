@@ -1778,7 +1778,7 @@ public class Conversation extends AbstractEntity implements Blockable, Comparabl
 
                 @Override
                 public void bind(Item note) {
-                    binding.message.setText(note.el.getContent());
+                    binding.message.setText(note != null && note.el != null ? note.el.getContent() : "");
 
                     String type = note.el.getAttribute("type");
                     if (type != null && type.equals("error")) {
@@ -2627,6 +2627,7 @@ public class Conversation extends AbstractEntity implements Blockable, Comparabl
             protected CommandPageBinding mBinding = null;
             protected IqPacket response = null;
             protected Element responseElement = null;
+            protected boolean expectingRemoval = false;
             protected List<Field> reported = null;
             protected SparseArray<Item> items = new SparseArray<>();
             protected XmppConnectionService xmppConnectionService;
@@ -2758,6 +2759,7 @@ public class Conversation extends AbstractEntity implements Blockable, Comparabl
                                     break;
                                 }
                                 if (scheme.equals("xmpp")) {
+                                    expectingRemoval = true;
                                     final Intent intent = new Intent(getView().getContext(), UriHandlerActivity.class);
                                     intent.setAction(Intent.ACTION_VIEW);
                                     intent.setData(Uri.parse(url));
@@ -2790,6 +2792,7 @@ public class Conversation extends AbstractEntity implements Blockable, Comparabl
                             xmppConnectionService.archiveConversation(Conversation.this);
                         }
 
+                        expectingRemoval = true;
                         removeSession(this);
                         return;
                     }
@@ -3007,7 +3010,12 @@ public class Conversation extends AbstractEntity implements Blockable, Comparabl
                         return new ProgressBarViewHolder(binding);
                     }
                     default:
-                        throw new IllegalArgumentException("Unknown viewType: " + viewType + " based on: " + response);
+                        if (expectingRemoval) {
+                            CommandNoteBinding binding = DataBindingUtil.inflate(LayoutInflater.from(container.getContext()), R.layout.command_note, container, false);
+                            return new NoteViewHolder(binding);
+                        }
+
+                        throw new IllegalArgumentException("Unknown viewType: " + viewType + " based on: " + response + ", " + responseElement + ", " + expectingRemoval);
                 }
             }
 
