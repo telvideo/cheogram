@@ -110,7 +110,6 @@ public class MessageArchiveService implements OnAdvancedStreamFeaturesLoaded {
                 mXmppConnectionService.databaseBackend.getLastMessageReceived(account),
                 mXmppConnectionService.databaseBackend.getLastClearDate(account)
         );
-        mamReference = MamReference.max(mamReference, mXmppConnectionService.getAutomaticMessageDeletionDate());
         long endCatchup = account.getXmppConnection().getLastSessionEstablished();
         final Query query;
         if (mamReference.getTimestamp() == 0) {
@@ -184,7 +183,7 @@ public class MessageArchiveService implements OnAdvancedStreamFeaturesLoaded {
     public Query query(Conversation conversation, MamReference start, long end, boolean allowCatchup) {
         synchronized (this.queries) {
             final Query query;
-            final MamReference startActual = MamReference.max(start, mXmppConnectionService.getAutomaticMessageDeletionDate());
+            final MamReference startActual = start;
             if (start.getTimestamp() == 0) {
                 query = new Query(conversation, startActual, end, false);
                 query.reference = conversation.getFirstMamReference();

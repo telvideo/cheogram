@@ -817,12 +817,6 @@ public class MessageParser extends AbstractParser implements OnMessagePacketRece
                 }
             }
 
-            long deletionDate = mXmppConnectionService.getAutomaticMessageDeletionDate();
-            if (deletionDate != 0 && message.getTimeSent() < deletionDate) {
-                Log.d(Config.LOGTAG, account.getJid().asBareJid() + ": skipping message from " + message.getCounterpart().toString() + " because it was sent prior to our deletion date");
-                return;
-            }
-
             boolean checkForDuplicates = (isTypeGroupChat && packet.hasChild("delay", "urn:xmpp:delay"))
                     || message.isPrivateMessage()
                     || message.getServerMsgId() != null
