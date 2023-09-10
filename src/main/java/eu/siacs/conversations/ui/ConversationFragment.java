@@ -2543,7 +2543,9 @@ public class ConversationFragment extends XmppFragment
             } else {
                 if (conversation.getMode() == Conversation.MODE_MULTI) {
                     if (activity == null || activity.xmppConnectionService == null) return;
-                    if (!activity.xmppConnectionService.getBooleanPreference("follow_thread_in_channel", R.bool.follow_thread_in_channel)) return;
+                    if (message.getStatus() < Message.STATUS_SEND) {
+                        if (!activity.xmppConnectionService.getBooleanPreference("follow_thread_in_channel", R.bool.follow_thread_in_channel)) return;
+                    }
                 }
 
                 setThread(message.getThread());
