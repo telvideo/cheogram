@@ -1040,8 +1040,8 @@ public class ConversationFragment extends XmppFragment
             this.binding.textinput.setHint(R.string.you_are_not_participating);
         } else {
             this.binding.textInputHint.setVisibility(View.GONE);
-            this.binding.textinput.setHint(UIHelper.getMessageHint(getActivity(), conversation));
-            getActivity().invalidateOptionsMenu();
+            this.binding.textinput.setHint(UIHelper.getMessageHint(activity, conversation));
+            activity.invalidateOptionsMenu();
         }
 
         binding.messagesView.post(this::updateThreadFromLastMessage);
@@ -3461,16 +3461,20 @@ public class ConversationFragment extends XmppFragment
     private void refresh(boolean notifyConversationRead) {
         synchronized (this.messageList) {
             if (this.conversation != null) {
-                conversation.populateWithMessages(this.messageList);
-                updateSnackBar(conversation);
-                updateStatusMessages();
+                if (messageListAdapter.hasSelection()) {
+                    if (notifyConversationRead) binding.messagesView.postDelayed(this::refresh, 1000L);
+                } else {
+                    conversation.populateWithMessages(this.messageList);
+                    updateStatusMessages();
+                    this.messageListAdapter.notifyDataSetChanged();
+                }
                 if (conversation.getReceivedMessagesCountSinceUuid(lastMessageUuid) != 0) {
                     binding.unreadCountCustomView.setVisibility(View.VISIBLE);
                     binding.unreadCountCustomView.setUnreadCount(
                             conversation.getReceivedMessagesCountSinceUuid(lastMessageUuid));
                 }
-                this.messageListAdapter.notifyDataSetChanged();
-                updateChatMsgHint();
+                updateSnackBar(conversation);
+                if (activity != null) updateChatMsgHint();
                 if (notifyConversationRead && activity != null) {
                     binding.messagesView.post(this::fireReadEvent);
                 }

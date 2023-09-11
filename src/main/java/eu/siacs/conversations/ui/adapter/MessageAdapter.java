@@ -24,6 +24,7 @@ import android.text.style.StyleSpan;
 import android.text.style.URLSpan;
 import android.util.DisplayMetrics;
 import android.util.LruCache;
+import android.view.accessibility.AccessibilityEvent;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
@@ -127,6 +128,7 @@ public class MessageAdapter extends ArrayAdapter<Message> {
     private boolean mUseGreenBackground = false;
     private final boolean mForceNames;
     private final Map<String, WebxdcUpdate> lastWebxdcUpdate = new HashMap<>();
+    private String selectionUuid = null;
 
     public MessageAdapter(final XmppActivity activity, final List<Message> messages, final boolean forceNames) {
         super(activity, 0, messages);
@@ -177,6 +179,10 @@ public class MessageAdapter extends ArrayAdapter<Message> {
 
     public void quoteText(String text) {
         if (mConversationFragment != null) mConversationFragment.quoteText(text);
+    }
+
+    public boolean hasSelection() {
+        return selectionUuid != null;
     }
 
     public Activity getActivity() {
@@ -1059,6 +1065,7 @@ public class MessageAdapter extends ArrayAdapter<Message> {
                 return false;
             }
         });
+        viewHolder.messageBody.setAccessibilityDelegate(null);
 
         final Transferable transferable = message.getTransferable();
         final boolean unInitiatedButKnownSize = MessageUtils.unInitiatedButKnownSize(message);
@@ -1180,6 +1187,20 @@ public class MessageAdapter extends ArrayAdapter<Message> {
         }
 
         displayStatus(viewHolder, message, type, darkBackground);
+
+        viewHolder.messageBody.setAccessibilityDelegate(new View.AccessibilityDelegate() {
+            @Override
+            public void sendAccessibilityEvent(View host, int eventType) {
+                super.sendAccessibilityEvent(host, eventType);
+                if (eventType == AccessibilityEvent.TYPE_VIEW_TEXT_SELECTION_CHANGED) {
+                    if (viewHolder.messageBody.hasSelection()) {
+                        selectionUuid = message.getUuid();
+                    } else if (message.getUuid() != null && message.getUuid().equals(selectionUuid)) {
+                        selectionUuid = null;
+                    }
+                }
+            }
+        });
 
         return view;
     }
