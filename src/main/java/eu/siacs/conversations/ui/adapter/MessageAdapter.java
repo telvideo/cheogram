@@ -1020,9 +1020,23 @@ public class MessageAdapter extends ArrayAdapter<Message> {
             }
         });
         viewHolder.message_box.setOnTouchListener(swipeDetector);
-        viewHolder.messageBody.setOnTouchListener(swipeDetector);
         viewHolder.image.setOnTouchListener(swipeDetector);
         viewHolder.time.setOnTouchListener(swipeDetector);
+
+        // Treat touch-up as click so we don't have to touch twice
+        // (touch twice is because it's waiting to see if you double-touch for text selection)
+        viewHolder.messageBody.setOnTouchListener((v, event) -> {
+            if (event.getAction() == MotionEvent.ACTION_UP) {
+                if (MessageAdapter.this.mOnMessageBoxClickedListener != null) {
+                    MessageAdapter.this.mOnMessageBoxClickedListener
+                        .onContactPictureClicked(message);
+                }
+            }
+
+            swipeDetector.onTouch(v, event);
+
+            return false;
+        });
         viewHolder.messageBody.setOnClickListener(v -> {
             if (MessageAdapter.this.mOnMessageBoxClickedListener != null) {
                 MessageAdapter.this.mOnMessageBoxClickedListener
