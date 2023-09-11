@@ -21,7 +21,7 @@ import java.util.List;
 import eu.siacs.conversations.Config;
 import eu.siacs.conversations.entities.Account;
 import eu.siacs.conversations.entities.Contact;
-import eu.siacs.conversations.entities.Conversation;
+import eu.siacs.conversations.entities.MucOptions;
 import eu.siacs.conversations.ui.StartConversationActivity;
 import eu.siacs.conversations.ui.ConversationsActivity;
 import eu.siacs.conversations.utils.ReplacingSerialSingleThreadExecutor;
@@ -101,6 +101,24 @@ public class ShortcutService {
                         .build();
     }
 
+    public ShortcutInfoCompat getShortcutInfoCompat(final MucOptions mucOptions) {
+        final ShortcutInfoCompat.Builder builder =
+                new ShortcutInfoCompat.Builder(xmppConnectionService, getShortcutId(mucOptions))
+                        .setShortLabel(mucOptions.getConversation().getName())
+                        .setIntent(getShortcutIntent(mucOptions))
+                        .setIsConversation();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            builder.setIcon(
+                    IconCompat.createFromIcon(
+                            xmppConnectionService,
+                            Icon.createWithBitmap(
+                                    xmppConnectionService
+                                            .getAvatarService()
+                                            .getRoundedShortcut(mucOptions))));
+        }
+        return builder.build();
+    }
+
     @TargetApi(Build.VERSION_CODES.N_MR1)
     private ShortcutInfo getShortcutInfo(Contact contact) {
         return getShortcutInfoCompat(contact).toShortcutInfo();
@@ -129,22 +147,40 @@ public class ShortcutService {
         return contact.getAccount().getJid().asBareJid().toEscapedString()+"#"+contact.getJid().asBareJid().toEscapedString();
     }
 
-    private Intent getShortcutIntent(Contact contact) {
-        final Conversation conversation = xmppConnectionService.find(contact.getAccount(), contact.getJid());
+    private static String getShortcutId(final MucOptions mucOptions) {
+        final Account account = mucOptions.getAccount();
+        final Jid jid = mucOptions.getConversation().getJid();
+        return account.getJid().asBareJid().toEscapedString()
+                + "#"
+                + jid.asBareJid().toEscapedString();
+    }
 
-        if (conversation != null) {
-            Intent intent = new Intent(xmppConnectionService, ConversationsActivity.class);
-            intent.setAction(ConversationsActivity.ACTION_VIEW_CONVERSATION);
-            intent.putExtra(ConversationsActivity.EXTRA_CONVERSATION, conversation.getUuid());
-            intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP| Intent.FLAG_ACTIVITY_SINGLE_TOP);
-            return intent;
-        }
+    private Intent getShortcutIntent(final MucOptions mucOptions) {
+        final Account account = mucOptions.getAccount();
+        return getShortcutIntent(
+                account,
+                Uri.parse(
+                        String.format(
+                                "xmpp:%s?join",
+                                mucOptions
+                                        .getConversation()
+                                        .getJid()
+                                        .asBareJid()
+                                        .toEscapedString())));
+    }
 
+    private Intent getShortcutIntent(final Contact contact) {
+        return getShortcutIntent(
+                contact.getAccount(),
+                Uri.parse("xmpp:" + contact.getJid().asBareJid().toEscapedString()));
+    }
+
+    private Intent getShortcutIntent(final Account account, final Uri uri) {
         Intent intent = new Intent(xmppConnectionService, StartConversationActivity.class);
         intent.setAction(Intent.ACTION_VIEW);
-        intent.setData(Uri.parse("xmpp:"+contact.getJid().asBareJid().toEscapedString()));
-        intent.putExtra("account",contact.getAccount().getJid().asBareJid().toString());
-        intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP| Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        intent.setData(uri);
+        intent.putExtra("account", account.getJid().asBareJid().toString());
+        intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
         return intent;
     }
 

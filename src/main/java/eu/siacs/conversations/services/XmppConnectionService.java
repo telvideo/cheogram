@@ -5042,8 +5042,14 @@ public class XmppConnectionService extends Service {
     }
 
     public Conversation findFirstMuc(Jid jid) {
+        return findFirstMuc(jid, null);
+    }
+
+    public Conversation findFirstMuc(Jid jid, String accountJid) {
         for (Conversation conversation : getConversations()) {
-            if (conversation.getAccount().isEnabled() && conversation.getJid().asBareJid().equals(jid.asBareJid()) && conversation.getMode() == Conversation.MODE_MULTI) {
+            if ((conversation.getAccount().isEnabled() || accountJid != null)
+                    && (accountJid == null || accountJid.equals(conversation.getAccount().getJid().asBareJid().toString()))
+                    && conversation.getJid().asBareJid().equals(jid.asBareJid()) && conversation.getMode() == Conversation.MODE_MULTI) {
                 return conversation;
             }
         }

@@ -1018,9 +1018,9 @@ public class StartConversationActivity extends XmppActivity implements XmppConne
     }
 
     private boolean handleJid(Invite invite) {
-        List<Contact> contacts = xmppConnectionService.findContacts(invite.getJid(), invite.account);
-        if (invite.isAction(XmppUri.ACTION_JOIN)) {
-            Conversation muc = xmppConnectionService.findFirstMuc(invite.getJid());
+        final List<Contact> contacts = xmppConnectionService.findContacts(invite.getJid(), invite.account);
+        final Conversation muc = xmppConnectionService.findFirstMuc(invite.getJid(), invite.account);
+        if (invite.isAction(XmppUri.ACTION_JOIN) || (contacts.isEmpty() && muc != null)) {
             if (muc != null && !invite.forceDialog) {
                 switchToConversationDoNotAppend(muc, invite.getBody());
                 return true;

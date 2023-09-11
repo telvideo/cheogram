@@ -1999,7 +1999,12 @@ public class ConversationFragment extends XmppFragment
     }
 
     private void addShortcut() {
-        ShortcutInfoCompat info = activity.xmppConnectionService.getShortcutService().getShortcutInfoCompat(conversation.getContact());
+        ShortcutInfoCompat info;
+        if (conversation.getMode() == Conversation.MODE_MULTI) {
+            info = activity.xmppConnectionService.getShortcutService().getShortcutInfoCompat(conversation.getMucOptions());
+        } else {
+            info = activity.xmppConnectionService.getShortcutService().getShortcutInfoCompat(conversation.getContact());
+        }
         ShortcutManagerCompat.requestPinShortcut(activity, info, null);
     }
 
