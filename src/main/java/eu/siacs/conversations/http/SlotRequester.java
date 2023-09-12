@@ -55,13 +55,13 @@ public class SlotRequester {
         this.service = service;
     }
 
-    public ListenableFuture<Slot> request(Method method, Account account, DownloadableFile file, String mime) {
+    public ListenableFuture<Slot> request(Method method, Account account, DownloadableFile file, String name, String mime) {
         if (method == Method.HTTP_UPLOAD_LEGACY) {
             final Jid host = account.getXmppConnection().findDiscoItemByFeature(Namespace.HTTP_UPLOAD_LEGACY);
             return requestHttpUploadLegacy(account, host, file, mime);
         } else {
             final Jid host = account.getXmppConnection().findDiscoItemByFeature(Namespace.HTTP_UPLOAD);
-            return requestHttpUpload(account, host, file, mime);
+            return requestHttpUpload(account, host, file, name, mime);
         }
     }
 
@@ -95,9 +95,9 @@ public class SlotRequester {
         return future;
     }
 
-    private ListenableFuture<Slot> requestHttpUpload(Account account, Jid host, DownloadableFile file, String mime) {
+    private ListenableFuture<Slot> requestHttpUpload(Account account, Jid host, DownloadableFile file, String fname, String mime) {
         final SettableFuture<Slot> future = SettableFuture.create();
-        final IqPacket request = service.getIqGenerator().requestHttpUploadSlot(host, file, mime);
+        final IqPacket request = service.getIqGenerator().requestHttpUploadSlot(host, file, fname, mime);
         service.sendIqPacket(account, request, (a, packet) -> {
             if (packet.getType() == IqPacket.TYPE.RESULT) {
                 final Element slotElement = packet.findChild("slot", Namespace.HTTP_UPLOAD);
