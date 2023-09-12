@@ -134,10 +134,16 @@ public class SpannedToXHTML {
 				}
 			}
 			String content = text.subSequence(i, next).toString();
+			boolean prevSpace = false;
 			for (int c = 0; c < content.length(); c++) {
 				if (content.charAt(c) == '\n') {
+					prevSpace = false;
 					out.addChild("br");
+				} else if (prevSpace && content.charAt(c) == ' ') {
+					prevSpace = false;
+					out.addChild(new TextNode("\u00A0"));
 				} else {
+					prevSpace = content.charAt(c) == ' ';
 					out.addChild(new TextNode("" + content.charAt(c)));
 				}
 			}
