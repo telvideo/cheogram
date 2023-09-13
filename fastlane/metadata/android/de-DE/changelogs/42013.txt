@@ -1,1 +1,0 @@
-* Probleme mit "Keine Verbindung" unter Android 7.1 behoben
