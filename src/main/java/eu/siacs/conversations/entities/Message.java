@@ -911,38 +911,7 @@ public class Message extends AbstractEntity implements AvatarService.Avatarable 
     }
 
     public boolean mergeable(final Message message) {
-        return message != null &&
-                (message.getType() == Message.TYPE_TEXT &&
-                        this.getTransferable() == null &&
-                        message.getTransferable() == null &&
-                        message.getEncryption() != Message.ENCRYPTION_PGP &&
-                        message.getEncryption() != Message.ENCRYPTION_DECRYPTION_FAILED &&
-                        this.getType() == message.getType() &&
-                        isStatusMergeable(this.getStatus(), message.getStatus()) &&
-                        isEncryptionMergeable(this.getEncryption(),message.getEncryption()) &&
-                        this.getCounterpart() != null &&
-                        this.getCounterpart().equals(message.getCounterpart()) &&
-                        this.edited() == message.edited() &&
-                        (message.getTimeSent() - this.getTimeSent()) <= (Config.MESSAGE_MERGE_WINDOW * 1000) &&
-                        (this.getSubject() == null || this.getSubject().equals(message.getSubject())) &&
-                        (this.getThread() == null || (message.getThread() != null && this.getThread().toString().equals(message.getThread().toString()))) &&
-                        this.getBody().length() + message.getBody().length() <= Config.MAX_DISPLAY_MESSAGE_CHARS &&
-                        this.getModerated() == null &&
-                        !message.isGeoUri() &&
-                        !this.isGeoUri() &&
-                        !message.isOOb() &&
-                        !this.isOOb() &&
-                        !message.treatAsDownloadable() &&
-                        !this.treatAsDownloadable() &&
-                        !message.hasMeCommand() &&
-                        !this.hasMeCommand() &&
-                        !this.bodyIsOnlyEmojis() &&
-                        !message.bodyIsOnlyEmojis() &&
-                        ((this.axolotlFingerprint == null && message.axolotlFingerprint == null) || this.axolotlFingerprint.equals(message.getFingerprint())) &&
-                        UIHelper.sameDay(message.getTimeSent(), this.getTimeSent()) &&
-                        this.getReadByMarkers().equals(message.getReadByMarkers()) &&
-                        !this.conversation.getJid().asBareJid().equals(Config.BUG_REPORTS)
-                );
+        return false; // Merrgine messages messes up reply, so disable for now
     }
 
     private static boolean isStatusMergeable(int a, int b) {
