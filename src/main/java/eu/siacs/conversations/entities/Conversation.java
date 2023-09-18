@@ -2527,10 +2527,10 @@ public class Conversation extends AbstractEntity implements Blockable, Comparabl
                             }
                         } else if (fieldType.equals("list-single")) {
                             Element validate = el.findChild("validate", "http://jabber.org/protocol/xdata-validate");
-                            if (Option.forField(el).size() > 9) {
-                                viewType = TYPE_SEARCH_LIST_FIELD;
-                            } else if (fillableFieldCount == 1 && actionsAdapter.countExceptCancel() < 1) {
+                            if (fillableFieldCount == 1 && actionsAdapter.countExceptCancel() < 1) {
                                 viewType = TYPE_BUTTON_GRID_FIELD;
+                            } else if (Option.forField(el).size() > 9) {
+                                viewType = TYPE_SEARCH_LIST_FIELD;
                             } else if (el.findChild("value", "jabber:x:data") == null || (validate != null && validate.findChild("open", "http://jabber.org/protocol/xdata-validate") != null)) {
                                 viewType = TYPE_RADIO_EDIT_FIELD;
                             } else {
