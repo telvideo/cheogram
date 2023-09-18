@@ -195,8 +195,7 @@ public class HttpDownloadConnection implements Transferable {
         if (message.getEncryption() == Message.ENCRYPTION_PGP) {
             notify = message.getConversation().getAccount().getPgpDecryptionService().decrypt(message, notify);
         }
-        DownloadableFile file;
-        final DownloadableFile tmp = mXmppConnectionService.getFileBackend().getFile(message);
+        final DownloadableFile tmp = file;
         final String extension = MimeUtils.extractRelevantExtension(tmp.getName());
         try {
             mXmppConnectionService.getFileBackend().setupRelativeFilePath(message, new FileInputStream(tmp), extension);
