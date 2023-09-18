@@ -2168,7 +2168,7 @@ public class FileBackend {
     public Drawable getSVG(File file, int size) {
         try {
             SVG svg = SVG.getFromInputStream(new FileInputStream(file));
-            svg.setDocumentPreserveAspectRatio(com.caverock.androidsvg.PreserveAspectRatio.TOP);
+            svg.setDocumentPreserveAspectRatio(com.caverock.androidsvg.PreserveAspectRatio.LETTERBOX);
 
             float w = svg.getDocumentWidth();
             float h = svg.getDocumentHeight();

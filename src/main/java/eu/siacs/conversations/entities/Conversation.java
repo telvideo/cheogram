@@ -61,6 +61,7 @@ import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.viewpager.widget.ViewPager;
 
 import com.caverock.androidsvg.SVG;
+import com.caverock.androidsvg.SVGParseException;
 
 import com.cheogram.android.ConversationPage;
 import com.cheogram.android.Util;
@@ -2175,9 +2176,16 @@ public class Conversation extends AbstractEntity implements Blockable, Comparabl
 
                             final SVG icon = getItem(position).getIcon();
                             if (icon != null) {
+                                 synchronized (CommandSession.this) {
+                                     waitingForRefresh = true;
+                                 }
                                  v.post(() -> {
                                      if (v.getHeight() == 0) return;
-                                     icon.setDocumentPreserveAspectRatio(com.caverock.androidsvg.PreserveAspectRatio.TOP);
+                                     icon.setDocumentPreserveAspectRatio(com.caverock.androidsvg.PreserveAspectRatio.LETTERBOX);
+                                     try {
+                                         icon.setDocumentWidth("100%");
+                                         icon.setDocumentHeight("100%");
+                                     } catch (final SVGParseException e) { }
                                      Bitmap bitmap = Bitmap.createBitmap(v.getHeight(), v.getHeight(), Bitmap.Config.ARGB_8888);
                                      Canvas bmcanvas = new Canvas(bitmap);
                                      icon.renderToCanvas(bmcanvas);
@@ -2266,7 +2274,14 @@ public class Conversation extends AbstractEntity implements Blockable, Comparabl
 
                         final SVG defaultIcon = defaultOption.getIcon();
                         if (defaultIcon != null) {
-                             defaultIcon.setDocumentPreserveAspectRatio(com.caverock.androidsvg.PreserveAspectRatio.TOP);
+                             synchronized (CommandSession.this) {
+                                 waitingForRefresh = true;
+                             }
+                             defaultIcon.setDocumentPreserveAspectRatio(com.caverock.androidsvg.PreserveAspectRatio.LETTERBOX);
+                             try {
+                                 defaultIcon.setDocumentWidth("100%");
+                                 defaultIcon.setDocumentHeight("100%");
+                             } catch (final SVGParseException e) { }
                              DisplayMetrics display = mPager.getContext().getResources().getDisplayMetrics();
                              Bitmap bitmap = Bitmap.createBitmap((int)(display.heightPixels*display.density/4), (int)(display.heightPixels*display.density/4), Bitmap.Config.ARGB_8888);
                              bitmap.setDensity(display.densityDpi);
