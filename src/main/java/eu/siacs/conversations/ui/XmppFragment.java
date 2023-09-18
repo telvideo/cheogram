@@ -78,7 +78,9 @@ public abstract class XmppFragment extends Fragment implements OnBackendConnecte
 
 	@Override
 	public void onDestroy() {
-		lifecycle.handleLifecycleEvent(Lifecycle.Event.ON_DESTROY);
+		if (lifecycle.getCurrentState().isAtLeast(Lifecycle.State.CREATED)) {
+			lifecycle.handleLifecycleEvent(Lifecycle.Event.ON_DESTROY);
+		}
 		super.onDestroy();
 	}
 
