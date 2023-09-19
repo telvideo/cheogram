@@ -1858,7 +1858,7 @@ public class XmppConnectionService extends Service {
                                                 waiter.release();
                                             }
                                         })
-                                            .showNullOnEmpty(false)
+                                            .showNullOnEmpty(true)
                                             .maxBodySize(4000)
                                             .timeout(5000);
                                         if (useTorToConnect()) {
