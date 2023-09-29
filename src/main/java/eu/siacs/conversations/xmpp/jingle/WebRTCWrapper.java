@@ -36,13 +36,13 @@ import org.webrtc.SdpObserver;
 import org.webrtc.SessionDescription;
 import org.webrtc.VideoTrack;
 import org.webrtc.audio.JavaAudioDeviceModule;
-import org.webrtc.voiceengine.WebRtcAudioEffects;
 
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -283,9 +283,7 @@ public class WebRTCWrapper {
         Preconditions.checkNotNull(media);
         Preconditions.checkArgument(
                 media.size() > 0, "media can not be empty when initializing peer connection");
-        final boolean setUseHardwareAcousticEchoCanceler =
-                WebRtcAudioEffects.canUseAcousticEchoCanceler()
-                        && !HARDWARE_AEC_BLACKLIST.contains(Build.MODEL);
+        final boolean setUseHardwareAcousticEchoCanceler = !HARDWARE_AEC_BLACKLIST.contains(Build.MODEL);
         Log.d(
                 Config.LOGTAG,
                 String.format(
@@ -609,11 +607,7 @@ public class WebRTCWrapper {
                             new SetSdpObserver() {
                                 @Override
                                 public void onSetSuccess() {
-                                    final SessionDescription description =
-                                            peerConnection.getLocalDescription();
-                                    Log.d(EXTENDED_LOGGING_TAG, "set local description:");
-                                    logDescription(description);
-                                    future.set(description);
+                                    future.setFuture(getLocalDescriptionFuture());
                                 }
 
                                 @Override
@@ -625,6 +619,15 @@ public class WebRTCWrapper {
                     return future;
                 },
                 MoreExecutors.directExecutor());
+    }
+
+    private ListenableFuture<SessionDescription> getLocalDescriptionFuture() {
+        return Futures.submit(() -> {
+            final SessionDescription description = requirePeerConnection().getLocalDescription();
+            Log.d(EXTENDED_LOGGING_TAG, "local description:");
+            logDescription(description);
+            return description;
+        },executorService);
     }
 
     public static void logDescription(final SessionDescription sessionDescription) {

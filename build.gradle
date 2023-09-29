@@ -114,7 +114,7 @@ dependencies {
     implementation 'com.splitwise:tokenautocomplete:3.0.2'
     implementation 'com.github.singpolyma:Better-Link-Movement-Method:4df081e1e4'
     implementation 'com.github.singpolyma:android-identicons:3361281bd4'
-    implementation 'im.conversations.webrtc:webrtc-android:104.0.0'
+    implementation 'im.conversations.webrtc:webrtc-android:117.1.0'
     implementation 'com.github.woltapp:blurhash:master'
     implementation 'com.caverock:androidsvg-aar:1.4'
     implementation 'org.tomlj:tomlj:1.1.0'
