@@ -844,13 +844,7 @@ public class StartConversationActivity extends XmppActivity implements XmppConne
                         final AtomicBoolean requestPermission = new AtomicBoolean(false);
                         builder.setTitle(R.string.sync_with_contacts);
                         builder.setMessage(getString(R.string.sync_with_contacts_long, getString(R.string.app_name)));
-                        @StringRes int confirmButtonText;
-                        if (QuickConversationsService.isConversations()) {
-                            confirmButtonText = R.string.next;
-                        } else {
-                            confirmButtonText = R.string.agree_and_continue;
-                        }
-                        builder.setPositiveButton(confirmButtonText, (dialog, which) -> {
+                        builder.setPositiveButton(R.string.next, (dialog, which) -> {
                             if (requestPermission.compareAndSet(false, true)) {
                                 requestPermissions(new String[]{Manifest.permission.READ_CONTACTS}, REQUEST_SYNC_CONTACTS);
                             }
