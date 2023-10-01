@@ -652,6 +652,7 @@ public class MessageAdapter extends ArrayAdapter<Message> {
         } else {
             viewHolder.messageBody.setText("");
             viewHolder.messageBody.setTextIsSelectable(false);
+            toggleWhisperInfo(viewHolder, message, darkBackground);
         }
     }
 
