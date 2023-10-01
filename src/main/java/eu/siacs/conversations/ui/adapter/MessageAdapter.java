@@ -538,6 +538,7 @@ public class MessageAdapter extends ArrayAdapter<Message> {
         viewHolder.messageBody.setTypeface(null, Typeface.NORMAL);
 
         if (message.getBody() != null && !message.getBody().equals("")) {
+            viewHolder.messageBody.setTextIsSelectable(true);
             viewHolder.messageBody.setVisibility(View.VISIBLE);
             final String nick = UIHelper.getMessageDisplayName(message);
             SpannableStringBuilder body = getSpannableBody(message);
