@@ -1942,14 +1942,14 @@ public class FileBackend {
         if (encrypted && !file.exists()) {
             Log.d(Config.LOGTAG, "skipping updateFileParams because file is encrypted");
             final DownloadableFile encryptedFile = getFile(message, false);
-            fileParams.size = encryptedFile.getSize();
+            if (encryptedFile.canRead()) fileParams.size = encryptedFile.getSize();
         } else {
             Log.d(Config.LOGTAG, "running updateFileParams");
             final boolean ambiguous = MimeUtils.AMBIGUOUS_CONTAINER_FORMATS.contains(mime);
             final boolean video = mime != null && mime.startsWith("video/");
             final boolean audio = mime != null && mime.startsWith("audio/");
             final boolean pdf = "application/pdf".equals(mime);
-            fileParams.size = file.getSize();
+            if (file.canRead()) fileParams.size = file.getSize();
             if (ambiguous) {
                 try {
                     final Dimensions dimensions = getVideoDimensions(file);
