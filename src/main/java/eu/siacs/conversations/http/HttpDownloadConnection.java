@@ -188,6 +188,8 @@ public class HttpDownloadConnection implements Transferable {
         if (!file.delete()) {
             Log.w(Config.LOGTAG, "unable to delete temporary OMEMO encrypted file " + file.getAbsolutePath());
         }
+
+        file = outputFile;
     }
 
     private void finish() {
