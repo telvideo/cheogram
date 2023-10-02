@@ -549,7 +549,7 @@ public class WebRTCWrapper {
                 return false;
             }
         } else {
-            throw new IllegalStateException("Local audio track does not exist (yet)");
+            return false;
         }
     }
 
