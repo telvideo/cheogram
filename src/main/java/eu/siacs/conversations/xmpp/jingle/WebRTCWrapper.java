@@ -16,6 +16,10 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.SettableFuture;
 
+import eu.siacs.conversations.Config;
+import eu.siacs.conversations.services.AppRTCAudioManager;
+import eu.siacs.conversations.services.XmppConnectionService;
+
 import org.webrtc.AudioSource;
 import org.webrtc.AudioTrack;
 import org.webrtc.CandidatePairChangeEvent;
@@ -42,7 +46,6 @@ import java.util.List;
 import java.util.Queue;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -50,17 +53,13 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-import eu.siacs.conversations.Config;
-import eu.siacs.conversations.services.AppRTCAudioManager;
-import eu.siacs.conversations.services.XmppConnectionService;
-
 @SuppressWarnings("UnstableApiUsage")
 public class WebRTCWrapper {
 
     private static final String EXTENDED_LOGGING_TAG = WebRTCWrapper.class.getSimpleName();
 
     private final ExecutorService executorService = Executors.newSingleThreadExecutor();
-    
+
     private static final int TONE_DURATION = 500;
     private static final Map<String,Integer> TONE_CODES;
     static {
@@ -79,6 +78,8 @@ public class WebRTCWrapper {
         builder.put("#", ToneGenerator.TONE_DTMF_P);
         TONE_CODES = builder.build();
     }
+    private final ExecutorService localDescriptionExecutorService =
+            Executors.newSingleThreadExecutor();
 
     private static final Set<String> HARDWARE_AEC_BLACKLIST =
             new ImmutableSet.Builder<String>()
@@ -283,7 +284,8 @@ public class WebRTCWrapper {
         Preconditions.checkNotNull(media);
         Preconditions.checkArgument(
                 media.size() > 0, "media can not be empty when initializing peer connection");
-        final boolean setUseHardwareAcousticEchoCanceler = !HARDWARE_AEC_BLACKLIST.contains(Build.MODEL);
+        final boolean setUseHardwareAcousticEchoCanceler =
+                !HARDWARE_AEC_BLACKLIST.contains(Build.MODEL);
         Log.d(
                 Config.LOGTAG,
                 String.format(
@@ -435,21 +437,20 @@ public class WebRTCWrapper {
         requirePeerConnection().setConfiguration(buildConfiguration(iceServers));
     }
 
-    void restartIce() {
-        executorService.execute(
-                () -> {
-                    final PeerConnection peerConnection;
-                    try {
-                        peerConnection = requirePeerConnection();
-                    } catch (final PeerConnectionNotInitialized e) {
-                        Log.w(
-                                EXTENDED_LOGGING_TAG,
-                                "PeerConnection vanished before we could execute restart");
-                        return;
-                    }
-                    setIsReadyToReceiveIceCandidates(false);
-                    peerConnection.restartIce();
-                });
+    void restartIceAsync() {
+        this.execute(this::restartIce);
+    }
+
+    private void restartIce() {
+        final PeerConnection peerConnection;
+        try {
+            peerConnection = requirePeerConnection();
+        } catch (final PeerConnectionNotInitialized e) {
+            Log.w(EXTENDED_LOGGING_TAG, "PeerConnection vanished before we could execute restart");
+            return;
+        }
+        setIsReadyToReceiveIceCandidates(false);
+        peerConnection.restartIce();
     }
 
     public void setIsReadyToReceiveIceCandidates(final boolean ready) {
@@ -622,12 +623,15 @@ public class WebRTCWrapper {
     }
 
     private ListenableFuture<SessionDescription> getLocalDescriptionFuture() {
-        return Futures.submit(() -> {
-            final SessionDescription description = requirePeerConnection().getLocalDescription();
-            Log.d(EXTENDED_LOGGING_TAG, "local description:");
-            logDescription(description);
-            return description;
-        },executorService);
+        return Futures.submit(
+                () -> {
+                    final SessionDescription description =
+                            requirePeerConnection().getLocalDescription();
+                    Log.d(EXTENDED_LOGGING_TAG, "local description:");
+                    logDescription(description);
+                    return description;
+                },
+                localDescriptionExecutorService);
     }
 
     public static void logDescription(final SessionDescription sessionDescription) {
@@ -747,7 +751,7 @@ public class WebRTCWrapper {
     }
 
     void execute(final Runnable command) {
-        executorService.execute(command);
+        this.executorService.execute(command);
     }
 
     public void switchSpeakerPhonePreference(AppRTCAudioManager.SpeakerPhonePreference preference) {

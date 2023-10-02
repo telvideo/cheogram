@@ -2360,7 +2360,7 @@ public class JingleRtpConnection extends AbstractJingleConnection
 
     private void restartIce() {
         this.stateHistory.clear();
-        this.webRTCWrapper.restartIce();
+        this.webRTCWrapper.restartIceAsync();
     }
 
     @Override
