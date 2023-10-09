@@ -156,7 +156,6 @@ import eu.siacs.conversations.utils.GeoHelper;
 import eu.siacs.conversations.utils.MessageUtils;
 import eu.siacs.conversations.utils.MimeUtils;
 import eu.siacs.conversations.utils.NickValidityChecker;
-import eu.siacs.conversations.utils.Patterns;
 import eu.siacs.conversations.utils.PermissionUtils;
 import eu.siacs.conversations.utils.QuickLoader;
 import eu.siacs.conversations.utils.StylingHelper;
@@ -174,6 +173,19 @@ import eu.siacs.conversations.xmpp.jingle.Media;
 import eu.siacs.conversations.xmpp.jingle.OngoingRtpSession;
 import eu.siacs.conversations.xmpp.jingle.RtpCapability;
 import eu.siacs.conversations.xmpp.stanzas.IqPacket;
+
+import org.jetbrains.annotations.NotNull;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ConversationFragment extends XmppFragment
         implements EditMessage.KeyboardListener,
@@ -2063,7 +2075,7 @@ public class ConversationFragment extends XmppFragment
             return;
         }
         final Contact contact = conversation.getContact();
-        if (contact.getPresences().anySupport(Namespace.JINGLE_MESSAGE)) {
+        if (RtpCapability.jmiSupport(contact)) {
             triggerRtpSession(contact.getAccount(), contact.getJid().asBareJid(), action);
         } else {
             final RtpCapability.Capability capability;
