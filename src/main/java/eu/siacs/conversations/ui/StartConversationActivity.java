@@ -740,7 +740,11 @@ public class StartConversationActivity extends XmppActivity implements XmppConne
         String initialSearchValue = mInitialSearchValue.pop();
         if (initialSearchValue != null) {
             mMenuSearchView.expandActionView();
-            mSearchEditText.append(initialSearchValue);
+            try {
+                mSearchEditText.append(initialSearchValue);
+            } catch (final StringIndexOutOfBoundsException e) {
+                mSearchEditText.setText(initialSearchValue);
+            }
             filter(initialSearchValue);
         }
         updateSearchViewHint();
