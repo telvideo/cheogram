@@ -648,7 +648,11 @@ public class ContactDetailsActivity extends OmemoActivity implements OnAccountUp
                     switchToConversation(xmppConnectionService.findOrCreateConversation(account, Jid.of(uri.getSchemeSpecificPart()), false, true));
                 } else {
                     Intent intent = new Intent(Intent.ACTION_VIEW, uri);
-                    startActivity(intent);
+                    try {
+                        startActivity(intent);
+                    } catch (ActivityNotFoundException e) {
+                        Toast.makeText(this, R.string.no_application_found_to_open_link, Toast.LENGTH_SHORT).show();
+                    }
                 }
             });
             binding.profileItems.setOnItemLongClickListener((a0, v, pos, a3) -> {
