@@ -2168,11 +2168,20 @@ public class FileBackend {
     public Drawable getSVG(File file, int size) {
         try {
             SVG svg = SVG.getFromInputStream(new FileInputStream(file));
+            return drawSVG(svg, size);
+        } catch (final IOException | SVGParseException | IllegalArgumentException e) {
+            Log.w(Config.LOGTAG, "Could not parse SVG: " + e);
+            return null;
+        }
+    }
+
+    public Drawable drawSVG(SVG svg, int size) {
+        try {
             svg.setDocumentPreserveAspectRatio(com.caverock.androidsvg.PreserveAspectRatio.LETTERBOX);
 
             float w = svg.getDocumentWidth();
             float h = svg.getDocumentHeight();
-            Rect r = rectForSize((int) w, (int) h, size);
+            Rect r = rectForSize(w < 1 ? size : (int) w, h < 1 ? size : (int) h, size);
             svg.setDocumentWidth("100%");
             svg.setDocumentHeight("100%");
 
@@ -2181,7 +2190,7 @@ public class FileBackend {
             svg.renderToCanvas(canvas);
 
             return new SVGDrawable(output);
-        } catch (final IOException | SVGParseException | IllegalArgumentException e) {
+        } catch (final SVGParseException e) {
             Log.w(Config.LOGTAG, "Could not parse SVG: " + e);
             return null;
         }

@@ -10,6 +10,7 @@ public class Option {
     protected final String value;
     protected final String label;
     protected final SVG icon;
+    protected final Element iconEl;
 
     public static List<Option> forField(Element field) {
         List<Option> options = new ArrayList<>();
@@ -25,18 +26,20 @@ public class Option {
         this(
             option.findChildContent("value", "jabber:x:data"),
             option.getAttribute("label"),
-            parseSVG(option.findChild("svg", "http://www.w3.org/2000/svg"))
+            parseSVG(option.findChild("svg", "http://www.w3.org/2000/svg")),
+            option.findChild("svg", "http://www.w3.org/2000/svg")
         );
     }
 
     public Option(final String value, final String label) {
-        this(value, label, null);
+        this(value, label, null, null);
     }
 
-    public Option(final String value, final String label, final SVG icon) {
+    public Option(final String value, final String label, final SVG icon, final Element iconEl) {
         this.value = value;
         this.label = label == null ? value : label;
         this.icon = icon;
+        this.iconEl = iconEl;
     }
 
     public boolean equals(Object o) {
@@ -52,6 +55,8 @@ public class Option {
     public String getValue() { return value; }
 
     public SVG getIcon() { return icon; }
+
+    public Element getIconEl() { return iconEl; }
 
     private static SVG parseSVG(final Element svg) {
         if (svg == null) return null;

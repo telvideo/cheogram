@@ -353,7 +353,6 @@ public class XmppConnectionService extends Service {
     private final Set<OnMucRosterUpdate> mOnMucRosterUpdate = Collections.newSetFromMap(new WeakHashMap<OnMucRosterUpdate, Boolean>());
     private final Set<OnKeyStatusUpdated> mOnKeyStatusUpdated = Collections.newSetFromMap(new WeakHashMap<OnKeyStatusUpdated, Boolean>());
     private final Set<OnJingleRtpConnectionUpdate> onJingleRtpConnectionUpdate = Collections.newSetFromMap(new WeakHashMap<OnJingleRtpConnectionUpdate, Boolean>());
-    private final Set<String> alreadyAttemptedSVGDownload = new HashSet<>();
 
     private final Object LISTENER_LOCK = new Object();
 
@@ -1432,35 +1431,6 @@ public class XmppConnectionService extends Service {
         toggleForegroundService();
         setupPhoneStateListener();
         rescanStickers();
-        com.caverock.androidsvg.SVG.registerExternalFileResolver(new com.caverock.androidsvg.SVGExternalFileResolver() {
-            @Override
-            public Bitmap resolveImage(String filename) {
-                final LruCache<String, Drawable> cache = getDrawableCache();
-                final Drawable d = cache.get(filename);
-                if (d != null) return FileBackend.drawDrawable(d);
-                if (getLongPreference("auto_accept_file_size", R.integer.auto_accept_filesize) < 3000000) {
-                    return null;
-                }
-                synchronized(alreadyAttemptedSVGDownload) {
-                    if (alreadyAttemptedSVGDownload.contains(filename)) return null;
-                    alreadyAttemptedSVGDownload.add(filename);
-                }
-                final HttpConnectionManager httpManager = getHttpConnectionManager();
-                Message dummy = new Message(new Conversation(null, getAccounts().get(0), null, 0), filename, Message.ENCRYPTION_NONE);
-                dummy.setFileParams(new Message.FileParams(filename));
-                httpManager.createNewDownloadConnection(dummy, true, (file) -> {
-                    if (file == null) {
-                        dummy.getTransferable().start();
-                    } else {
-                        try {
-                            int size = (int)(getResources().getDisplayMetrics().density * 288);
-                            getFileBackend().getThumbnail(file, getResources(), size, false, filename);
-                        } catch (final Exception e) { }
-                    }
-                });
-                return null;
-            }
-        });
     }
 
 

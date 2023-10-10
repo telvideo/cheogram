@@ -6,6 +6,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
 import android.database.DataSetObserver;
+import android.graphics.drawable.AnimatedImageDrawable;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.Bitmap;
@@ -61,7 +62,6 @@ import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.viewpager.widget.ViewPager;
 
 import com.caverock.androidsvg.SVG;
-import com.caverock.androidsvg.SVGParseException;
 
 import com.cheogram.android.ConversationPage;
 import com.cheogram.android.Util;
@@ -1811,24 +1811,8 @@ public class Conversation extends AbstractEntity implements Blockable, Comparabl
                             if (mimeType == null || uriS == null) continue;
                             Uri uri = Uri.parse(uriS);
                             if (mimeType.startsWith("image/") && "https".equals(uri.getScheme())) {
-                                final Drawable d = cache.get(uri.toString());
-                                if (d == null) {
-                                    synchronized (CommandSession.this) {
-                                        waitingForRefresh = true;
-                                    }
-                                    int size = (int)(xmppConnectionService.getResources().getDisplayMetrics().density * 288);
-                                    Message dummy = new Message(Conversation.this, uri.toString(), Message.ENCRYPTION_NONE);
-                                    dummy.setFileParams(new Message.FileParams(uri.toString()));
-                                    httpManager.createNewDownloadConnection(dummy, true, (file) -> {
-                                        if (file == null) {
-                                            dummy.getTransferable().start();
-                                        } else {
-                                            try {
-                                                xmppConnectionService.getFileBackend().getThumbnail(file, xmppConnectionService.getResources(), size, false, uri.toString());
-                                            } catch (final Exception e) { }
-                                        }
-                                    });
-                                } else {
+                                final Drawable d = getDrawableForUrl(uri.toString());
+                                if (d != null) {
                                     binding.mediaImage.setImageDrawable(d);
                                     binding.mediaImage.setVisibility(View.VISIBLE);
                                 }
@@ -2178,29 +2162,21 @@ public class Conversation extends AbstractEntity implements Blockable, Comparabl
 
                             final SVG icon = getItem(position).getIcon();
                             if (icon != null) {
-                                 synchronized (CommandSession.this) {
-                                     waitingForRefresh = true;
-                                 }
+                                 final Element iconEl = getItem(position).getIconEl();
                                  if (height < 1) {
                                      v.measure(0, 0);
                                      height = v.getMeasuredHeight();
                                  }
                                  if (height < 1) return v;
-                                 icon.setDocumentPreserveAspectRatio(com.caverock.androidsvg.PreserveAspectRatio.LETTERBOX);
-                                 try {
-                                     icon.setDocumentWidth("100%");
-                                     icon.setDocumentHeight("100%");
-                                 } catch (final SVGParseException e) { }
                                  if (mediaSelector) {
-                                     Bitmap bitmap = Bitmap.createBitmap(height * 4, height * 4, Bitmap.Config.ARGB_8888);
-                                     Canvas bmcanvas = new Canvas(bitmap);
-                                     icon.renderToCanvas(bmcanvas);
-                                     v.setCompoundDrawablesRelativeWithIntrinsicBounds(null, new BitmapDrawable(bitmap), null, null);
+                                     final Drawable d = getDrawableForSVG(icon, iconEl, height * 4);
+                                     if (d != null) {
+                                         final int boundsHeight = 35 + (int)((height * 4) / xmppConnectionService.getResources().getDisplayMetrics().density);
+                                         d.setBounds(0, 0, d.getIntrinsicWidth(), boundsHeight);
+                                     }
+                                     v.setCompoundDrawables(null, d, null, null);
                                  } else {
-                                     Bitmap bitmap = Bitmap.createBitmap(height, height, Bitmap.Config.ARGB_8888);
-                                     Canvas bmcanvas = new Canvas(bitmap);
-                                     icon.renderToCanvas(bmcanvas);
-                                     v.setCompoundDrawablesRelativeWithIntrinsicBounds(new BitmapDrawable(bitmap), null, null, null);
+                                     v.setCompoundDrawablesRelativeWithIntrinsicBounds(getDrawableForSVG(icon, iconEl, height), null, null, null);
                                  }
                             }
 
@@ -2287,20 +2263,9 @@ public class Conversation extends AbstractEntity implements Blockable, Comparabl
 
                         final SVG defaultIcon = defaultOption.getIcon();
                         if (defaultIcon != null) {
-                             synchronized (CommandSession.this) {
-                                 waitingForRefresh = true;
-                             }
-                             defaultIcon.setDocumentPreserveAspectRatio(com.caverock.androidsvg.PreserveAspectRatio.LETTERBOX);
-                             try {
-                                 defaultIcon.setDocumentWidth("100%");
-                                 defaultIcon.setDocumentHeight("100%");
-                             } catch (final SVGParseException e) { }
                              DisplayMetrics display = mPager.getContext().getResources().getDisplayMetrics();
-                             Bitmap bitmap = Bitmap.createBitmap((int)(display.heightPixels*display.density/4), (int)(display.heightPixels*display.density/4), Bitmap.Config.ARGB_8888);
-                             bitmap.setDensity(display.densityDpi);
-                             Canvas bmcanvas = new Canvas(bitmap);
-                             defaultIcon.renderToCanvas(bmcanvas);
-                             binding.defaultButton.setCompoundDrawablesRelativeWithIntrinsicBounds(null, new BitmapDrawable(bitmap), null, null);
+                             int height = (int)(display.heightPixels*display.density/4);
+                             binding.defaultButton.setCompoundDrawablesRelativeWithIntrinsicBounds(null, getDrawableForSVG(defaultIcon, defaultOption.getIconEl(), height), null, null);
                         }
 
                         binding.defaultButton.setText(defaultOption.toString());
@@ -3260,6 +3225,39 @@ public class Conversation extends AbstractEntity implements Blockable, Comparabl
                     pendingResponsePacket = null;
                     updateWithResponseUiThread(pending);
                 }
+            }
+
+            private Drawable getDrawableForSVG(SVG svg, Element svgElement, int size) {
+               if (svgElement != null && svgElement.getChildren().size() == 1 && svgElement.getChildren().get(0).getName().equals("image"))  {
+                   return getDrawableForUrl(svgElement.getChildren().get(0).getAttribute("href"));
+               } else {
+                   return xmppConnectionService.getFileBackend().drawSVG(svg, size);
+               }
+            }
+
+            private Drawable getDrawableForUrl(final String url) {
+                final LruCache<String, Drawable> cache = xmppConnectionService.getDrawableCache();
+                final HttpConnectionManager httpManager = xmppConnectionService.getHttpConnectionManager();
+                final Drawable d = cache.get(url);
+                if (Build.VERSION.SDK_INT >= 28 && d instanceof AnimatedImageDrawable) ((AnimatedImageDrawable) d).start();
+                if (d == null) {
+                    synchronized (CommandSession.this) {
+                        waitingForRefresh = true;
+                    }
+                    int size = (int)(xmppConnectionService.getResources().getDisplayMetrics().density * 288);
+                    Message dummy = new Message(Conversation.this, url, Message.ENCRYPTION_NONE);
+                    dummy.setFileParams(new Message.FileParams(url));
+                    httpManager.createNewDownloadConnection(dummy, true, (file) -> {
+                        if (file == null) {
+                            dummy.getTransferable().start();
+                        } else {
+                            try {
+                                xmppConnectionService.getFileBackend().getThumbnail(file, xmppConnectionService.getResources(), size, false, url);
+                            } catch (final Exception e) { }
+                        }
+                    });
+                }
+                return d;
             }
 
             public View inflateUi(Context context, Consumer<ConversationPage> remover) {
