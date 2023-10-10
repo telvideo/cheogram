@@ -2165,6 +2165,8 @@ public class Conversation extends AbstractEntity implements Blockable, Comparabl
                 public ButtonGridFieldViewHolder(CommandButtonGridFieldBinding binding) {
                     super(binding);
                     options = new ArrayAdapter<Option>(binding.getRoot().getContext(), R.layout.button_grid_item) {
+                        protected int height = 0;
+
                         @Override
                         public View getView(int position, View convertView, ViewGroup parent) {
                             Button v = (Button) super.getView(position, convertView, parent);
@@ -2179,18 +2181,27 @@ public class Conversation extends AbstractEntity implements Blockable, Comparabl
                                  synchronized (CommandSession.this) {
                                      waitingForRefresh = true;
                                  }
-                                 v.post(() -> {
-                                     if (v.getHeight() == 0) return;
-                                     icon.setDocumentPreserveAspectRatio(com.caverock.androidsvg.PreserveAspectRatio.LETTERBOX);
-                                     try {
-                                         icon.setDocumentWidth("100%");
-                                         icon.setDocumentHeight("100%");
-                                     } catch (final SVGParseException e) { }
-                                     Bitmap bitmap = Bitmap.createBitmap(v.getHeight(), v.getHeight(), Bitmap.Config.ARGB_8888);
+                                 if (height < 1) {
+                                     v.measure(0, 0);
+                                     height = v.getMeasuredHeight();
+                                 }
+                                 if (height < 1) return v;
+                                 icon.setDocumentPreserveAspectRatio(com.caverock.androidsvg.PreserveAspectRatio.LETTERBOX);
+                                 try {
+                                     icon.setDocumentWidth("100%");
+                                     icon.setDocumentHeight("100%");
+                                 } catch (final SVGParseException e) { }
+                                 if (mediaSelector) {
+                                     Bitmap bitmap = Bitmap.createBitmap(height * 4, height * 4, Bitmap.Config.ARGB_8888);
+                                     Canvas bmcanvas = new Canvas(bitmap);
+                                     icon.renderToCanvas(bmcanvas);
+                                     v.setCompoundDrawablesRelativeWithIntrinsicBounds(null, new BitmapDrawable(bitmap), null, null);
+                                 } else {
+                                     Bitmap bitmap = Bitmap.createBitmap(height, height, Bitmap.Config.ARGB_8888);
                                      Canvas bmcanvas = new Canvas(bitmap);
                                      icon.renderToCanvas(bmcanvas);
                                      v.setCompoundDrawablesRelativeWithIntrinsicBounds(new BitmapDrawable(bitmap), null, null, null);
-                                 });
+                                 }
                             }
 
                             return v;
@@ -2200,6 +2211,7 @@ public class Conversation extends AbstractEntity implements Blockable, Comparabl
                 protected Element mValue = null;
                 protected ArrayAdapter<Option> options;
                 protected Option defaultOption = null;
+                protected boolean mediaSelector = false;
 
                 @Override
                 public void bind(Item item) {
@@ -2216,6 +2228,7 @@ public class Conversation extends AbstractEntity implements Blockable, Comparabl
                     }
 
                     mValue = field.getValue();
+                    mediaSelector = field.el.findChild("media-selector", "https://ns.cheogram.com/") != null;
 
                     Element validate = field.el.findChild("validate", "http://jabber.org/protocol/xdata-validate");
                     binding.openButton.setVisibility((validate != null && validate.findChild("open", "http://jabber.org/protocol/xdata-validate") != null) ? View.VISIBLE : View.GONE);
