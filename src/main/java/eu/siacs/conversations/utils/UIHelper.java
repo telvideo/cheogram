@@ -274,7 +274,8 @@ public class UIHelper {
 
     public static Pair<CharSequence, Boolean> getMessagePreview(final Context context, final Message message, @ColorInt int textColor) {
         final Transferable d = message.getTransferable();
-        if (d != null) {
+        final boolean moderated = message.getModerated() != null;
+        if (d != null && !moderated) {
             switch (d.getStatus()) {
                 case Transferable.STATUS_CHECKING:
                     return new Pair<>(context.getString(R.string.checking_x,
@@ -310,7 +311,7 @@ public class UIHelper {
             return new Pair<>(context.getString(R.string.not_encrypted_for_this_device), true);
         } else if (message.getEncryption() == Message.ENCRYPTION_AXOLOTL_FAILED) {
             return new Pair<>(context.getString(R.string.omemo_decryption_failed), true);
-        } else if (message.isFileOrImage()) {
+        } else if (message.isFileOrImage() && !moderated) {
             return new Pair<>(getFileDescriptionString(context, message), true);
         } else if (message.getType() == Message.TYPE_RTP_SESSION) {
             RtpSessionStatus rtpSessionStatus = RtpSessionStatus.of(message.getBody());
@@ -327,7 +328,7 @@ public class UIHelper {
                         UIHelper.getMessageDisplayName(message) + " "), false);
             } else if (message.isGeoUri()) {
                 return new Pair<>(context.getString(R.string.location), true);
-            } else if (message.treatAsDownloadable() || MessageUtils.unInitiatedButKnownSize(message)) {
+            } else if (!moderated && (message.treatAsDownloadable() || MessageUtils.unInitiatedButKnownSize(message))) {
                 return new Pair<>(context.getString(R.string.x_file_offered_for_download,
                         getFileDescriptionString(context, message)), true);
             } else {
