@@ -201,7 +201,7 @@ public class Bookmark extends Element implements ListItem {
 		} catch (final IllegalArgumentException e) {
 			try {
 				return tryFix ? getFullJid(gnu.inet.encoding.Punycode.encode(nick), false) : null;
-			} catch (final gnu.inet.encoding.PunycodeException | ArrayIndexOutOfBoundsException e2) {
+			} catch (final Exception e2) {
 				return null;
 			}
 		}

@@ -158,7 +158,7 @@ public abstract class AbstractParser {
 			if (nickname == null && nicknameIn != null && nick != null && gnu.inet.encoding.Punycode.decode(nick).equals(nicknameIn)) {
 				nickname = nicknameIn;
 			}
-		} catch (final gnu.inet.encoding.PunycodeException | ArrayIndexOutOfBoundsException e) { }
+		} catch (final Exception e) { }
 		Set<MucOptions.Hat> hats = new TreeSet<>();
 		for (Element hat : hatsEl.getChildren()) {
 			if ("hat".equals(hat.getName()) && ("urn:xmpp:hats:0".equals(hat.getNamespace()) || "xmpp:prosody.im/protocol/hats:1".equals(hat.getNamespace()))) {
