@@ -41,6 +41,7 @@ import org.webrtc.SessionDescription;
 import org.webrtc.VideoTrack;
 import org.webrtc.audio.JavaAudioDeviceModule;
 
+import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
@@ -102,6 +103,7 @@ public class WebRTCWrapper {
 
     private final EventCallback eventCallback;
     private final AtomicBoolean readyToReceivedIceCandidates = new AtomicBoolean(false);
+    private final AtomicBoolean rfc3264 = new AtomicBoolean(false);
     private final Queue<IceCandidate> iceCandidates = new LinkedList<>();
     private final AppRTCAudioManager.AudioManagerEvents audioManagerEvents =
             new AppRTCAudioManager.AudioManagerEvents() {
@@ -152,11 +154,14 @@ public class WebRTCWrapper {
                 public void onIceGatheringChange(
                         PeerConnection.IceGatheringState iceGatheringState) {
                     Log.d(EXTENDED_LOGGING_TAG, "onIceGatheringChange(" + iceGatheringState + ")");
+                    if (iceGatheringState == PeerConnection.IceGatheringState.COMPLETE) {
+                        eventCallback.onIceGatheringComplete(iceCandidates);
+                    }
                 }
 
                 @Override
                 public void onIceCandidate(IceCandidate iceCandidate) {
-                    if (readyToReceivedIceCandidates.get()) {
+                    if (readyToReceivedIceCandidates.get() && !rfc3264.get()) {
                         eventCallback.onIceCandidate(iceCandidate);
                     } else {
                         iceCandidates.add(iceCandidate);
@@ -305,7 +310,7 @@ public class WebRTCWrapper {
                                         .createAudioDeviceModule())
                         .createPeerConnectionFactory();
 
-        final PeerConnection.RTCConfiguration rtcConfig = buildConfiguration(iceServers);
+        final PeerConnection.RTCConfiguration rtcConfig = buildConfiguration(iceServers, rfc3264.get());
         final PeerConnection peerConnection =
                 requirePeerConnectionFactory()
                         .createPeerConnection(rtcConfig, peerConnectionObserver);
@@ -420,13 +425,18 @@ public class WebRTCWrapper {
     }
 
     private static PeerConnection.RTCConfiguration buildConfiguration(
-            final List<PeerConnection.IceServer> iceServers) {
+            final List<PeerConnection.IceServer> iceServers, boolean rfc3264) {
         final PeerConnection.RTCConfiguration rtcConfig =
                 new PeerConnection.RTCConfiguration(iceServers);
         rtcConfig.tcpCandidatePolicy =
                 PeerConnection.TcpCandidatePolicy.DISABLED; // XEP-0176 doesn't support tcp
-        rtcConfig.continualGatheringPolicy =
+        if (rfc3264) {
+            rtcConfig.continualGatheringPolicy =
+                PeerConnection.ContinualGatheringPolicy.GATHER_ONCE;
+        } else {
+            rtcConfig.continualGatheringPolicy =
                 PeerConnection.ContinualGatheringPolicy.GATHER_CONTINUALLY;
+        }
         rtcConfig.sdpSemantics = PeerConnection.SdpSemantics.UNIFIED_PLAN;
         rtcConfig.rtcpMuxPolicy = PeerConnection.RtcpMuxPolicy.NEGOTIATE;
         rtcConfig.enableImplicitRollback = true;
@@ -434,7 +444,7 @@ public class WebRTCWrapper {
     }
 
     void reconfigurePeerConnection(final List<PeerConnection.IceServer> iceServers) {
-        requirePeerConnection().setConfiguration(buildConfiguration(iceServers));
+        requirePeerConnection().setConfiguration(buildConfiguration(iceServers, rfc3264.get()));
     }
 
     void restartIceAsync() {
@@ -455,6 +465,7 @@ public class WebRTCWrapper {
 
     public void setIsReadyToReceiveIceCandidates(final boolean ready) {
         readyToReceivedIceCandidates.set(ready);
+        if (this.rfc3264.get()) return;
         final int was = iceCandidates.size();
         while (ready && iceCandidates.peek() != null) {
             eventCallback.onIceCandidate(iceCandidates.poll());
@@ -463,6 +474,15 @@ public class WebRTCWrapper {
         Log.d(
                 EXTENDED_LOGGING_TAG,
                 "setIsReadyToReceiveCandidates(" + ready + ") was=" + was + " is=" + is);
+    }
+
+    public void setRFC3264(final boolean rfc3264) {
+        // When this feature is enabled, do not trickle candidates
+        this.rfc3264.set(rfc3264);
+    }
+
+    public boolean getRFC3264() {
+        return this.rfc3264.get();
     }
 
     synchronized void close() {
@@ -593,6 +613,10 @@ public class WebRTCWrapper {
             return;
         }
         throw new IllegalStateException("Local video track does not exist");
+    }
+
+    synchronized SessionDescription getLocalDescription() {
+        return peerConnection.getLocalDescription();
     }
 
     synchronized ListenableFuture<SessionDescription> setLocalDescription() {
@@ -769,6 +793,8 @@ public class WebRTCWrapper {
                 Set<AppRTCAudioManager.AudioDevice> availableAudioDevices);
 
         void onRenegotiationNeeded();
+
+        void onIceGatheringComplete(Collection<IceCandidate> iceCandidates);
     }
 
     private abstract static class SetSdpObserver implements SdpObserver {

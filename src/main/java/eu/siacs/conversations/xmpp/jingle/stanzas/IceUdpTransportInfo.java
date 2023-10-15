@@ -69,6 +69,9 @@ public class IceUdpTransportInfo extends GenericTransportInfo {
         for (final String iceOption : IceOption.of(media)) {
             iceUdpTransportInfo.addChild(new IceOption(iceOption));
         }
+        for (final String candidate : media.attributes.get("candidate")) {
+            iceUdpTransportInfo.addChild(Candidate.fromSdpAttributeValue(candidate, ufrag));
+        }
         return iceUdpTransportInfo;
     }
 
