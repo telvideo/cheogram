@@ -155,7 +155,7 @@ public class WebRTCWrapper {
                         PeerConnection.IceGatheringState iceGatheringState) {
                     Log.d(EXTENDED_LOGGING_TAG, "onIceGatheringChange(" + iceGatheringState + ")");
                     if (iceGatheringState == PeerConnection.IceGatheringState.COMPLETE) {
-                        eventCallback.onIceGatheringComplete(iceCandidates);
+                        execute(() -> eventCallback.onIceGatheringComplete(iceCandidates));
                     }
                 }
 
