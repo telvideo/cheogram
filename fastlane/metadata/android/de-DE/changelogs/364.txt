@@ -1,2 +1,0 @@
-* Bereitstellen von PDF-Vorschau ab Android 5+
-* Nutzung von 12 byte IVs für OMEMO

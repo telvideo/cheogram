@@ -1,3 +1,0 @@
-* Bietet einfache Einladungserstellung auf unterstützenden Servern
-* GIFs anzeigen, die von Movim gesendet werden
-* Profilbilder im Cache speichern
