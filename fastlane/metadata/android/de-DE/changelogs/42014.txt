@@ -1,2 +1,0 @@
-* Domänenname immer überprüfen. Kein Überschreiben von Benutzern
-* Unterstützung der Kontaktlisten-Vorauthentifizierung
