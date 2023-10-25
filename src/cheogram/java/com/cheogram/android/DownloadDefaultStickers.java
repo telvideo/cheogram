@@ -69,7 +69,7 @@ public class DownloadDefaultStickers extends Service {
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
 		if (http == null) {
-			http = HttpConnectionManager.newBuilder(intent.getBooleanExtra("tor", getResources().getBoolean(R.bool.use_tor))).build();
+			http = HttpConnectionManager.newBuilder(intent == null ? getResources().getBoolean(R.bool.use_tor) : intent.getBooleanExtra("tor", getResources().getBoolean(R.bool.use_tor))).build();
 		}
 		synchronized(pendingPacks) {
 			pendingPacks.add(intent.getData() == null ? Uri.parse("https://stickers.cheogram.com/index.json") : intent.getData());
