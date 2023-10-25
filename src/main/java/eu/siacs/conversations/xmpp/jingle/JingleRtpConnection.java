@@ -1130,7 +1130,8 @@ public class JingleRtpConnection extends AbstractJingleConnection
             return;
         }
         final Presence presence = id.getContact().getPresences().get(id.getWith().getResource());
-        if (presence != null && presence.getServiceDiscoveryResult().getFeatures().contains("urn:ietf:rfc:3264")) webRTCWrapper.setRFC3264(true);
+        final ServiceDiscoveryResult disco = presence == null ? null : presence.getServiceDiscoveryResult();
+        if (disco != null && disco.getFeatures().contains("urn:ietf:rfc:3264")) webRTCWrapper.setRFC3264(true);
         final ListenableFuture<RtpContentMap> future = receiveRtpContentMap(jinglePacket, false);
         Futures.addCallback(
                 future,
@@ -2376,7 +2377,8 @@ public class JingleRtpConnection extends AbstractJingleConnection
     private void setupWebRTC(final Set<Media> media, final List<PeerConnection.IceServer> iceServers) throws WebRTCWrapper.InitializationException {
         this.jingleConnectionManager.ensureConnectionIsRegistered(this);
         final Presence presence = id.getContact().getPresences().get(id.getWith().getResource());
-        if (presence != null && presence.getServiceDiscoveryResult().getFeatures().contains("urn:ietf:rfc:3264")) webRTCWrapper.setRFC3264(true);
+        final ServiceDiscoveryResult disco = presence == null ? null : presence.getServiceDiscoveryResult();
+        if (disco != null && disco.getFeatures().contains("urn:ietf:rfc:3264")) webRTCWrapper.setRFC3264(true);
         this.webRTCWrapper.setup(this.xmppConnectionService, AppRTCAudioManager.SpeakerPhonePreference.of(media));
         this.webRTCWrapper.initializePeerConnection(media, iceServers);
     }
