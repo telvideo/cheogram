@@ -150,15 +150,16 @@ public class Presences {
     }
 
     public String firstWhichSupport(final String namespace) {
-        for (Map.Entry<String, Presence> entry : this.presences.entrySet()) {
-            String resource = entry.getKey();
-            Presence presence = entry.getValue();
-            ServiceDiscoveryResult disco = presence.getServiceDiscoveryResult();
-            if (disco != null && disco.getFeatures().contains(namespace)) {
-                return resource;
+        synchronized (this.presences) {
+            for (Map.Entry<String, Presence> entry : this.presences.entrySet()) {
+                String resource = entry.getKey();
+                Presence presence = entry.getValue();
+                ServiceDiscoveryResult disco = presence.getServiceDiscoveryResult();
+                if (disco != null && disco.getFeatures().contains(namespace)) {
+                    return resource;
+                }
             }
         }
-
         return null;
     }
 
