@@ -1339,6 +1339,15 @@ public class FileBackend {
         int height = drawable.getIntrinsicHeight();
         if (height < 1) height = bounds == null || bounds.bottom < 1 ? 256 : bounds.bottom;
 
+        if (width < 1) {
+            Log.w(Config.LOGTAG, "Drawable with no width: " + drawable);
+            width = 48;
+        }
+        if (height < 1) {
+            Log.w(Config.LOGTAG, "Drawable with no height: " + drawable);
+            height = 48;
+        }
+
         bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
         Canvas canvas = new Canvas(bitmap);
         drawable.setBounds(0, 0, canvas.getWidth(), canvas.getHeight());
