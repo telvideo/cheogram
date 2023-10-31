@@ -8,6 +8,7 @@ artifacts:
 packages:
 - wget
 - unzip
+- openjdk-17-jdk-headless
 - android-sdk
 secrets:
 - 7eed327c-05c7-49b4-baed-a4d8785588d5
