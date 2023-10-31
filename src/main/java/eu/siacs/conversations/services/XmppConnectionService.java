@@ -19,6 +19,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.content.pm.ServiceInfo;
 import android.database.ContentObserver;
 import android.graphics.Bitmap;
 import android.graphics.drawable.AnimatedImageDrawable;
@@ -101,6 +102,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
@@ -144,6 +146,7 @@ import eu.siacs.conversations.persistance.DatabaseBackend;
 import eu.siacs.conversations.persistance.FileBackend;
 import eu.siacs.conversations.persistance.UnifiedPushDatabase;
 import eu.siacs.conversations.ui.ChooseAccountForProfilePictureActivity;
+import eu.siacs.conversations.ui.ConversationsActivity;
 import eu.siacs.conversations.ui.RtpSessionActivity;
 import eu.siacs.conversations.ui.SettingsActivity;
 import eu.siacs.conversations.ui.UiCallback;
@@ -211,7 +214,11 @@ public class XmppConnectionService extends Service {
     public static final String ACTION_CLEAR_MISSED_CALL_NOTIFICATION = "clear_missed_call_notification";
     public static final String ACTION_DISMISS_ERROR_NOTIFICATIONS = "dismiss_error";
     public static final String ACTION_TRY_AGAIN = "try_again";
+
+    public static final String ACTION_TEMPORARILY_DISABLE = "temporarily_disable";
+    public static final String ACTION_PING = "ping";
     public static final String ACTION_IDLE_PING = "idle_ping";
+    public static final String ACTION_INTERNAL_PING = "internal_ping";
     public static final String ACTION_FCM_TOKEN_REFRESH = "fcm_token_refresh";
     public static final String ACTION_FCM_MESSAGE_RECEIVED = "fcm_message_received";
     public static final String ACTION_DISMISS_CALL = "dismiss_call";
@@ -225,6 +232,8 @@ public class XmppConnectionService extends Service {
     public final CountDownLatch restoredFromDatabaseLatch = new CountDownLatch(1);
     private final static Executor FILE_OBSERVER_EXECUTOR = Executors.newSingleThreadExecutor();
     private final static Executor FILE_ATTACHMENT_EXECUTOR = Executors.newSingleThreadExecutor();
+
+    private final ScheduledExecutorService internalPingExecutor = Executors.newSingleThreadScheduledExecutor();
     private final static SerialSingleThreadExecutor VIDEO_COMPRESSION_EXECUTOR = new SerialSingleThreadExecutor("VideoCompression");
     private final SerialSingleThreadExecutor mDatabaseWriterExecutor = new SerialSingleThreadExecutor("DatabaseWriter");
     private final SerialSingleThreadExecutor mDatabaseReaderExecutor = new SerialSingleThreadExecutor("DatabaseReader");
@@ -488,9 +497,9 @@ public class XmppConnectionService extends Service {
                     joinMuc(conversation);
                 }
                 scheduleWakeUpCall(Config.PING_MAX_INTERVAL, account.getUuid().hashCode());
-            } else if (account.getStatus() == Account.State.OFFLINE || account.getStatus() == Account.State.DISABLED) {
+            } else if (account.getStatus() == Account.State.OFFLINE || account.getStatus() == Account.State.DISABLED || account.getStatus() == Account.State.LOGGED_OUT) {
                 resetSendingToWaiting(account);
-                if (account.isEnabled() && isInLowPingTimeoutMode(account)) {
+                if (account.isConnectionEnabled() && isInLowPingTimeoutMode(account)) {
                     Log.d(Config.LOGTAG, account.getJid().asBareJid() + ": went into offline state during low ping mode. reconnecting now");
                     reconnectAccount(account, true, false);
                 } else {
@@ -503,7 +512,8 @@ public class XmppConnectionService extends Service {
             } else if (account.getStatus() != Account.State.CONNECTING && account.getStatus() != Account.State.NO_INTERNET) {
                 resetSendingToWaiting(account);
                 if (connection != null && account.getStatus().isAttemptReconnect()) {
-                    final boolean aggressive = hasJingleRtpConnection(account);
+                    final boolean aggressive = account.getStatus() == Account.State.SEE_OTHER_HOST
+                            || hasJingleRtpConnection(account);
                     final int next = connection.getTimeToNextAttempt(aggressive);
                     final boolean lowPingTimeoutMode = isInLowPingTimeoutMode(account);
                     if (next <= 0) {
@@ -513,6 +523,13 @@ public class XmppConnectionService extends Service {
                         final int attempt = connection.getAttempt() + 1;
                         Log.d(Config.LOGTAG, account.getJid().asBareJid() + ": error connecting account. try again in " + next + "s for the " + attempt + " time. lowPingTimeout=" + lowPingTimeoutMode+", aggressive="+aggressive);
                         scheduleWakeUpCall(next, account.getUuid().hashCode());
+                        if (aggressive) {
+                            internalPingExecutor.schedule(
+                                    XmppConnectionService.this::manageAccountConnectionStatesInternal,
+                                    (next * 1000L) + 50,
+                                    TimeUnit.MILLISECONDS
+                            );
+                        }
                     }
                 }
             }
@@ -524,6 +541,7 @@ public class XmppConnectionService extends Service {
     private WakeLock wakeLock;
     private LruCache<String, Drawable> mDrawableCache;
     private final BroadcastReceiver mInternalEventReceiver = new InternalEventReceiver();
+    private final BroadcastReceiver mInternalRestrictedEventReceiver = new RestrictedEventReceiver(Arrays.asList(TorServiceUtils.ACTION_STATUS));
     private final BroadcastReceiver mInternalScreenEventReceiver = new InternalEventReceiver();
     private EmojiSearch emojiSearch = null;
 
@@ -797,239 +815,259 @@ public class XmppConnectionService extends Service {
     }
 
     @Override
-    public int onStartCommand(Intent intent, int flags, int startId) {
-        final String action = intent == null ? null : intent.getAction();
+    public int onStartCommand(final Intent intent, int flags, int startId) {
+        final String action = Strings.nullToEmpty(intent == null ? null : intent.getAction());
         final boolean needsForegroundService = intent != null && intent.getBooleanExtra(EventReceiver.EXTRA_NEEDS_FOREGROUND_SERVICE, false);
         if (needsForegroundService) {
             Log.d(Config.LOGTAG, "toggle forced foreground service after receiving event (action=" + action + ")");
             toggleForegroundService(true);
         }
-        String pushedAccountHash = null;
-        boolean interactive = false;
-        if (action != null) {
-            final String uuid = intent.getStringExtra("uuid");
-            switch (action) {
-                case QuickConversationsService.SMS_RETRIEVED_ACTION:
-                    mQuickConversationsService.handleSmsReceived(intent);
-                    break;
-                case ConnectivityManager.CONNECTIVITY_ACTION:
-                    if (hasInternetConnection()) {
-                        if (Config.POST_CONNECTIVITY_CHANGE_PING_INTERVAL > 0) {
-                            schedulePostConnectivityChange();
-                        }
-                        if (Config.RESET_ATTEMPT_COUNT_ON_NETWORK_CHANGE) {
-                            resetAllAttemptCounts(true, false);
-                        }
-                        Resolver.clearCache();
+        final String uuid = intent == null ? null : intent.getStringExtra("uuid");
+        switch (action) {
+            case QuickConversationsService.SMS_RETRIEVED_ACTION:
+                mQuickConversationsService.handleSmsReceived(intent);
+                break;
+            case ConnectivityManager.CONNECTIVITY_ACTION:
+                if (hasInternetConnection()) {
+                    if (Config.POST_CONNECTIVITY_CHANGE_PING_INTERVAL > 0) {
+                        schedulePostConnectivityChange();
                     }
-                    break;
-                case Intent.ACTION_SHUTDOWN:
-                    logoutAndSave(true);
-                    return START_NOT_STICKY;
-                case ACTION_CLEAR_MESSAGE_NOTIFICATION:
-                    mNotificationExecutor.execute(() -> {
-                        try {
-                            final Conversation c = findConversationByUuid(uuid);
-                            if (c != null) {
-                                mNotificationService.clearMessages(c);
-                            } else {
-                                mNotificationService.clearMessages();
-                            }
-                            restoredFromDatabaseLatch.await();
-
-                        } catch (InterruptedException e) {
-                            Log.d(Config.LOGTAG, "unable to process clear message notification");
-                        }
-                    });
-                    break;
-                case ACTION_CLEAR_MISSED_CALL_NOTIFICATION:
-                    mNotificationExecutor.execute(() -> {
-                        try {
-                            final Conversation c = findConversationByUuid(uuid);
-                            if (c != null) {
-                                mNotificationService.clearMissedCalls(c);
-                            } else {
-                                mNotificationService.clearMissedCalls();
-                            }
-                            restoredFromDatabaseLatch.await();
-
-                        } catch (InterruptedException e) {
-                            Log.d(Config.LOGTAG, "unable to process clear missed call notification");
-                        }
-                    });
-                    break;
-                case ACTION_DISMISS_CALL: {
-                    final String sessionId = intent.getStringExtra(RtpSessionActivity.EXTRA_SESSION_ID);
-                    Log.d(Config.LOGTAG, "received intent to dismiss call with session id " + sessionId);
-                    mJingleConnectionManager.rejectRtpSession(sessionId);
-                    break;
-                }
-                case TorServiceUtils.ACTION_STATUS:
-                    final String status = intent.getStringExtra(TorServiceUtils.EXTRA_STATUS);
-                    //TODO port and host are in 'extras' - but this may not be a reliable source?
-                    if ("ON".equals(status)) {
-                        handleOrbotStartedEvent();
-                        return START_STICKY;
+                    if (Config.RESET_ATTEMPT_COUNT_ON_NETWORK_CHANGE) {
+                        resetAllAttemptCounts(true, false);
                     }
-                    break;
-                case ACTION_END_CALL: {
-                    final String sessionId = intent.getStringExtra(RtpSessionActivity.EXTRA_SESSION_ID);
-                    Log.d(Config.LOGTAG, "received intent to end call with session id " + sessionId);
-                    mJingleConnectionManager.endRtpSession(sessionId);
+                    Resolver.clearCache();
                 }
                 break;
-                case ACTION_PROVISION_ACCOUNT: {
-                    final String address = intent.getStringExtra("address");
-                    final String password = intent.getStringExtra("password");
-                    if (QuickConversationsService.isQuicksy() || Strings.isNullOrEmpty(address) || Strings.isNullOrEmpty(password)) {
-                        break;
-                    }
-                    provisionAccount(address, password);
-                    break;
-                }
-                case ACTION_DISMISS_ERROR_NOTIFICATIONS:
-                    dismissErrorNotifications();
-                    break;
-                case ACTION_TRY_AGAIN:
-                    resetAllAttemptCounts(false, true);
-                    interactive = true;
-                    break;
-                case ACTION_REPLY_TO_CONVERSATION:
-                    Bundle remoteInput = RemoteInput.getResultsFromIntent(intent);
-                    if (remoteInput == null) {
-                        break;
-                    }
-                    final CharSequence body = remoteInput.getCharSequence("text_reply");
-                    final boolean dismissNotification = intent.getBooleanExtra("dismiss_notification", false);
-                    final String lastMessageUuid = intent.getStringExtra("last_message_uuid");
-                    if (body == null || body.length() <= 0) {
-                        break;
-                    }
-                    mNotificationExecutor.execute(() -> {
-                        try {
-                            restoredFromDatabaseLatch.await();
-                            final Conversation c = findConversationByUuid(uuid);
-                            if (c != null) {
-                                directReply(c, body.toString(), lastMessageUuid, dismissNotification);
-                            }
-                        } catch (InterruptedException e) {
-                            Log.d(Config.LOGTAG, "unable to process direct reply");
-                        }
-                    });
-                    break;
-                case ACTION_MARK_AS_READ:
-                    mNotificationExecutor.execute(() -> {
+            case Intent.ACTION_SHUTDOWN:
+                logoutAndSave(true);
+                return START_NOT_STICKY;
+            case ACTION_CLEAR_MESSAGE_NOTIFICATION:
+                mNotificationExecutor.execute(() -> {
+                    try {
                         final Conversation c = findConversationByUuid(uuid);
-                        if (c == null) {
-                            Log.d(Config.LOGTAG, "received mark read intent for unknown conversation (" + uuid + ")");
-                            return;
+                        if (c != null) {
+                            mNotificationService.clearMessages(c);
+                        } else {
+                            mNotificationService.clearMessages();
                         }
-                        try {
-                            restoredFromDatabaseLatch.await();
-                            sendReadMarker(c, null);
-                        } catch (InterruptedException e) {
-                            Log.d(Config.LOGTAG, "unable to process notification read marker for conversation " + c.getName());
-                        }
+                        restoredFromDatabaseLatch.await();
 
-                    });
-                    break;
-                case ACTION_SNOOZE:
-                    mNotificationExecutor.execute(() -> {
+                    } catch (InterruptedException e) {
+                        Log.d(Config.LOGTAG, "unable to process clear message notification");
+                    }
+                });
+                break;
+            case ACTION_CLEAR_MISSED_CALL_NOTIFICATION:
+                mNotificationExecutor.execute(() -> {
+                    try {
                         final Conversation c = findConversationByUuid(uuid);
-                        if (c == null) {
-                            Log.d(Config.LOGTAG, "received snooze intent for unknown conversation (" + uuid + ")");
-                            return;
+                        if (c != null) {
+                            mNotificationService.clearMissedCalls(c);
+                        } else {
+                            mNotificationService.clearMissedCalls();
                         }
-                        c.setMutedTill(System.currentTimeMillis() + 30 * 60 * 1000);
-                        mNotificationService.clearMessages(c);
-                        updateConversation(c);
-                    });
-                case AudioManager.RINGER_MODE_CHANGED_ACTION:
-                case NotificationManager.ACTION_INTERRUPTION_FILTER_CHANGED:
-                    if (dndOnSilentMode()) {
-                        refreshAllPresences();
+                        restoredFromDatabaseLatch.await();
+
+                    } catch (InterruptedException e) {
+                        Log.d(Config.LOGTAG, "unable to process clear missed call notification");
                     }
+                });
+                break;
+            case ACTION_DISMISS_CALL: {
+                if (intent == null) {
                     break;
-                case Intent.ACTION_SCREEN_ON:
-                    deactivateGracePeriod();
-                case Intent.ACTION_USER_PRESENT:
-                case Intent.ACTION_SCREEN_OFF:
-                    if (awayWhenScreenLocked()) {
-                        refreshAllPresences();
-                    }
-                    break;
-                case ACTION_FCM_TOKEN_REFRESH:
-                    refreshAllFcmTokens();
-                    break;
-                case ACTION_RENEW_UNIFIED_PUSH_ENDPOINTS:
-                    final String instance = intent.getStringExtra("instance");
-                    final String application = intent.getStringExtra("application");
-                    final Messenger messenger = intent.getParcelableExtra("messenger");
-                    final UnifiedPushBroker.PushTargetMessenger pushTargetMessenger;
-                    if (messenger != null && application != null && instance != null) {
-                        pushTargetMessenger = new UnifiedPushBroker.PushTargetMessenger(new UnifiedPushDatabase.PushTarget(application, instance),messenger);
-                        Log.d(Config.LOGTAG,"found push target messenger");
-                    } else {
-                        pushTargetMessenger = null;
-                    }
-                    final Optional<UnifiedPushBroker.Transport> transport = renewUnifiedPushEndpoints(pushTargetMessenger);
-                    if (instance != null && transport.isPresent()) {
-                        unifiedPushBroker.rebroadcastEndpoint(messenger, instance, transport.get());
-                    }
-                    break;
-                case ACTION_IDLE_PING:
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                        scheduleNextIdlePing();
-                    }
-                    break;
-                case ACTION_FCM_MESSAGE_RECEIVED:
-                    pushedAccountHash = intent.getStringExtra("account");
-                    Log.d(Config.LOGTAG, "push message arrived in service. account=" + pushedAccountHash);
-                    break;
-                case Intent.ACTION_SEND:
-                    Uri uri = intent.getData();
-                    if (uri != null) {
-                        Log.d(Config.LOGTAG, "received uri permission for " + uri);
-                    }
+                }
+                final String sessionId = intent.getStringExtra(RtpSessionActivity.EXTRA_SESSION_ID);
+                Log.d(Config.LOGTAG, "received intent to dismiss call with session id " + sessionId);
+                mJingleConnectionManager.rejectRtpSession(sessionId);
+                break;
+            }
+            case TorServiceUtils.ACTION_STATUS:
+                final String status = intent == null ? null : intent.getStringExtra(TorServiceUtils.EXTRA_STATUS);
+                //TODO port and host are in 'extras' - but this may not be a reliable source?
+                if ("ON".equals(status)) {
+                    handleOrbotStartedEvent();
                     return START_STICKY;
-            }
-        }
-        synchronized (this) {
-            WakeLockHelper.acquire(wakeLock);
-            boolean pingNow = ConnectivityManager.CONNECTIVITY_ACTION.equals(action) || (Config.POST_CONNECTIVITY_CHANGE_PING_INTERVAL > 0 && ACTION_POST_CONNECTIVITY_CHANGE.equals(action));
-            final HashSet<Account> pingCandidates = new HashSet<>();
-            final String androidId = PhoneHelper.getAndroidId(this);
-            for (Account account : accounts) {
-                final boolean pushWasMeantForThisAccount = CryptoHelper.getAccountFingerprint(account, androidId).equals(pushedAccountHash);
-                pingNow |= processAccountState(account,
-                        interactive,
-                        "ui".equals(action),
-                        pushWasMeantForThisAccount,
-                        pingCandidates);
-            }
-            if (pingNow) {
-                for (Account account : pingCandidates) {
-                    final boolean lowTimeout = isInLowPingTimeoutMode(account);
-                    account.getXmppConnection().sendPing();
-                    Log.d(Config.LOGTAG, account.getJid().asBareJid() + " send ping (action=" + action + ",lowTimeout=" + lowTimeout + ")");
-                    scheduleWakeUpCall(lowTimeout ? Config.LOW_PING_TIMEOUT : Config.PING_TIMEOUT, account.getUuid().hashCode());
                 }
-                long msToMucPing = (mLastMucPing + (Config.PING_MAX_INTERVAL * 2000L)) - SystemClock.elapsedRealtime();
-                if (msToMucPing <= 0) {
-                    mLastMucPing = SystemClock.elapsedRealtime();
-                    for (Conversation c : getConversations()) {
-                        if (c.getMode() == Conversation.MODE_MULTI && c.getMucOptions().online()) {
-                            mucSelfPingAndRejoin(c);
+                break;
+            case ACTION_END_CALL: {
+                if (intent == null) {
+                    break;
+                }
+                final String sessionId = intent.getStringExtra(RtpSessionActivity.EXTRA_SESSION_ID);
+                Log.d(Config.LOGTAG, "received intent to end call with session id " + sessionId);
+                mJingleConnectionManager.endRtpSession(sessionId);
+            }
+            break;
+            case ACTION_PROVISION_ACCOUNT: {
+                if (intent == null) {
+                    break;
+                }
+                final String address = intent.getStringExtra("address");
+                final String password = intent.getStringExtra("password");
+                if (QuickConversationsService.isQuicksy() || Strings.isNullOrEmpty(address) || Strings.isNullOrEmpty(password)) {
+                    break;
+                }
+                provisionAccount(address, password);
+                break;
+            }
+            case ACTION_DISMISS_ERROR_NOTIFICATIONS:
+                dismissErrorNotifications();
+                break;
+            case ACTION_TRY_AGAIN:
+                resetAllAttemptCounts(false, true);
+                break;
+            case ACTION_REPLY_TO_CONVERSATION:
+                final Bundle remoteInput = intent == null ? null : RemoteInput.getResultsFromIntent(intent);
+                if (remoteInput == null) {
+                    break;
+                }
+                final CharSequence body = remoteInput.getCharSequence("text_reply");
+                final boolean dismissNotification = intent.getBooleanExtra("dismiss_notification", false);
+                final String lastMessageUuid = intent.getStringExtra("last_message_uuid");
+                if (body == null || body.length() <= 0) {
+                    break;
+                }
+                mNotificationExecutor.execute(() -> {
+                    try {
+                        restoredFromDatabaseLatch.await();
+                        final Conversation c = findConversationByUuid(uuid);
+                        if (c != null) {
+                            directReply(c, body.toString(), lastMessageUuid, dismissNotification);
                         }
+                    } catch (InterruptedException e) {
+                        Log.d(Config.LOGTAG, "unable to process direct reply");
                     }
+                });
+                break;
+            case ACTION_MARK_AS_READ:
+                mNotificationExecutor.execute(() -> {
+                    final Conversation c = findConversationByUuid(uuid);
+                    if (c == null) {
+                        Log.d(Config.LOGTAG, "received mark read intent for unknown conversation (" + uuid + ")");
+                        return;
+                    }
+                    try {
+                        restoredFromDatabaseLatch.await();
+                        sendReadMarker(c, null);
+                    } catch (InterruptedException e) {
+                        Log.d(Config.LOGTAG, "unable to process notification read marker for conversation " + c.getName());
+                    }
+
+                });
+                break;
+            case ACTION_SNOOZE:
+                mNotificationExecutor.execute(() -> {
+                    final Conversation c = findConversationByUuid(uuid);
+                    if (c == null) {
+                        Log.d(Config.LOGTAG, "received snooze intent for unknown conversation (" + uuid + ")");
+                        return;
+                    }
+                    c.setMutedTill(System.currentTimeMillis() + 30 * 60 * 1000);
+                    mNotificationService.clearMessages(c);
+                    updateConversation(c);
+                });
+            case AudioManager.RINGER_MODE_CHANGED_ACTION:
+            case NotificationManager.ACTION_INTERRUPTION_FILTER_CHANGED:
+                if (dndOnSilentMode()) {
+                    refreshAllPresences();
                 }
-            }
-            WakeLockHelper.release(wakeLock);
+                break;
+            case Intent.ACTION_SCREEN_ON:
+                deactivateGracePeriod();
+            case Intent.ACTION_USER_PRESENT:
+            case Intent.ACTION_SCREEN_OFF:
+                if (awayWhenScreenLocked()) {
+                    refreshAllPresences();
+                }
+                break;
+            case ACTION_FCM_TOKEN_REFRESH:
+                refreshAllFcmTokens();
+                break;
+            case ACTION_RENEW_UNIFIED_PUSH_ENDPOINTS:
+                if (intent == null) {
+                    break;
+                }
+                final String instance = intent.getStringExtra("instance");
+                final String application = intent.getStringExtra("application");
+                final Messenger messenger = intent.getParcelableExtra("messenger");
+                final UnifiedPushBroker.PushTargetMessenger pushTargetMessenger;
+                if (messenger != null && application != null && instance != null) {
+                    pushTargetMessenger = new UnifiedPushBroker.PushTargetMessenger(new UnifiedPushDatabase.PushTarget(application, instance),messenger);
+                    Log.d(Config.LOGTAG,"found push target messenger");
+                } else {
+                    pushTargetMessenger = null;
+                }
+                final Optional<UnifiedPushBroker.Transport> transport = renewUnifiedPushEndpoints(pushTargetMessenger);
+                if (instance != null && transport.isPresent()) {
+                    unifiedPushBroker.rebroadcastEndpoint(messenger, instance, transport.get());
+                }
+                break;
+            case ACTION_IDLE_PING:
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    scheduleNextIdlePing();
+                }
+                break;
+            case ACTION_FCM_MESSAGE_RECEIVED:
+                Log.d(Config.LOGTAG, "push message arrived in service. account");
+                break;
+            case Intent.ACTION_SEND:
+                final Uri uri = intent == null ? null : intent.getData();
+                if (uri != null) {
+                    Log.d(Config.LOGTAG, "received uri permission for " + uri);
+                }
+                return START_STICKY;
+            case ACTION_TEMPORARILY_DISABLE:
+                toggleSoftDisabled(true);
+                if (checkListeners()) {
+                    stopSelf();
+                }
+                return START_NOT_STICKY;
         }
+        manageAccountConnectionStates(action, intent == null ? null : intent.getExtras());
         if (SystemClock.elapsedRealtime() - mLastExpiryRun.get() >= Config.EXPIRY_INTERVAL) {
             expireOldMessages();
         }
         return START_STICKY;
+    }
+
+    private void manageAccountConnectionStatesInternal() {
+        manageAccountConnectionStates(ACTION_INTERNAL_PING, null);
+    }
+
+    private synchronized void manageAccountConnectionStates(final String action, final Bundle extras) {
+        final String pushedAccountHash = extras == null ? null : extras.getString("account");
+        final boolean interactive = Arrays.asList(ACTION_TRY_AGAIN).contains(action);
+        WakeLockHelper.acquire(wakeLock);
+        boolean pingNow = ConnectivityManager.CONNECTIVITY_ACTION.equals(action) || (Config.POST_CONNECTIVITY_CHANGE_PING_INTERVAL > 0 && ACTION_POST_CONNECTIVITY_CHANGE.equals(action));
+        final HashSet<Account> pingCandidates = new HashSet<>();
+        final String androidId = PhoneHelper.getAndroidId(this);
+        for (final Account account : accounts) {
+            final boolean pushWasMeantForThisAccount = CryptoHelper.getAccountFingerprint(account, androidId).equals(pushedAccountHash);
+            pingNow |= processAccountState(account,
+                    interactive,
+                    "ui".equals(action),
+                    pushWasMeantForThisAccount,
+                    pingCandidates);
+        }
+        if (pingNow) {
+            for (Account account : pingCandidates) {
+                final boolean lowTimeout = isInLowPingTimeoutMode(account);
+                account.getXmppConnection().sendPing();
+                Log.d(Config.LOGTAG, account.getJid().asBareJid() + " send ping (action=" + action + ",lowTimeout=" + lowTimeout + ")");
+                scheduleWakeUpCall(lowTimeout ? Config.LOW_PING_TIMEOUT : Config.PING_TIMEOUT, account.getUuid().hashCode());
+            }
+            long msToMucPing = (mLastMucPing + (Config.PING_MAX_INTERVAL * 2000L)) - SystemClock.elapsedRealtime();
+            if (msToMucPing <= 0) {
+                mLastMucPing = SystemClock.elapsedRealtime();
+                for (Conversation c : getConversations()) {
+                    if (c.getMode() == Conversation.MODE_MULTI && c.getMucOptions().online()) {
+                        mucSelfPingAndRejoin(c);
+                    }
+                }
+            }
+        }
+        WakeLockHelper.release(wakeLock);
     }
 
     private void handleOrbotStartedEvent() {
@@ -1041,79 +1079,85 @@ public class XmppConnectionService extends Service {
     }
 
     private boolean processAccountState(Account account, boolean interactive, boolean isUiAction, boolean isAccountPushed, HashSet<Account> pingCandidates) {
-        boolean pingNow = false;
-        if (account.getStatus().isAttemptReconnect()) {
-            if (!hasInternetConnection()) {
-                account.setStatus(Account.State.NO_INTERNET);
-                if (statusListener != null) {
-                    statusListener.onStatusChanged(account);
-                }
-            } else {
-                if (account.getStatus() == Account.State.NO_INTERNET) {
-                    account.setStatus(Account.State.OFFLINE);
-                    if (statusListener != null) {
-                        statusListener.onStatusChanged(account);
-                    }
-                }
-                if (account.getStatus() == Account.State.ONLINE) {
-                    synchronized (mLowPingTimeoutMode) {
-                        long lastReceived = account.getXmppConnection().getLastPacketReceived();
-                        long lastSent = account.getXmppConnection().getLastPingSent();
-                        long pingInterval = isUiAction ? Config.PING_MIN_INTERVAL * 1000 : Config.PING_MAX_INTERVAL * 1000;
-                        long msToNextPing = (Math.max(lastReceived, lastSent) + pingInterval) - SystemClock.elapsedRealtime();
-                        int pingTimeout = mLowPingTimeoutMode.contains(account.getJid().asBareJid()) ? Config.LOW_PING_TIMEOUT * 1000 : Config.PING_TIMEOUT * 1000;
-                        long pingTimeoutIn = (lastSent + pingTimeout) - SystemClock.elapsedRealtime();
-                        if (lastSent > lastReceived) {
-                            if (pingTimeoutIn < 0) {
-                                Log.d(Config.LOGTAG, account.getJid().asBareJid() + ": ping timeout");
-                                this.reconnectAccount(account, true, interactive);
-                            } else {
-                                int secs = (int) (pingTimeoutIn / 1000);
-                                this.scheduleWakeUpCall(secs, account.getUuid().hashCode());
-                            }
+        if (!account.getStatus().isAttemptReconnect()) {
+            return false;
+        }
+        if (!hasInternetConnection()) {
+            account.setStatus(Account.State.NO_INTERNET);
+            statusListener.onStatusChanged(account);
+        } else {
+            if (account.getStatus() == Account.State.NO_INTERNET) {
+                account.setStatus(Account.State.OFFLINE);
+                statusListener.onStatusChanged(account);
+            }
+            if (account.getStatus() == Account.State.ONLINE) {
+                synchronized (mLowPingTimeoutMode) {
+                    long lastReceived = account.getXmppConnection().getLastPacketReceived();
+                    long lastSent = account.getXmppConnection().getLastPingSent();
+                    long pingInterval = isUiAction ? Config.PING_MIN_INTERVAL * 1000 : Config.PING_MAX_INTERVAL * 1000;
+                    long msToNextPing = (Math.max(lastReceived, lastSent) + pingInterval) - SystemClock.elapsedRealtime();
+                    int pingTimeout = mLowPingTimeoutMode.contains(account.getJid().asBareJid()) ? Config.LOW_PING_TIMEOUT * 1000 : Config.PING_TIMEOUT * 1000;
+                    long pingTimeoutIn = (lastSent + pingTimeout) - SystemClock.elapsedRealtime();
+                    if (lastSent > lastReceived) {
+                        if (pingTimeoutIn < 0) {
+                            Log.d(Config.LOGTAG, account.getJid().asBareJid() + ": ping timeout");
+                            this.reconnectAccount(account, true, interactive);
                         } else {
-                            pingCandidates.add(account);
-                            if (isAccountPushed) {
-                                pingNow = true;
-                                if (mLowPingTimeoutMode.add(account.getJid().asBareJid())) {
-                                    Log.d(Config.LOGTAG, account.getJid().asBareJid() + ": entering low ping timeout mode");
-                                }
-                            } else if (msToNextPing <= 0) {
-                                pingNow = true;
-                            } else {
-                                this.scheduleWakeUpCall((int) (msToNextPing / 1000), account.getUuid().hashCode());
-                                if (mLowPingTimeoutMode.remove(account.getJid().asBareJid())) {
-                                    Log.d(Config.LOGTAG, account.getJid().asBareJid() + ": leaving low ping timeout mode");
-                                }
+                            int secs = (int) (pingTimeoutIn / 1000);
+                            this.scheduleWakeUpCall(secs, account.getUuid().hashCode());
+                        }
+                    } else {
+                        pingCandidates.add(account);
+                        if (isAccountPushed) {
+                            if (mLowPingTimeoutMode.add(account.getJid().asBareJid())) {
+                                Log.d(Config.LOGTAG, account.getJid().asBareJid() + ": entering low ping timeout mode");
+                            }
+                            return true;
+                        } else if (msToNextPing <= 0) {
+                            return true;
+                        } else {
+                            this.scheduleWakeUpCall((int) (msToNextPing / 1000), account.getUuid().hashCode());
+                            if (mLowPingTimeoutMode.remove(account.getJid().asBareJid())) {
+                                Log.d(Config.LOGTAG, account.getJid().asBareJid() + ": leaving low ping timeout mode");
                             }
                         }
                     }
-                } else if (account.getStatus() == Account.State.OFFLINE) {
+                }
+            } else if (account.getStatus() == Account.State.OFFLINE) {
+                reconnectAccount(account, true, interactive);
+            } else if (account.getStatus() == Account.State.CONNECTING) {
+                long secondsSinceLastConnect = (SystemClock.elapsedRealtime() - account.getXmppConnection().getLastConnect()) / 1000;
+                long secondsSinceLastDisco = (SystemClock.elapsedRealtime() - account.getXmppConnection().getLastDiscoStarted()) / 1000;
+                long discoTimeout = Config.CONNECT_DISCO_TIMEOUT - secondsSinceLastDisco;
+                long timeout = Config.CONNECT_TIMEOUT - secondsSinceLastConnect;
+                if (timeout < 0) {
+                    Log.d(Config.LOGTAG, account.getJid() + ": time out during connect reconnecting (secondsSinceLast=" + secondsSinceLastConnect + ")");
+                    account.getXmppConnection().resetAttemptCount(false);
                     reconnectAccount(account, true, interactive);
-                } else if (account.getStatus() == Account.State.CONNECTING) {
-                    long secondsSinceLastConnect = (SystemClock.elapsedRealtime() - account.getXmppConnection().getLastConnect()) / 1000;
-                    long secondsSinceLastDisco = (SystemClock.elapsedRealtime() - account.getXmppConnection().getLastDiscoStarted()) / 1000;
-                    long discoTimeout = Config.CONNECT_DISCO_TIMEOUT - secondsSinceLastDisco;
-                    long timeout = Config.CONNECT_TIMEOUT - secondsSinceLastConnect;
-                    if (timeout < 0) {
-                        Log.d(Config.LOGTAG, account.getJid() + ": time out during connect reconnecting (secondsSinceLast=" + secondsSinceLastConnect + ")");
-                        account.getXmppConnection().resetAttemptCount(false);
-                        reconnectAccount(account, true, interactive);
-                    } else if (discoTimeout < 0) {
-                        account.getXmppConnection().sendDiscoTimeout();
-                        scheduleWakeUpCall((int) Math.min(timeout, discoTimeout), account.getUuid().hashCode());
-                    } else {
-                        scheduleWakeUpCall((int) Math.min(timeout, discoTimeout), account.getUuid().hashCode());
-                    }
+                } else if (discoTimeout < 0) {
+                    account.getXmppConnection().sendDiscoTimeout();
+                    scheduleWakeUpCall((int) Math.min(timeout, discoTimeout), account.getUuid().hashCode());
                 } else {
-                    final boolean aggressive = hasJingleRtpConnection(account);
-                    if (account.getXmppConnection().getTimeToNextAttempt(aggressive) <= 0) {
-                        reconnectAccount(account, true, interactive);
-                    }
+                    scheduleWakeUpCall((int) Math.min(timeout, discoTimeout), account.getUuid().hashCode());
+                }
+            } else {
+                final boolean aggressive = account.getStatus() == Account.State.SEE_OTHER_HOST || hasJingleRtpConnection(account);
+                if (account.getXmppConnection().getTimeToNextAttempt(aggressive) <= 0) {
+                    reconnectAccount(account, true, interactive);
                 }
             }
         }
-        return pingNow;
+        return false;
+    }
+
+    private void toggleSoftDisabled(final boolean softDisabled) {
+        for(final Account account : this.accounts) {
+            if (account.isEnabled()) {
+                if (account.setOption(Account.OPTION_SOFT_DISABLED, softDisabled)) {
+                    updateAccount(account);
+                }
+            }
+        }
     }
 
     public boolean processUnifiedPushMessage(final Account account, final Jid transport, final Element push) {
@@ -1395,7 +1439,7 @@ public class XmppConnectionService extends Service {
         if (Config.supportOpenPgp()) {
             this.pgpServiceConnection = new OpenPgpServiceConnection(this, "org.sufficientlysecure.keychain", new OpenPgpServiceConnection.OnBound() {
                 @Override
-                public void onBound(IOpenPgpService2 service) {
+                public void onBound(final IOpenPgpService2 service) {
                     for (Account account : accounts) {
                         final PgpDecryptionService pgp = account.getPgpDecryptionService();
                         if (pgp != null) {
@@ -1405,7 +1449,8 @@ public class XmppConnectionService extends Service {
                 }
 
                 @Override
-                public void onError(Exception e) {
+                public void onError(final Exception exception) {
+                    Log.e(Config.LOGTAG,"could not bind to OpenKeyChain", exception);
                 }
             });
             this.pgpServiceConnection.bindToService();
@@ -1417,20 +1462,31 @@ public class XmppConnectionService extends Service {
         toggleForegroundService();
         updateUnreadCountBadge();
         toggleScreenEventReceiver();
-        final IntentFilter intentFilter = new IntentFilter();
-        intentFilter.addAction(TorServiceUtils.ACTION_STATUS);
+        final IntentFilter systemBroadcastFilter = new IntentFilter();
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             scheduleNextIdlePing();
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                intentFilter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
+                systemBroadcastFilter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
             }
-            intentFilter.addAction(NotificationManager.ACTION_INTERRUPTION_FILTER_CHANGED);
+            systemBroadcastFilter.addAction(NotificationManager.ACTION_INTERRUPTION_FILTER_CHANGED);
         }
-        registerReceiver(this.mInternalEventReceiver, intentFilter);
+        ContextCompat.registerReceiver(
+                this,
+                this.mInternalEventReceiver,
+                systemBroadcastFilter,
+                ContextCompat.RECEIVER_NOT_EXPORTED);
+        final IntentFilter exportedBroadcastFilter = new IntentFilter();
+        exportedBroadcastFilter.addAction(TorServiceUtils.ACTION_STATUS);
+        ContextCompat.registerReceiver(
+                this,
+                this.mInternalRestrictedEventReceiver,
+                exportedBroadcastFilter,
+                ContextCompat.RECEIVER_EXPORTED);
         mForceDuringOnCreate.set(false);
         toggleForegroundService();
         setupPhoneStateListener();
         rescanStickers();
+        internalPingExecutor.scheduleAtFixedRate(this::manageAccountConnectionStatesInternal,10,10,TimeUnit.SECONDS);
     }
 
 
@@ -1497,12 +1553,14 @@ public class XmppConnectionService extends Service {
     public void onDestroy() {
         try {
             unregisterReceiver(this.mInternalEventReceiver);
+            unregisterReceiver(this.mInternalRestrictedEventReceiver);
             unregisterReceiver(this.mInternalScreenEventReceiver);
         } catch (final IllegalArgumentException e) {
             //ignored
         }
         destroyed = false;
         fileObserver.stopWatching();
+        internalPingExecutor.shutdown();
         super.onDestroy();
     }
 
@@ -1579,9 +1637,27 @@ public class XmppConnectionService extends Service {
 
     private void startForegroundOrCatch(final int id, final Notification notification) {
         try {
-            startForeground(id, notification);
-        } catch (final IllegalStateException e) {
-            Log.e(Config.LOGTAG,"Could not start foreground service", e);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                final int foregroundServiceType;
+                if (getSystemService(PowerManager.class)
+                        .isIgnoringBatteryOptimizations(getPackageName())) {
+                    foregroundServiceType = ServiceInfo.FOREGROUND_SERVICE_TYPE_SYSTEM_EXEMPTED;
+                } else if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO)
+                        == PackageManager.PERMISSION_GRANTED) {
+                    foregroundServiceType = ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE;
+                } else if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
+                        == PackageManager.PERMISSION_GRANTED) {
+                    foregroundServiceType = ServiceInfo.FOREGROUND_SERVICE_TYPE_CAMERA;
+                } else {
+                    foregroundServiceType = ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE;
+                    Log.w(Config.LOGTAG,"falling back to special use foreground service type");
+                }
+                startForeground(id, notification, foregroundServiceType);
+            } else {
+                startForeground(id, notification);
+            }
+        } catch (final IllegalStateException | SecurityException e) {
+            Log.e(Config.LOGTAG, "Could not start foreground service", e);
         }
     }
 
@@ -1602,7 +1678,7 @@ public class XmppConnectionService extends Service {
     private void logoutAndSave(boolean stop) {
         int activeAccounts = 0;
         for (final Account account : accounts) {
-            if (account.getStatus() != Account.State.DISABLED) {
+            if (account.isConnectionEnabled()) {
                 databaseBackend.writeRoster(account.getRoster());
                 activeAccounts++;
             }
@@ -1638,25 +1714,18 @@ public class XmppConnectionService extends Service {
         }
     }
 
-    public void scheduleWakeUpCall(int seconds, int requestCode) {
+    public void scheduleWakeUpCall(final int seconds, final int requestCode) {
         final long timeToWake = SystemClock.elapsedRealtime() + (seconds < 0 ? 1 : seconds + 1) * 1000L;
         final AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
         if (alarmManager == null) {
             return;
         }
         final Intent intent = new Intent(this, EventReceiver.class);
-        intent.setAction("ping");
+        intent.setAction(ACTION_PING);
         try {
-            final PendingIntent pendingIntent;
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                pendingIntent =
-                        PendingIntent.getBroadcast(
-                                this, requestCode, intent, PendingIntent.FLAG_IMMUTABLE);
-            } else {
-                pendingIntent =
-                        PendingIntent.getBroadcast(
-                                this, requestCode, intent, 0);
-            }
+            final PendingIntent pendingIntent =
+                    PendingIntent.getBroadcast(
+                            this, requestCode, intent, PendingIntent.FLAG_IMMUTABLE);
             alarmManager.set(AlarmManager.ELAPSED_REALTIME_WAKEUP, timeToWake, pendingIntent);
         } catch (RuntimeException e) {
             Log.e(Config.LOGTAG, "unable to schedule alarm for ping", e);
@@ -3120,6 +3189,7 @@ public class XmppConnectionService extends Service {
     }
 
     private void switchToForeground() {
+        toggleSoftDisabled(false);
         final boolean broadcastLastActivity = broadcastLastActivity();
         for (Conversation conversation : getConversations()) {
             if (conversation.getMode() == Conversation.MODE_MULTI) {
@@ -3500,8 +3570,8 @@ public class XmppConnectionService extends Service {
         if (this.accounts == null) {
             return false;
         }
-        for (Account account : this.accounts) {
-            if (account.isEnabled()) {
+        for (final Account account : this.accounts) {
+            if (account.isConnectionEnabled()) {
                 return true;
             }
         }
@@ -3948,23 +4018,23 @@ public class XmppConnectionService extends Service {
         });
     }
 
-    private void disconnect(Account account, boolean force) {
-        if ((account.getStatus() == Account.State.ONLINE)
-                || (account.getStatus() == Account.State.DISABLED)) {
-            final XmppConnection connection = account.getXmppConnection();
-            if (!force) {
-                List<Conversation> conversations = getConversations();
-                for (Conversation conversation : conversations) {
-                    if (conversation.getAccount() == account) {
-                        if (conversation.getMode() == Conversation.MODE_MULTI) {
-                            leaveMuc(conversation, true);
-                        }
+    private void disconnect(final Account account, boolean force) {
+        final XmppConnection connection = account.getXmppConnection();
+        if (connection == null) {
+            return;
+        }
+        if (!force) {
+            final List<Conversation> conversations = getConversations();
+            for (Conversation conversation : conversations) {
+                if (conversation.getAccount() == account) {
+                    if (conversation.getMode() == Conversation.MODE_MULTI) {
+                        leaveMuc(conversation, true);
                     }
                 }
-                sendOfflinePresence(account);
             }
-            connection.disconnect(force);
+            sendOfflinePresence(account);
         }
+        connection.disconnect(force);
     }
 
     @Override
@@ -4485,13 +4555,18 @@ public class XmppConnectionService extends Service {
 
     private void reconnectAccount(final Account account, final boolean force, final boolean interactive) {
         synchronized (account) {
-            XmppConnection connection = account.getXmppConnection();
-            if (connection == null) {
+            final XmppConnection existingConnection = account.getXmppConnection();
+            final XmppConnection connection;
+            if (existingConnection != null) {
+                connection = existingConnection;
+            } else if (account.isConnectionEnabled()) {
                 connection = createConnection(account);
                 account.setXmppConnection(connection);
+            } else {
+                return;
             }
-            boolean hasInternet = hasInternetConnection();
-            if (account.isEnabled() && hasInternet) {
+            final boolean hasInternet = hasInternetConnection();
+            if (account.isConnectionEnabled() && hasInternet) {
                 if (!force) {
                     disconnect(account, false);
                 }
@@ -4989,7 +5064,7 @@ public class XmppConnectionService extends Service {
     public void refreshAllPresences() {
         boolean includeIdleTimestamp = checkListeners() && broadcastLastActivity();
         for (Account account : getAccounts()) {
-            if (account.isEnabled()) {
+            if (account.isConnectionEnabled()) {
                 sendPresence(account, includeIdleTimestamp);
             }
         }
@@ -5532,8 +5607,27 @@ public class XmppConnectionService extends Service {
     private class InternalEventReceiver extends BroadcastReceiver {
 
         @Override
-        public void onReceive(Context context, Intent intent) {
+        public void onReceive(final Context context, final Intent intent) {
             onStartCommand(intent, 0, 0);
+        }
+    }
+
+    private class RestrictedEventReceiver extends BroadcastReceiver {
+
+        private final Collection<String> allowedActions;
+
+        private RestrictedEventReceiver(final Collection<String> allowedActions) {
+            this.allowedActions = allowedActions;
+        }
+
+        @Override
+        public void onReceive(final Context context, final Intent intent) {
+            final String action = intent == null ? null : intent.getAction();
+            if (allowedActions.contains(action)) {
+                onStartCommand(intent,0,0);
+            } else {
+                Log.e(Config.LOGTAG,"restricting broadcast of event "+action);
+            }
         }
     }
 
@@ -5560,6 +5654,20 @@ public class XmppConnectionService extends Service {
         public int hashCode() {
             return Objects.hashCode(id, media, reconnecting);
         }
+    }
+
+    public static void toggleForegroundService(final XmppConnectionService service) {
+        if (service == null) {
+            return;
+        }
+        service.toggleForegroundService();
+    }
+
+    public static void toggleForegroundService(final ConversationsActivity activity) {
+        if (activity == null) {
+            return;
+        }
+        toggleForegroundService(activity.xmppConnectionService);
     }
 
     public static class BlockedMediaException extends Exception { }

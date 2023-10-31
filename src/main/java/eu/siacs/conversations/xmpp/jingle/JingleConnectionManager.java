@@ -73,7 +73,7 @@ public class JingleConnectionManager extends AbstractConnectionManager {
     static String nextRandomId() {
         final byte[] id = new byte[16];
         new SecureRandom().nextBytes(id);
-        return Base64.encodeToString(id, Base64.NO_WRAP | Base64.NO_PADDING);
+        return Base64.encodeToString(id, Base64.NO_WRAP | Base64.NO_PADDING | Base64.URL_SAFE);
     }
 
     public void deliverPacket(final Account account, final JinglePacket packet) {
@@ -100,7 +100,8 @@ public class JingleConnectionManager extends AbstractConnectionManager {
                         this.terminatedSessions.asMap().containsKey(PersistableSessionId.of(id));
                 final boolean stranger =
                         isWithStrangerAndStrangerNotificationsAreOff(account, id.with);
-                if (isBusy() != null || sessionEnded || stranger) {
+                final boolean busy = isBusy() != null;
+                if (busy || sessionEnded || stranger) {
                     Log.d(
                             Config.LOGTAG,
                             id.account.getJid().asBareJid()
@@ -117,6 +118,15 @@ public class JingleConnectionManager extends AbstractConnectionManager {
                     sessionTermination.setTo(id.with);
                     sessionTermination.setReason(Reason.BUSY, null);
                     mXmppConnectionService.sendIqPacket(account, sessionTermination, null);
+                    if (busy || stranger) {
+                        writeLogMissedIncoming(
+                                account,
+                                id.with,
+                                id.sessionId,
+                                null,
+                                System.currentTimeMillis(),
+                                stranger);
+                    }
                     return;
                 }
                 connection = new JingleRtpConnection(this, id, from);
@@ -283,6 +293,7 @@ public class JingleConnectionManager extends AbstractConnectionManager {
             if ("accept".equals(message.getName())) return;
         }
         final boolean fromSelf = from.asBareJid().equals(account.getJid().asBareJid());
+        // XEP version 0.6.0 sends proceed, reject, ringing to bare jid
         final boolean addressedDirectly = to != null && to.equals(account.getJid());
         final AbstractJingleConnection.Id id;
         if (fromSelf) {
@@ -327,6 +338,7 @@ public class JingleConnectionManager extends AbstractConnectionManager {
                             Config.LOGTAG,
                             id.account.getJid().asBareJid()
                                     + ": updated previous busy because call got picked up by another device");
+                    mXmppConnectionService.getNotificationService().clearMissedCall(previousBusy);
                     return;
                 }
             }
@@ -383,18 +395,27 @@ public class JingleConnectionManager extends AbstractConnectionManager {
                         this.connections.put(id, rtpConnection);
                         rtpConnection.setProposedMedia(ImmutableSet.copyOf(media));
                         rtpConnection.deliveryMessage(from, message, serverMsgId, timestamp);
+                        // TODO actually do the automatic accept?!
                     } else {
                         Log.d(
                                 Config.LOGTAG,
                                 account.getJid().asBareJid()
                                         + ": our session won tie break. waiting for other party to accept. winningSession="
                                         + ourSessionId);
+                        // TODO reject their session with <tie-break/>?
                     }
                     return;
                 }
-                final boolean stranger = isWithStrangerAndStrangerNotificationsAreOff(account, id.with);
+                final boolean stranger =
+                        isWithStrangerAndStrangerNotificationsAreOff(account, id.with);
                 if (isBusy() != null || stranger) {
-                    writeLogMissedIncoming(account, id.with.asBareJid(), id.sessionId, serverMsgId, timestamp);
+                    writeLogMissedIncoming(
+                            account,
+                            id.with.asBareJid(),
+                            id.sessionId,
+                            serverMsgId,
+                            timestamp,
+                            stranger);
                     if (stranger) {
                         Log.d(
                                 Config.LOGTAG,
@@ -450,7 +471,9 @@ public class JingleConnectionManager extends AbstractConnectionManager {
                     Log.d(
                             Config.LOGTAG,
                             account.getJid().asBareJid()
-                                    + ": no rtp session proposal found for "
+                                    + ": no rtp session ("
+                                    + sessionId
+                                    + ") proposal found for "
                                     + from
                                     + " to deliver proceed");
                     if (remoteMsgId == null) {
@@ -489,6 +512,10 @@ public class JingleConnectionManager extends AbstractConnectionManager {
                                     + " to deliver reject");
                 }
             }
+        } else if (addressedDirectly && "ringing".equals(message.getName())) {
+            Log.d(Config.LOGTAG, account.getJid().asBareJid() + ": " + from + " started ringing");
+            updateProposedSessionDiscovered(
+                    account, from, sessionId, DeviceDiscoveryState.DISCOVERED);
         } else {
             Log.d(
                     Config.LOGTAG,
@@ -532,10 +559,11 @@ public class JingleConnectionManager extends AbstractConnectionManager {
 
     private void writeLogMissedIncoming(
             final Account account,
-            Jid with,
+            final Jid with,
             final String sessionId,
-            String serverMsgId,
-            long timestamp) {
+            final String serverMsgId,
+            final long timestamp,
+            final boolean stranger) {
         final Conversation conversation =
                 mXmppConnectionService.findOrCreateConversation(
                         account, with.asBareJid(), false, false);
@@ -545,7 +573,12 @@ public class JingleConnectionManager extends AbstractConnectionManager {
         message.setBody(new RtpSessionStatus(false, 0).toString());
         message.setServerMsgId(serverMsgId);
         message.setTime(timestamp);
+        message.setCounterpart(with);
         writeMessage(message);
+        if (stranger) {
+            return;
+        }
+        mXmppConnectionService.getNotificationService().pushMissedCallNow(message);
     }
 
     private void writeMessage(final Message message) {

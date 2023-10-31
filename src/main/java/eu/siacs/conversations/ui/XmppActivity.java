@@ -53,7 +53,6 @@ import android.widget.Toast;
 
 import androidx.annotation.BoolRes;
 import androidx.annotation.NonNull;
-import androidx.annotation.RequiresApi;
 import androidx.annotation.StringRes;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AlertDialog.Builder;
@@ -87,16 +86,22 @@ import eu.siacs.conversations.services.XmppConnectionService;
 import eu.siacs.conversations.services.XmppConnectionService.XmppConnectionBinder;
 import eu.siacs.conversations.ui.util.MenuDoubleTabUtil;
 import eu.siacs.conversations.ui.util.PresenceSelector;
+import eu.siacs.conversations.ui.util.SettingsUtils;
 import eu.siacs.conversations.ui.util.SoftKeyboardUtils;
 import eu.siacs.conversations.utils.AccountUtils;
 import eu.siacs.conversations.utils.Compatibility;
 import eu.siacs.conversations.utils.ExceptionHelper;
-import eu.siacs.conversations.ui.util.SettingsUtils;
 import eu.siacs.conversations.utils.SignupUtils;
 import eu.siacs.conversations.utils.ThemeHelper;
 import eu.siacs.conversations.xmpp.Jid;
 import eu.siacs.conversations.xmpp.OnKeyStatusUpdated;
 import eu.siacs.conversations.xmpp.OnUpdateBlocklist;
+
+import java.io.IOException;
+import java.lang.ref.WeakReference;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.RejectedExecutionException;
 
 public abstract class XmppActivity extends ActionBarActivity {
 
@@ -327,22 +332,24 @@ public abstract class XmppActivity extends ActionBarActivity {
                         button.setText(R.string.please_wait);
                         button.setEnabled(false);
                         xmppConnectionService.unregisterAccount(account, result -> {
-                            if (result) {
-                                dialog.dismiss();
-                                if (postDelete != null) {
-                                    postDelete.run();
+                            runOnUiThread(()->{
+                                if (result) {
+                                    dialog.dismiss();
+                                    if (postDelete != null) {
+                                        postDelete.run();
+                                    }
+                                    if (xmppConnectionService.getAccounts().size() == 0 && Config.MAGIC_CREATE_DOMAIN != null) {
+                                        final Intent intent = SignupUtils.getSignUpIntent(this);
+                                        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                                        startActivity(intent);
+                                    }
+                                } else {
+                                    deleteFromServer.setEnabled(true);
+                                    button.setText(R.string.delete);
+                                    button.setEnabled(true);
+                                    Toast.makeText(this,R.string.could_not_delete_account_from_server,Toast.LENGTH_LONG).show();
                                 }
-                                if (xmppConnectionService.getAccounts().size() == 0 && Config.MAGIC_CREATE_DOMAIN != null) {
-                                    final Intent intent = SignupUtils.getSignUpIntent(this);
-                                    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-                                    startActivity(intent);
-                                }
-                            } else {
-                                deleteFromServer.setEnabled(true);
-                                button.setText(R.string.delete);
-                                button.setEnabled(true);
-                                Toast.makeText(this,R.string.could_not_delete_account_from_server,Toast.LENGTH_LONG).show();
-                            }
+                            });
                         });
                     } else {
                         Toast.makeText(this,R.string.not_connected_try_again,Toast.LENGTH_LONG).show();
@@ -671,9 +678,9 @@ public abstract class XmppActivity extends ActionBarActivity {
             xmppConnectionService.getPgpEngine().generateSignature(intent, account, status, new UiCallback<String>() {
 
                 @Override
-                public void userInputRequired(PendingIntent pi, String signature) {
+                public void userInputRequired(final PendingIntent pi, final String signature) {
                     try {
-                        startIntentSenderForResult(pi.getIntentSender(), REQUEST_ANNOUNCE_PGP, null, 0, 0, 0);
+                        startIntentSenderForResult(pi.getIntentSender(), REQUEST_ANNOUNCE_PGP, null, 0, 0, 0,Compatibility.pgpStartIntentSenderOptions());
                     } catch (final SendIntentException ignored) {
                     }
                 }
@@ -734,7 +741,7 @@ public abstract class XmppActivity extends ActionBarActivity {
             public void userInputRequired(PendingIntent pi, Account object) {
                 try {
                     startIntentSenderForResult(pi.getIntentSender(),
-                            REQUEST_CHOOSE_PGP_ID, null, 0, 0, 0);
+                            REQUEST_CHOOSE_PGP_ID, null, 0, 0, 0, Compatibility.pgpStartIntentSenderOptions());
                 } catch (final SendIntentException ignored) {
                 }
             }
@@ -938,8 +945,9 @@ public abstract class XmppActivity extends ActionBarActivity {
         try {
             startIntentSenderForResult(
                     pgp.getIntentForKey(keyId).getIntentSender(), 0, null, 0,
-                    0, 0);
-        } catch (Throwable e) {
+                    0, 0, Compatibility.pgpStartIntentSenderOptions());
+        } catch (final Throwable e) {
+            Log.d(Config.LOGTAG,"could not launch OpenKeyChain", e);
             Toast.makeText(XmppActivity.this, R.string.openpgp_error, Toast.LENGTH_SHORT).show();
         }
     }

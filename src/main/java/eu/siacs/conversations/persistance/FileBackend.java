@@ -684,8 +684,13 @@ public class FileBackend {
         }
     }
 
-    public String getOriginalPath(Uri uri) {
-        return FileUtils.getPath(mXmppConnectionService, uri);
+    public String getOriginalPath(final Uri uri) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            // On Android 11+ we don’t have access to the original file
+            return null;
+        } else {
+            return FileUtils.getPath(mXmppConnectionService, uri);
+        }
     }
 
     public void copyFileToDocumentFile(Context ctx, File file, DocumentFile df) throws FileCopyException {

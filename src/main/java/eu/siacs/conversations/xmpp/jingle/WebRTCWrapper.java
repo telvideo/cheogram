@@ -60,6 +60,8 @@ public class WebRTCWrapper {
     private static final String EXTENDED_LOGGING_TAG = WebRTCWrapper.class.getSimpleName();
 
     private final ExecutorService executorService = Executors.newSingleThreadExecutor();
+    private final ExecutorService localDescriptionExecutorService =
+            Executors.newSingleThreadExecutor();
 
     private static final int TONE_DURATION = 500;
     private static final Map<String,Integer> TONE_CODES;
@@ -79,8 +81,6 @@ public class WebRTCWrapper {
         builder.put("#", ToneGenerator.TONE_DTMF_P);
         TONE_CODES = builder.build();
     }
-    private final ExecutorService localDescriptionExecutorService =
-            Executors.newSingleThreadExecutor();
 
     private static final Set<String> HARDWARE_AEC_BLACKLIST =
             new ImmutableSet.Builder<String>()
@@ -95,6 +95,7 @@ public class WebRTCWrapper {
                     .add("E5823") // Sony z5 compact
                     .add("Redmi Note 5")
                     .add("FP2") // Fairphone FP2
+                    .add("FP4") // Fairphone FP4
                     .add("MI 5")
                     .add("GT-I9515") // Samsung Galaxy S4 Value Edition (jfvelte)
                     .add("GT-I9515L") // Samsung Galaxy S4 Value Edition (jfvelte)

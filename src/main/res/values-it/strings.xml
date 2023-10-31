@@ -254,7 +254,7 @@
     <string name="contact_added_you">Il contatto ti ha aggiunto alla sua lista contatti</string>
     <string name="add_back">Aggiungi anche tu</string>
     <string name="contact_has_read_up_to_this_point">%s ha letto fino a questo punto</string>
-    <string name="contacts_have_read_up_to_this_point">%s ha letto fino a questo punto</string>
+    <string name="contacts_have_read_up_to_this_point">%s hanno letto fino a questo punto</string>
     <string name="contacts_and_n_more_have_read_up_to_this_point">%1$s + altri %2$d hanno letto fino a questo punto</string>
     <string name="everyone_has_read_up_to_this_point">Tutti hanno letto fino a questo punto</string>
     <string name="publish">Pubblica</string>
@@ -1021,4 +1021,8 @@
     <string name="save_as_group_chat">Salva come chat di gruppo</string>
     <string name="search_group_chats">Cerca chat di gruppo</string>
     <string name="channel_discover_opt_in_message">La scoperta dei canali usa un servizio di terze parti chiamato &lt;a href=https://search.jabber.network&gt;search.jabber.network&lt;/a&gt;.&lt;br&gt;&lt;br&gt;L\'uso di questa funzione invierà il tuo indirizzo IP e i termini di ricerca a quel servizio. Vedi la sua &lt;a href=https://search.jabber.network/privacy&gt;informativa sulla privacy&lt;/a&gt; per maggiori informazioni.</string>
+    <string name="restore_warning_continued">Non tentare di ripristinare dei backup che non hai creato te stesso!</string>
+    <string name="outdated_backup_file_format">Stai tentando di importare un formato di file di backup obsoleto</string>
+    <string name="audiobook">Audiolibro</string>
+    <string name="reconnect_on_other_host">Riconnetti su altro host</string>
 </resources>

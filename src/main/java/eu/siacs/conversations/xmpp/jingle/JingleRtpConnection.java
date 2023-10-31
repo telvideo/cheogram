@@ -409,7 +409,29 @@ public class JingleRtpConnection extends AbstractJingleConnection
             return;
         }
         if (isInState(State.SESSION_ACCEPTED)) {
-            receiveContentAdd(jinglePacket, modification);
+            final boolean hasFullTransportInfo = modification.hasFullTransportInfo();
+            final ListenableFuture<RtpContentMap> future =
+                    receiveRtpContentMap(
+                            modification, this.omemoVerification.hasFingerprint() && hasFullTransportInfo);
+            Futures.addCallback(future, new FutureCallback<RtpContentMap>() {
+                @Override
+                public void onSuccess(final RtpContentMap rtpContentMap) {
+                    receiveContentAdd(jinglePacket, rtpContentMap);
+                }
+
+                @Override
+                public void onFailure(@NonNull Throwable throwable) {
+                    respondOk(jinglePacket);
+                    final Throwable rootCause = Throwables.getRootCause(throwable);
+                    Log.d(
+                            Config.LOGTAG,
+                            id.account.getJid().asBareJid()
+                                    + ": improperly formatted contents in content-add",
+                            throwable);
+                    webRTCWrapper.close();
+                    sendSessionTerminate(Reason.ofThrowable(rootCause), rootCause.getMessage());
+                }
+            }, MoreExecutors.directExecutor());
         } else {
             terminateWithOutOfOrder(jinglePacket);
         }
@@ -494,7 +516,22 @@ public class JingleRtpConnection extends AbstractJingleConnection
         if (ourSummary.equals(ContentAddition.summary(receivedContentAccept))) {
             this.outgoingContentAdd = null;
             respondOk(jinglePacket);
-            receiveContentAccept(receivedContentAccept);
+            final boolean hasFullTransportInfo = receivedContentAccept.hasFullTransportInfo();
+            final ListenableFuture<RtpContentMap> future =
+                    receiveRtpContentMap(
+                            receivedContentAccept, this.omemoVerification.hasFingerprint() && hasFullTransportInfo);
+            Futures.addCallback(future, new FutureCallback<RtpContentMap>() {
+                @Override
+                public void onSuccess(final RtpContentMap result) {
+                    receiveContentAccept(result);
+                }
+
+                @Override
+                public void onFailure(@NonNull final Throwable throwable) {
+                    webRTCWrapper.close();
+                    sendSessionTerminate(Reason.ofThrowable(throwable), throwable.getMessage());
+                }
+            }, MoreExecutors.directExecutor());
         } else {
             Log.d(Config.LOGTAG, "received content-accept did not match our outgoing content-add");
             terminateWithOutOfOrder(jinglePacket);
@@ -527,17 +564,20 @@ public class JingleRtpConnection extends AbstractJingleConnection
             sendSessionTerminate(Reason.FAILED_APPLICATION, cause.getMessage());
             return;
         }
-        processCandidates(receivedContentAccept.contents.entrySet());
-        updateEndUserState();
         Log.d(
                 Config.LOGTAG,
                 id.getAccount().getJid().asBareJid()
                         + ": remote has accepted content-add "
                         + ContentAddition.summary(receivedContentAccept));
+        processCandidates(receivedContentAccept.contents.entrySet());
+        updateEndUserState();
     }
 
     private void receiveContentModify(final JinglePacket jinglePacket) {
-        // TODO check session accepted
+        if (this.state != State.SESSION_ACCEPTED) {
+            terminateWithOutOfOrder(jinglePacket);
+            return;
+        }
         final Map<String, Content.Senders> modification =
                 Maps.transformEntries(
                         jinglePacket.getJingleContents(), (key, value) -> value.getSenders());
@@ -855,6 +895,7 @@ public class JingleRtpConnection extends AbstractJingleConnection
             final RtpContentMap contentAcceptMap =
                     rtpContentMap.toContentModification(
                             Collections2.transform(contentAddition, ca -> ca.name));
+
             Log.d(
                     Config.LOGTAG,
                     id.getAccount().getJid().asBareJid()
@@ -864,8 +905,22 @@ public class JingleRtpConnection extends AbstractJingleConnection
             addIceCandidatesFromBlackLog();
 
             modifyLocalContentMap(rtpContentMap);
-            sendContentAccept(contentAcceptMap);
-            this.webRTCWrapper.setIsReadyToReceiveIceCandidates(true);
+            final ListenableFuture<RtpContentMap> future = prepareOutgoingContentMap(contentAcceptMap);
+            Futures.addCallback(
+                    future,
+                    new FutureCallback<RtpContentMap>() {
+                        @Override
+                        public void onSuccess(final RtpContentMap rtpContentMap) {
+                            sendContentAccept(rtpContentMap);
+                            webRTCWrapper.setIsReadyToReceiveIceCandidates(true);
+                        }
+
+                        @Override
+                        public void onFailure(@NonNull final Throwable throwable) {
+                            failureToPerformAction(JinglePacket.Action.CONTENT_ACCEPT, throwable);
+                        }
+                    },
+                    MoreExecutors.directExecutor());
         } catch (final Exception e) {
             Log.d(Config.LOGTAG, "unable to accept content add", Throwables.getRootCause(e));
             webRTCWrapper.close();
@@ -1078,12 +1133,20 @@ public class JingleRtpConnection extends AbstractJingleConnection
 
     private ListenableFuture<RtpContentMap> receiveRtpContentMap(
             final JinglePacket jinglePacket, final boolean expectVerification) {
-        final RtpContentMap receivedContentMap;
         try {
-            receivedContentMap = RtpContentMap.of(jinglePacket);
+            return receiveRtpContentMap(RtpContentMap.of(jinglePacket), expectVerification);
         } catch (final Exception e) {
             return Futures.immediateFailedFuture(e);
         }
+        }
+        private ListenableFuture<RtpContentMap> receiveRtpContentMap(final RtpContentMap receivedContentMap, final boolean expectVerification) {
+        Log.d(
+                Config.LOGTAG,
+                "receiveRtpContentMap("
+                        + receivedContentMap.getClass().getSimpleName()
+                        + ",expectVerification="
+                        + expectVerification
+                        + ")");
         if (receivedContentMap instanceof OmemoVerifiedRtpContentMap) {
             final ListenableFuture<AxolotlService.OmemoVerifiedPayload<RtpContentMap>> future =
                     id.account
@@ -1389,6 +1452,16 @@ public class JingleRtpConnection extends AbstractJingleConnection
         sendSessionTerminate(Reason.ofThrowable(rootCause), rootCause.getMessage());
     }
 
+    private void failureToPerformAction(final JinglePacket.Action action, final Throwable throwable) {
+        if (isTerminated()) {
+            return;
+        }
+        final Throwable rootCause = Throwables.getRootCause(throwable);
+        Log.d(Config.LOGTAG, "unable to send " + action, rootCause);
+        webRTCWrapper.close();
+        sendSessionTerminate(Reason.ofThrowable(rootCause), rootCause.getMessage());
+    }
+
     private void addIceCandidatesFromBlackLog() {
         Map.Entry<String, RtpContentMap.DescriptionTransport> foo;
         while ((foo = this.pendingIceCandidates.poll()) != null) {
@@ -1663,6 +1736,9 @@ public class JingleRtpConnection extends AbstractJingleConnection
             }
             this.message.setTime(timestamp);
             startRinging();
+            if (xmppConnectionService.confirmMessages() && id.getContact().showInContactList()) {
+                sendJingleMessage("ringing");
+            }
         } else {
             Log.d(
                     Config.LOGTAG,
@@ -1980,7 +2056,6 @@ public class JingleRtpConnection extends AbstractJingleConnection
         final JinglePacket jinglePacket =
                 new JinglePacket(JinglePacket.Action.SESSION_TERMINATE, id.sessionId);
         jinglePacket.setReason(reason, text);
-        Log.d(Config.LOGTAG, jinglePacket.toString());
         send(jinglePacket);
         finish();
     }
@@ -2558,8 +2633,12 @@ public class JingleRtpConnection extends AbstractJingleConnection
             sessionDescription = setLocalSessionDescription();
         } catch (final Exception e) {
             final Throwable cause = Throwables.getRootCause(e);
-            Log.d(Config.LOGTAG, "failed to renegotiate", cause);
             webRTCWrapper.close();
+            if (isTerminated()) {
+                Log.d(Config.LOGTAG, "failed to renegotiate. session was already terminated", cause);
+                return;
+            }
+            Log.d(Config.LOGTAG, "failed to renegotiate. sending session-terminate", cause);
             sendSessionTerminate(Reason.FAILED_APPLICATION, cause.getMessage());
             return;
         }
@@ -2637,6 +2716,27 @@ public class JingleRtpConnection extends AbstractJingleConnection
     private void sendContentAdd(final RtpContentMap rtpContentMap, final Collection<String> added) {
         final RtpContentMap contentAdd = rtpContentMap.toContentModification(added);
         this.outgoingContentAdd = contentAdd;
+        final ListenableFuture<RtpContentMap> outgoingContentMapFuture =
+                prepareOutgoingContentMap(contentAdd);
+        Futures.addCallback(
+                outgoingContentMapFuture,
+                new FutureCallback<RtpContentMap>() {
+                    @Override
+                    public void onSuccess(final RtpContentMap outgoingContentMap) {
+                        sendContentAdd(outgoingContentMap);
+                        webRTCWrapper.setIsReadyToReceiveIceCandidates(true);
+                    }
+
+                    @Override
+                    public void onFailure(@NonNull Throwable throwable) {
+                        failureToPerformAction(JinglePacket.Action.CONTENT_ADD, throwable);
+                    }
+                },
+                MoreExecutors.directExecutor());
+    }
+
+    private void sendContentAdd(final RtpContentMap contentAdd) {
+
         final JinglePacket jinglePacket =
                 contentAdd.toJinglePacket(JinglePacket.Action.CONTENT_ADD, id.sessionId);
         jinglePacket.setTo(id.with);
@@ -2837,7 +2937,7 @@ public class JingleRtpConnection extends AbstractJingleConnection
                                         // STUN URLs do not support a query section since M110
                                         final String uri;
                                         if (Arrays.asList("stun","stuns").contains(type)) {
-                                            uri = String.format("%s:%s%s", type, IP.wrapIPv6(host),port);
+                                            uri = String.format("%s:%s:%s", type, IP.wrapIPv6(host),port);
                                         } else {
                                             uri = String.format(
                                                     "%s:%s:%s?transport=%s",

@@ -345,7 +345,11 @@ public class StartConversationActivity extends XmppActivity implements XmppConne
             }
             switch (actionItem.getId()) {
                 case R.id.discover_public_channels:
-                    startActivity(new Intent(this, ChannelDiscoveryActivity.class));
+                    if (QuickConversationsService.isPlayStoreFlavor()) {
+                        throw new IllegalStateException("Channel discovery is not available on Google Play flavor");
+                    } else {
+                        startActivity(new Intent(this, ChannelDiscoveryActivity.class));
+                    }
                     break;
                 case R.id.create_private_group_chat:
                     showCreatePrivateGroupChatDialog();
@@ -368,6 +372,9 @@ public class StartConversationActivity extends XmppActivity implements XmppConne
         final Menu menu = popupMenu.getMenu();
         for (int i = 0; i < menu.size(); i++) {
             final MenuItem menuItem = menu.getItem(i);
+            if (QuickConversationsService.isPlayStoreFlavor() && menuItem.getItemId() == R.id.discover_public_channels) {
+                continue;
+            }
             final SpeedDialActionItem actionItem = new SpeedDialActionItem.Builder(menuItem.getItemId(), menuItem.getIcon())
                     .setLabel(menuItem.getTitle() != null ? menuItem.getTitle().toString() : null)
                     .setFabImageTintColor(ContextCompat.getColor(this, R.color.white))
@@ -881,6 +888,7 @@ public class StartConversationActivity extends XmppActivity implements XmppConne
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (grantResults.length > 0)
             if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 ScanActivity.onRequestPermissionResult(this, requestCode, grantResults);
@@ -1091,8 +1099,8 @@ public class StartConversationActivity extends XmppActivity implements XmppConne
         ArrayList<ListItem.Tag> tags = new ArrayList<>();
         final List<Account> accounts = xmppConnectionService.getAccounts();
         boolean foundSopranica = false;
-        for (Account account : accounts) {
-            if (account.getStatus() != Account.State.DISABLED) {
+        for (final Account account : accounts) {
+            if (account.isEnabled()) {
                 for (Contact contact : account.getRoster().getContacts()) {
                     Presence.Status s = contact.getShownStatus();
                     if (contact.showInContactList() && contact.match(this, needle)
@@ -1152,7 +1160,7 @@ public class StartConversationActivity extends XmppActivity implements XmppConne
     protected void filterConferences(String needle) {
         this.conferences.clear();
         for (final Account account : xmppConnectionService.getAccounts()) {
-            if (account.getStatus() != Account.State.DISABLED) {
+            if (account.isEnabled()) {
                 for (final Bookmark bookmark : account.getBookmarks()) {
                     if (bookmark.match(this, needle)) {
                         this.conferences.add(bookmark);

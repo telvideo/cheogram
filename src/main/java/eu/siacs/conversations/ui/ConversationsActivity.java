@@ -72,8 +72,9 @@ import io.michaelrocks.libphonenumber.android.NumberParseException;
 import org.openintents.openpgp.util.OpenPgpApi;
 
 import java.util.Arrays;
-import java.util.List;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -439,14 +440,16 @@ public class ConversationsActivity extends XmppActivity implements OnConversatio
         }
     }
 
-    private void handleActivityResult(ActivityResult activityResult) {
+    private void handleActivityResult(final ActivityResult activityResult) {
         if (activityResult.resultCode == Activity.RESULT_OK) {
             handlePositiveActivityResult(activityResult.requestCode, activityResult.data);
         } else {
             handleNegativeActivityResult(activityResult.requestCode);
         }
         if (activityResult.requestCode == REQUEST_BATTERY_OP) {
+            // the result code is always 0 even when battery permission were granted
             requestNotificationPermissionIfNeeded();
+            XmppConnectionService.toggleForegroundService(xmppConnectionService);
         }
     }
 

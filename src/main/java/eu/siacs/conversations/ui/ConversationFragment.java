@@ -4,6 +4,8 @@ import static eu.siacs.conversations.ui.XmppActivity.EXTRA_ACCOUNT;
 import static eu.siacs.conversations.ui.XmppActivity.REQUEST_INVITE_TO_CONVERSATION;
 import static eu.siacs.conversations.ui.util.SoftKeyboardUtils.hideSoftKeyboard;
 import static eu.siacs.conversations.utils.PermissionUtils.allGranted;
+import static eu.siacs.conversations.utils.PermissionUtils.audioGranted;
+import static eu.siacs.conversations.utils.PermissionUtils.cameraGranted;
 import static eu.siacs.conversations.utils.PermissionUtils.getFirstDenied;
 import static eu.siacs.conversations.utils.PermissionUtils.writeGranted;
 
@@ -173,6 +175,19 @@ import eu.siacs.conversations.xmpp.jingle.Media;
 import eu.siacs.conversations.xmpp.jingle.OngoingRtpSession;
 import eu.siacs.conversations.xmpp.jingle.RtpCapability;
 import eu.siacs.conversations.xmpp.stanzas.IqPacket;
+
+import org.jetbrains.annotations.NotNull;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -468,6 +483,7 @@ public class ConversationFragment extends XmppFragment
                 public void onClick(View v) {
                     final Account account = conversation == null ? null : conversation.getAccount();
                     if (account != null) {
+                        account.setOption(Account.OPTION_SOFT_DISABLED, false);
                         account.setOption(Account.OPTION_DISABLED, false);
                         activity.xmppConnectionService.updateAccount(account);
                     }
@@ -530,7 +546,8 @@ public class ConversationFragment extends XmppFragment
                                             null,
                                             0,
                                             0,
-                                            0);
+                                            0,
+                                            Compatibility.pgpStartIntentSenderOptions());
                         } catch (SendIntentException e) {
                             Toast.makeText(
                                             getActivity(),
@@ -2075,6 +2092,10 @@ public class ConversationFragment extends XmppFragment
                     .show();
             return;
         }
+        final Account account = conversation.getAccount();
+        if (account.setOption(Account.OPTION_SOFT_DISABLED, false)) {
+            activity.xmppConnectionService.updateAccount(account);
+        }
         final Contact contact = conversation.getContact();
         if (RtpCapability.jmiSupport(contact)) {
             triggerRtpSession(contact.getAccount(), contact.getJid().asBareJid(), action);
@@ -2330,6 +2351,9 @@ public class ConversationFragment extends XmppFragment
                 activity.xmppConnectionService.restartFileObserver();
             }
             refresh();
+        }
+        if (cameraGranted(grantResults, permissions) || audioGranted(grantResults, permissions)) {
+            XmppConnectionService.toggleForegroundService(activity);
         }
     }
 
@@ -3362,6 +3386,8 @@ public class ConversationFragment extends XmppFragment
                     R.string.this_account_is_disabled,
                     R.string.enable,
                     this.mEnableAccountListener);
+        } else if (account.getStatus() == Account.State.LOGGED_OUT) {
+            showSnackbar(R.string.this_account_is_logged_out,R.string.log_in,this.mEnableAccountListener);
         } else if (conversation.isBlocked()) {
             showSnackbar(R.string.contact_blocked, R.string.unblock, this.mUnblockClickListener);
         } else if (contact != null
@@ -4114,7 +4140,7 @@ public class ConversationFragment extends XmppFragment
         try {
             getActivity()
                     .startIntentSenderForResult(
-                            pendingIntent.getIntentSender(), requestCode, null, 0, 0, 0);
+                            pendingIntent.getIntentSender(), requestCode, null, 0, 0, 0, Compatibility.pgpStartIntentSenderOptions());
         } catch (final SendIntentException ignored) {
         }
     }

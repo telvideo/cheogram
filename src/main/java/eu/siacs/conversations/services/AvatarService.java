@@ -128,7 +128,7 @@ public class AvatarService implements OnAdvancedStreamFeaturesLoaded {
 	public Bitmap getRoundedShortcut(final MucOptions mucOptions) {
 		final DisplayMetrics metrics = mXmppConnectionService.getResources().getDisplayMetrics();
 		final int size = Math.round(metrics.density * 48);
-		Bitmap bitmap = FileBackend.drawDrawable(get(mucOptions, size, false));
+		final Bitmap bitmap = FileBackend.drawDrawable(get(mucOptions, size, false));
 		final Bitmap output = Bitmap.createBitmap(bitmap.getWidth(), bitmap.getHeight(), Bitmap.Config.ARGB_8888);
 		final Canvas canvas = new Canvas(output);
 		final Paint paint = new Paint();

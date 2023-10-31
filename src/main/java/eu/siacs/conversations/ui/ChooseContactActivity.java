@@ -279,7 +279,7 @@ public class ChooseContactActivity extends AbstractSearchableListItemActivity im
             return;
         }
         for (final Account account : xmppConnectionService.getAccounts()) {
-            if (account.getStatus() != Account.State.DISABLED) {
+            if (account.isEnabled()) {
                 for (final Contact contact : account.getRoster().getContacts()) {
                     if (contact.showInContactList() &&
                             !filterContacts.contains(contact.getJid().asBareJid().toString())
@@ -382,7 +382,7 @@ public class ChooseContactActivity extends AbstractSearchableListItemActivity im
         filterContacts();
         this.mActivatedAccounts.clear();
         for (Account account : xmppConnectionService.getAccounts()) {
-            if (account.getStatus() != Account.State.DISABLED) {
+            if (account.isEnabled()) {
                 if (Config.DOMAIN_LOCK != null) {
                     this.mActivatedAccounts.add(account.getJid().getEscapedLocal());
                 } else {
@@ -402,6 +402,7 @@ public class ChooseContactActivity extends AbstractSearchableListItemActivity im
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         ScanActivity.onRequestPermissionResult(this, requestCode, grantResults);
     }
 

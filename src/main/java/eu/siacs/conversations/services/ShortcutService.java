@@ -11,6 +11,7 @@ import android.os.Build;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.RequiresApi;
 import androidx.core.content.pm.ShortcutInfoCompat;
 import androidx.core.graphics.drawable.IconCompat;
 
@@ -102,25 +103,16 @@ public class ShortcutService {
     }
 
     public ShortcutInfoCompat getShortcutInfoCompat(final MucOptions mucOptions) {
-        final ShortcutInfoCompat.Builder builder =
-                new ShortcutInfoCompat.Builder(xmppConnectionService, getShortcutId(mucOptions))
+        return new ShortcutInfoCompat.Builder(xmppConnectionService, getShortcutId(mucOptions))
                         .setShortLabel(mucOptions.getConversation().getName())
                         .setIntent(getShortcutIntent(mucOptions))
-                        .setIsConversation();
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            builder.setIcon(
-                    IconCompat.createFromIcon(
-                            xmppConnectionService,
-                            Icon.createWithBitmap(
-                                    xmppConnectionService
-                                            .getAvatarService()
-                                            .getRoundedShortcut(mucOptions))));
-        }
-        return builder.build();
+                        .setIcon(IconCompat.createWithBitmap(xmppConnectionService.getAvatarService().getRoundedShortcut(mucOptions)))
+                        .setIsConversation()
+                        .build();
     }
 
     @TargetApi(Build.VERSION_CODES.N_MR1)
-    private ShortcutInfo getShortcutInfo(Contact contact) {
+    private ShortcutInfo getShortcutInfo(final Contact contact) {
         return getShortcutInfoCompat(contact).toShortcutInfo();
     }
 
