@@ -130,7 +130,6 @@ android {
         versionCode 4204603
         versionName grgit.describe(always: true)
         applicationId "eu.siacs.conversations"
-        resValue "string", "applicationId", applicationId
         def appName = "Conversations"
         resValue "string", "app_name", appName
         buildConfigField "String", "APP_NAME", "\"$appName\"";
@@ -165,7 +164,6 @@ android {
         quicksy {
             dimension "mode"
             applicationId = "im.quicksy.client"
-            resValue "string", "applicationId", applicationId
 
             def appName = "Quicksy"
             resValue "string", "app_name", appName
@@ -180,7 +178,6 @@ android {
             dimension "mode"
 
             applicationId = "com.cheogram.android"
-            resValue "string", "applicationId", applicationId
 
             def appName = "Cheogram"
             resValue "string", "app_name", appName
@@ -196,6 +193,10 @@ android {
             dimension "distribution"
             versionNameSuffix "+free"
         }
+    }
+
+    applicationVariants.all { variant ->
+      variant.resValue "string", "applicationId", applicationId
     }
 
     sourceSets {
