@@ -287,11 +287,12 @@ public class AudioPlayer implements View.OnClickListener, MediaPlayer.OnCompleti
         synchronized (AudioPlayer.LOCK) {
             final RelativeLayout audioPlayer = (RelativeLayout) seekBar.getParent();
             final Message message = (Message) audioPlayer.getTag();
-            if (fromUser && message == AudioPlayer.currentlyPlayingMessage) {
+            final MediaPlayer player = AudioPlayer.player;
+            if (fromUser && message == AudioPlayer.currentlyPlayingMessage && player != null) {
                 float percent = progress / 100f;
-                int duration = AudioPlayer.player.getDuration();
+                int duration = player.getDuration();
                 int seekTo = Math.round(duration * percent);
-                AudioPlayer.player.seekTo(seekTo);
+                player.seekTo(seekTo);
             }
         }
     }
