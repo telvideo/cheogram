@@ -329,16 +329,17 @@ public class Message extends AbstractEntity implements AvatarService.Avatarable 
     }
 
     public ContentValues getCheogramContentValues() {
+        final FileParams fp = fileParams;
         ContentValues values = new ContentValues();
         values.put(UUID, uuid);
         values.put("subject", subject);
-        values.put("fileParams", fileParams == null ? null : fileParams.toString());
-        if (fileParams != null && !fileParams.isEmpty()) {
+        values.put("fileParams", fp == null ? null : fp.toString());
+        if (fp != null && !fp.isEmpty()) {
             List<Element> sims = getSims();
             if (sims.isEmpty()) {
-                addPayload(fileParams.toSims());
+                addPayload(fp.toSims());
             } else {
-                sims.get(0).replaceChildren(fileParams.toSims().getChildren());
+                sims.get(0).replaceChildren(fp.toSims().getChildren());
             }
         }
         values.put("payloads", payloads.size() < 1 ? null : payloads.stream().map(Object::toString).collect(Collectors.joining()));
