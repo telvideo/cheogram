@@ -3268,9 +3268,12 @@ public class ConversationFragment extends XmppFragment
             });
             return;
         }
-        final Message message =
+        Message message =
                 downloadUuid == null ? null : conversation.findMessageWithFileAndUuid(downloadUuid);
         if ("webxdc".equals(postInitAction)) {
+            if (message == null) {
+                message = activity.xmppConnectionService.getMessage(conversation, downloadUuid);
+            }
             if (message == null) return;
 
             Cid webxdcCid = message.getFileParams().getCids().get(0);

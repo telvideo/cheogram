@@ -635,6 +635,10 @@ public class XmppConnectionService extends Service {
         this.databaseBackend.clearBlockedMedia();
     }
 
+    public Message getMessage(Conversation conversation, String uuid) {
+        return this.databaseBackend.getMessage(conversation, uuid);
+    }
+
     public void insertWebxdcUpdate(final WebxdcUpdate update) {
         this.databaseBackend.insertWebxdcUpdate(update);
     }

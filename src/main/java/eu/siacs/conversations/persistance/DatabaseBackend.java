@@ -1016,6 +1016,28 @@ public class DatabaseBackend extends SQLiteOpenHelper {
         return list;
     }
 
+    public Message getMessage(Conversation conversation, String uuid) {
+        ArrayList<Message> list = new ArrayList<>();
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor;
+        cursor = db.rawQuery(
+            "SELECT * FROM " + Message.TABLENAME + " " +
+            "LEFT JOIN cheogram." + Message.TABLENAME +
+            "  USING (" + Message.UUID + ")" +
+            "WHERE " + Message.UUID + "=?",
+            new String[]{uuid}
+        );
+        while (cursor.moveToNext()) {
+            try {
+                return Message.fromCursor(cursor, conversation);
+            } catch (Exception e) {
+                Log.e(Config.LOGTAG, "unable to restore message");
+            }
+        }
+        cursor.close();
+        return null;
+    }
+
     public ArrayList<Message> getMessages(Conversation conversations, int limit) {
         return getMessages(conversations, limit, -1);
     }
