@@ -225,6 +225,12 @@ public class XmppConnection implements Runnable {
         }
     }
 
+
+    public boolean resolverAuthenticated() {
+        if (currentResolverResult == null) return false;
+        return currentResolverResult.isAuthenticated();
+    }
+
     private void changeStatus(final Account.State nextStatus) {
         synchronized (this) {
             if (Thread.currentThread().isInterrupted()) {

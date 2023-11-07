@@ -14,10 +14,10 @@ import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.List;
 
-import de.measite.minidns.dnsserverlookup.AbstractDNSServerLookupMechanism;
-import de.measite.minidns.dnsserverlookup.AndroidUsingExec;
+import org.minidns.dnsserverlookup.AbstractDnsServerLookupMechanism;
+import org.minidns.dnsserverlookup.AndroidUsingExec;
 
-public class AndroidUsingLinkProperties extends AbstractDNSServerLookupMechanism {
+public class AndroidUsingLinkProperties extends AbstractDnsServerLookupMechanism {
 
     private final Context context;
 
@@ -33,11 +33,11 @@ public class AndroidUsingLinkProperties extends AbstractDNSServerLookupMechanism
 
     @Override
     @TargetApi(21)
-    public String[] getDnsServerAddresses() {
+    public List<String> getDnsServerAddresses() {
         final ConnectivityManager connectivityManager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
         final Network[] networks = connectivityManager == null ? null : connectivityManager.getAllNetworks();
         if (networks == null) {
-            return new String[0];
+            return new ArrayList<>();
         }
         final Network activeNetwork = getActiveNetwork(connectivityManager);
         final List<String> servers = new ArrayList<>();
@@ -58,7 +58,7 @@ public class AndroidUsingLinkProperties extends AbstractDNSServerLookupMechanism
                 servers.addAll(vpnOffset, getIPv4First(linkProperties.getDnsServers()));
             }
         }
-        return servers.toArray(new String[0]);
+        return servers;
     }
 
     @TargetApi(23)

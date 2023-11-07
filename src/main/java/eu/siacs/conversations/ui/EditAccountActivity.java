@@ -1265,6 +1265,14 @@ public class EditAccountActivity extends OmemoActivity implements OnAccountUpdat
             } else {
                 this.binding.otherDeviceKeysCard.setVisibility(View.GONE);
             }
+            this.binding.verificationBox.setVisibility(View.VISIBLE);
+            if (mAccount.getXmppConnection() != null && mAccount.getXmppConnection().resolverAuthenticated()) {
+                this.binding.verificationMessage.setText("DNSSEC Verified");
+                this.binding.verificationIndicator.setImageResource(R.drawable.shield);
+            } else {
+                this.binding.verificationMessage.setText("Not DNSSEC Verified");
+                this.binding.verificationIndicator.setImageResource(R.drawable.shield_question);
+            }
         } else {
             final TextInputLayout errorLayout;
             if (this.mAccount.errorStatus()) {
@@ -1287,6 +1295,7 @@ public class EditAccountActivity extends OmemoActivity implements OnAccountUpdat
             removeErrorsOnAllBut(errorLayout);
             this.binding.stats.setVisibility(View.GONE);
             this.binding.otherDeviceKeysCard.setVisibility(View.GONE);
+            this.binding.verificationBox.setVisibility(View.GONE);
         }
     }
 

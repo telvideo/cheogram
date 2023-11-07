@@ -309,11 +309,6 @@
                     android:summary="@string/pref_dont_trust_system_cas_summary"
                     android:title="@string/pref_dont_trust_system_cas_title" />
                 <CheckBoxPreference
-                    android:defaultValue="@bool/validate_hostname"
-                    android:key="validate_hostname"
-                    android:summary="@string/pref_validate_hostname_summary"
-                    android:title="@string/pref_validate_hostname" />
-                <CheckBoxPreference
                     android:defaultValue="@bool/allow_message_correction"
                     android:key="allow_message_correction"
                     android:summary="@string/pref_allow_message_correction_summary"

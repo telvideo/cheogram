@@ -19,17 +19,20 @@ import java.net.InetAddress;
 import java.util.HashSet;
 import java.util.logging.Level;
 
-import de.measite.minidns.dnsserverlookup.AbstractDNSServerLookupMechanism;
-import de.measite.minidns.dnsserverlookup.AndroidUsingReflection;
-import de.measite.minidns.dnsserverlookup.DNSServerLookupMechanism;
-import de.measite.minidns.util.PlatformDetection;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.minidns.dnsserverlookup.AbstractDnsServerLookupMechanism;
+import org.minidns.dnsserverlookup.AndroidUsingReflection;
+import org.minidns.dnsserverlookup.DnsServerLookupMechanism;
+import org.minidns.util.PlatformDetection;
 
 /**
  * Try to retrieve the list of DNS server by executing getprop.
  */
-public class AndroidUsingExecLowPriority extends AbstractDNSServerLookupMechanism {
+public class AndroidUsingExecLowPriority extends AbstractDnsServerLookupMechanism {
 
-	public static final DNSServerLookupMechanism INSTANCE = new AndroidUsingExecLowPriority();
+	public static final DnsServerLookupMechanism INSTANCE = new AndroidUsingExecLowPriority();
 	public static final int PRIORITY = AndroidUsingReflection.PRIORITY + 1;
 
 	private AndroidUsingExecLowPriority() {
@@ -37,7 +40,7 @@ public class AndroidUsingExecLowPriority extends AbstractDNSServerLookupMechanis
 	}
 
 	@Override
-	public String[] getDnsServerAddresses() {
+	public List<String> getDnsServerAddresses() {
 		try {
 			Process process = Runtime.getRuntime().exec("getprop");
 			InputStream inputStream = process.getInputStream();
@@ -76,7 +79,7 @@ public class AndroidUsingExecLowPriority extends AbstractDNSServerLookupMechanis
 				}
 			}
 			if (server.size() > 0) {
-				return server.toArray(new String[server.size()]);
+				return new ArrayList<>(server);
 			}
 		} catch (IOException e) {
 			LOGGER.log(Level.WARNING, "Exception in findDNSByExec", e);
