@@ -2825,7 +2825,7 @@ public class XmppConnectionService extends Service {
                     callback.onAccountCreated(account);
                     if (Config.X509_VERIFICATION) {
                         try {
-                            getMemorizingTrustManager().getNonInteractive(account.getServer()).checkClientTrusted(chain, "RSA");
+                            getMemorizingTrustManager().getNonInteractive(account.getServer(), null, 0, null).checkClientTrusted(chain, "RSA");
                         } catch (CertificateException e) {
                             callback.informUser(R.string.certificate_chain_is_not_trusted);
                         }

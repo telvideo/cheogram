@@ -1267,8 +1267,13 @@ public class EditAccountActivity extends OmemoActivity implements OnAccountUpdat
             }
             this.binding.verificationBox.setVisibility(View.VISIBLE);
             if (mAccount.getXmppConnection() != null && mAccount.getXmppConnection().resolverAuthenticated()) {
-                this.binding.verificationMessage.setText("DNSSEC Verified");
-                this.binding.verificationIndicator.setImageResource(R.drawable.shield);
+                if (mAccount.getXmppConnection().daneVerified()) {
+                    this.binding.verificationMessage.setText("DNSSEC + DANE Verified");
+                    this.binding.verificationIndicator.setImageResource(R.drawable.shield_verified);
+                } else {
+                    this.binding.verificationMessage.setText("DNSSEC Verified");
+                    this.binding.verificationIndicator.setImageResource(R.drawable.shield);
+                }
             } else {
                 this.binding.verificationMessage.setText("Not DNSSEC Verified");
                 this.binding.verificationIndicator.setImageResource(R.drawable.shield_question);

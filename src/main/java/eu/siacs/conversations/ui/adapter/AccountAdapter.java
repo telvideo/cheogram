@@ -69,10 +69,19 @@ public class AccountAdapter extends ArrayAdapter<Account> {
                 viewHolder.binding.accountStatus.setTextColor(StyledAttributes.getColor(activity, R.attr.TextColorError));
                 break;
         }
-        if (account.getXmppConnection() != null && account.getXmppConnection().resolverAuthenticated()) {
-            viewHolder.binding.verificationIndicator.setImageResource(R.drawable.shield);
+        if (account.isOnlineAndConnected()) {
+            viewHolder.binding.verificationIndicator.setVisibility(View.VISIBLE);
+            if (account.getXmppConnection() != null && account.getXmppConnection().resolverAuthenticated()) {
+                if (account.getXmppConnection().daneVerified()) {
+                    viewHolder.binding.verificationIndicator.setImageResource(R.drawable.shield_verified);
+                } else {
+                    viewHolder.binding.verificationIndicator.setImageResource(R.drawable.shield);
+                }
+            } else {
+                viewHolder.binding.verificationIndicator.setImageResource(R.drawable.shield_question);
+            }
         } else {
-            viewHolder.binding.verificationIndicator.setImageResource(R.drawable.shield_question);
+            viewHolder.binding.verificationIndicator.setVisibility(View.GONE);
         }
         final boolean isDisabled = (account.getStatus() == Account.State.DISABLED);
         viewHolder.binding.tglAccountStatus.setOnCheckedChangeListener(null);
