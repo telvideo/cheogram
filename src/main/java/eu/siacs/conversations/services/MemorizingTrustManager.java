@@ -127,7 +127,6 @@ public class MemorizingTrustManager {
     private final X509TrustManager defaultTrustManager;
     private X509TrustManager appTrustManager;
     private final DaneVerifier daneVerifier;
-    private String poshCacheDir;
 
     /**
      * Creates an instance of the MemorizingTrustManager class that falls back to a custom TrustManager.
@@ -243,8 +242,6 @@ public class MemorizingTrustManager {
 
         File dir = app.getDir(KEYSTORE_DIR, Context.MODE_PRIVATE);
         keyStoreFile = new File(dir + File.separator + KEYSTORE_FILE);
-
-        poshCacheDir = app.getCacheDir().getAbsolutePath() + "/posh_cache/";
 
         appKeyStore = loadAppKeyStore();
     }
@@ -398,130 +395,12 @@ public class MemorizingTrustManager {
                 else
                     defaultTrustManager.checkClientTrusted(chain, authType);
             } catch (final CertificateException e) {
-                final SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(master);
-                final boolean trustSystemCAs = !preferences.getBoolean("dont_trust_system_cas", false);
-                if (domain != null && isServer && trustSystemCAs && !isIp(domain) && !domain.endsWith(".onion")) {
-                    final String hash = getBase64Hash(chain[0], "SHA-256");
-                    final List<String> fingerprints = getPoshFingerprints(domain);
-                    if (hash != null && fingerprints.size() > 0) {
-                        if (fingerprints.contains(hash)) {
-                            Log.d(Config.LOGTAG, "trusted cert fingerprint of " + domain + " via posh");
-                            return;
-                        } else {
-                            Log.d(Config.LOGTAG, "fingerprint " + hash + " not found in " + fingerprints);
-                        }
-                        if (getPoshCacheFile(domain).delete()) {
-                            Log.d(Config.LOGTAG, "deleted posh file for " + domain + " after not being able to verify");
-                        }
-                    }
-                }
                 if (interactive) {
                     interactCert(chain, authType, e);
                 } else {
                     throw e;
                 }
             }
-        }
-    }
-
-    private List<String> getPoshFingerprints(final String domain) {
-        final List<String> cached = getPoshFingerprintsFromCache(domain);
-        if (cached == null) {
-            return getPoshFingerprintsFromServer(domain);
-        } else {
-            return cached;
-        }
-    }
-
-    private List<String> getPoshFingerprintsFromServer(String domain) {
-        return getPoshFingerprintsFromServer(domain, "https://" + domain + "/.well-known/posh/xmpp-client.json", -1, true);
-    }
-
-    private List<String> getPoshFingerprintsFromServer(String domain, String url, int maxTtl, boolean followUrl) {
-        Log.d(Config.LOGTAG, "downloading json for " + domain + " from " + url);
-        final SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(master);
-        final boolean useTor = preferences.getBoolean("use_tor", master.getResources().getBoolean(R.bool.use_tor));
-        try {
-            final List<String> results = new ArrayList<>();
-            final InputStream inputStream = HttpConnectionManager.open(url, useTor);
-            final String body = CharStreams.toString(new InputStreamReader(ByteStreams.limit(inputStream,10_000), Charsets.UTF_8));
-            final JSONObject jsonObject = new JSONObject(body);
-            int expires = jsonObject.getInt("expires");
-            if (expires <= 0) {
-                return new ArrayList<>();
-            }
-            if (maxTtl >= 0) {
-                expires = Math.min(maxTtl, expires);
-            }
-            String redirect;
-            try {
-                redirect = jsonObject.getString("url");
-            } catch (JSONException e) {
-                redirect = null;
-            }
-            if (followUrl && redirect != null && redirect.toLowerCase().startsWith("https")) {
-                return getPoshFingerprintsFromServer(domain, redirect, expires, false);
-            }
-            final JSONArray fingerprints = jsonObject.getJSONArray("fingerprints");
-            for (int i = 0; i < fingerprints.length(); i++) {
-                final JSONObject fingerprint = fingerprints.getJSONObject(i);
-                final String sha256 = fingerprint.getString("sha-256");
-                results.add(sha256);
-            }
-            writeFingerprintsToCache(domain, results, 1000L * expires + System.currentTimeMillis());
-            return results;
-        } catch (final Exception e) {
-            Log.d(Config.LOGTAG, "error fetching posh",e);
-            return new ArrayList<>();
-        }
-    }
-
-    private File getPoshCacheFile(String domain) {
-        return new File(poshCacheDir + domain + ".json");
-    }
-
-    private void writeFingerprintsToCache(String domain, List<String> results, long expires) {
-        final File file = getPoshCacheFile(domain);
-        file.getParentFile().mkdirs();
-        try {
-            file.createNewFile();
-            JSONObject jsonObject = new JSONObject();
-            jsonObject.put("expires", expires);
-            jsonObject.put("fingerprints", new JSONArray(results));
-            FileOutputStream outputStream = new FileOutputStream(file);
-            outputStream.write(jsonObject.toString().getBytes());
-            outputStream.flush();
-            outputStream.close();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    private List<String> getPoshFingerprintsFromCache(String domain) {
-        final File file = getPoshCacheFile(domain);
-        try {
-            final InputStream inputStream = new FileInputStream(file);
-            final String json = CharStreams.toString(new InputStreamReader(inputStream, Charsets.UTF_8));
-            final JSONObject jsonObject = new JSONObject(json);
-            long expires = jsonObject.getLong("expires");
-            long expiresIn = expires - System.currentTimeMillis();
-            if (expiresIn < 0) {
-                file.delete();
-                return null;
-            } else {
-                Log.d(Config.LOGTAG, "posh fingerprints expire in " + (expiresIn / 1000) + "s");
-            }
-            final List<String> result = new ArrayList<>();
-            final JSONArray jsonArray = jsonObject.getJSONArray("fingerprints");
-            for (int i = 0; i < jsonArray.length(); ++i) {
-                result.add(jsonArray.getString(i));
-            }
-            return result;
-        } catch (final IOException e) {
-            return null;
-        } catch (JSONException e) {
-            file.delete();
-            return null;
         }
     }
 
