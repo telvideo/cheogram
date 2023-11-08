@@ -372,9 +372,16 @@ public class MemorizingTrustManager {
             LOGGER.log(Level.FINE, "checkCertTrusted: trying appTrustManager");
             if (isServer) {
                 if (verifiedHostname != null) {
-                    if (daneVerifier.verifyCertificateChain(chain, verifiedHostname, port)) {
-                        if (daneCb != null) daneCb.accept(true);
-                        return;
+                    try {
+                        if (daneVerifier.verifyCertificateChain(chain, verifiedHostname, port)) {
+                            if (daneCb != null) daneCb.accept(true);
+                            return;
+                        }
+                    } catch (final CertificateException e) {
+                        Log.d(Config.LOGTAG, "checkCertTrusted DANE failure: " + e);
+                        throw e;
+                    } catch (final Exception e) {
+                        Log.d(Config.LOGTAG, "checkCertTrusted DANE related failure: " + e);
                     }
                 }
                 appTrustManager.checkServerTrusted(chain, authType);
