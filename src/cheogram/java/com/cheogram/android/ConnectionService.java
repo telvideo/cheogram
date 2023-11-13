@@ -47,6 +47,7 @@ import eu.siacs.conversations.entities.Account;
 import eu.siacs.conversations.persistance.FileBackend;
 import eu.siacs.conversations.services.AppRTCAudioManager;
 import eu.siacs.conversations.services.AvatarService;
+import eu.siacs.conversations.services.EventReceiver;
 import eu.siacs.conversations.services.XmppConnectionService.XmppConnectionBinder;
 import eu.siacs.conversations.services.XmppConnectionService;
 import eu.siacs.conversations.ui.RtpSessionActivity;
@@ -76,7 +77,8 @@ public class ConnectionService extends android.telecom.ConnectionService {
 	public void onCreate() {
 		// From XmppActivity.connectToBackend
 		Intent intent = new Intent(this, XmppConnectionService.class);
-		intent.setAction("ui");
+		intent.setAction(XmppConnectionService.ACTION_STARTING_CALL);
+		intent.putExtra(EventReceiver.EXTRA_NEEDS_FOREGROUND_SERVICE, true);
 		try {
 			startService(intent);
 		} catch (IllegalStateException e) {

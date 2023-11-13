@@ -223,6 +223,7 @@ public class XmppConnectionService extends Service {
     public static final String ACTION_FCM_MESSAGE_RECEIVED = "fcm_message_received";
     public static final String ACTION_DISMISS_CALL = "dismiss_call";
     public static final String ACTION_END_CALL = "end_call";
+    public static final String ACTION_STARTING_CALL = "starting_call";
     public static final String ACTION_PROVISION_ACCOUNT = "provision_account";
     private static final String ACTION_POST_CONNECTIVITY_CHANGE = "eu.siacs.conversations.POST_CONNECTIVITY_CHANGE";
     public static final String ACTION_RENEW_UNIFIED_PUSH_ENDPOINTS = "eu.siacs.conversations.UNIFIED_PUSH_RENEW";
@@ -824,7 +825,7 @@ public class XmppConnectionService extends Service {
         final boolean needsForegroundService = intent != null && intent.getBooleanExtra(EventReceiver.EXTRA_NEEDS_FOREGROUND_SERVICE, false);
         if (needsForegroundService) {
             Log.d(Config.LOGTAG, "toggle forced foreground service after receiving event (action=" + action + ")");
-            toggleForegroundService(true);
+            toggleForegroundService(true, action.equals(ACTION_STARTING_CALL));
         }
         final String uuid = intent == null ? null : intent.getStringExtra("uuid");
         switch (action) {
@@ -1591,20 +1592,20 @@ public class XmppConnectionService extends Service {
     }
 
     public void toggleForegroundService() {
-        toggleForegroundService(false);
+        toggleForegroundService(false, false);
     }
 
     public void setOngoingCall(AbstractJingleConnection.Id id, Set<Media> media, final boolean reconnecting) {
         ongoingCall.set(new OngoingCall(id, media, reconnecting));
-        toggleForegroundService(false);
+        toggleForegroundService(false, true);
     }
 
     public void removeOngoingCall() {
         ongoingCall.set(null);
-        toggleForegroundService(false);
+        toggleForegroundService(false, false);
     }
 
-    private void toggleForegroundService(boolean force) {
+    private void toggleForegroundService(boolean force, boolean needMic) {
         final boolean status;
         final OngoingCall ongoing = ongoingCall.get();
         final boolean showOngoing = ongoing != null && !diallerIntegrationActive.get();
@@ -1614,12 +1615,12 @@ public class XmppConnectionService extends Service {
             if (showOngoing) {
                 notification = this.mNotificationService.getOngoingCallNotification(ongoing);
                 id = NotificationService.ONGOING_CALL_NOTIFICATION_ID;
-                startForegroundOrCatch(id, notification);
+                startForegroundOrCatch(id, notification, true);
                 mNotificationService.cancel(NotificationService.FOREGROUND_NOTIFICATION_ID);
             } else {
                 notification = this.mNotificationService.createForegroundNotification();
                 id = NotificationService.FOREGROUND_NOTIFICATION_ID;
-                startForegroundOrCatch(id, notification);
+                startForegroundOrCatch(id, notification, needMic);
             }
 
             if (!mForceForegroundService.get()) {
@@ -1639,10 +1640,10 @@ public class XmppConnectionService extends Service {
         Log.d(Config.LOGTAG, "ForegroundService: " + (status ? "on" : "off"));
     }
 
-    private void startForegroundOrCatch(final int id, final Notification notification) {
+    private void startForegroundOrCatch(final int id, final Notification notification, boolean needMic) {
         try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-                final int foregroundServiceType;
+                int foregroundServiceType;
                 if (getSystemService(PowerManager.class)
                         .isIgnoringBatteryOptimizations(getPackageName())) {
                     foregroundServiceType = ServiceInfo.FOREGROUND_SERVICE_TYPE_SYSTEM_EXEMPTED;
@@ -1656,6 +1657,12 @@ public class XmppConnectionService extends Service {
                     foregroundServiceType = ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE;
                     Log.w(Config.LOGTAG,"falling back to special use foreground service type");
                 }
+
+                if (needMic && ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO)
+                        == PackageManager.PERMISSION_GRANTED) {
+                    foregroundServiceType = ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE;
+                 }
+
                 startForeground(id, notification, foregroundServiceType);
             } else {
                 startForeground(id, notification);
