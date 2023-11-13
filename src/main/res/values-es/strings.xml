@@ -537,7 +537,7 @@
     <string name="this_field_is_required">Este campo es requerido</string>
     <string name="correct_message">Corregir mensaje</string>
     <string name="send_corrected_message">Enviar mensaje corregido</string>
-    <string name="no_keys_just_confirm">Ya has validado la huella digital de esta persona de forma segura confirmando su confianza. Seleccionando \'Hecho\', estás confirmando que %s es parte de esta conversación en grupo. </string>
+    <string name="no_keys_just_confirm">Ya has confiado la huella digital de esta persona. Al seleccionar “Listo” solo estás confirmando que %s es parte de este chat grupal.</string>
     <string name="this_account_is_disabled">Has deshabilitado esta cuenta</string>
     <string name="security_error_invalid_file_access">Error de seguridad: ¡Acceso a archivo inválido!</string>
     <string name="no_application_to_share_uri">No se ha encontrado ninguna aplicación para compartir la URI</string>
@@ -1025,4 +1025,11 @@
     <string name="outdated_backup_file_format">Estás intentando importar un formato de copia de seguridad obsoleto</string>
     <string name="audiobook">Audiolibro</string>
     <string name="reconnect_on_other_host">Reconectarse a otros hosts</string>
+    <string name="this_account_is_logged_out">Has salido de esta cuenta</string>
+    <string name="log_in">Iniciar sesión</string>
+    <string name="hide_notification">Ocultar la notificación</string>
+    <string name="contact_uses_unverified_keys">Su contacto utiliza dispositivos no verificados. Escanea su código de barras en 2D para realizar la verificación e impedir ataques MITM activos.</string>
+    <string name="log_out">Desconectarse</string>
+    <string name="account_state_logged_out">Desconectado</string>
+    <string name="unverified_devices">Está utilizando dispositivos no verificados. Escanea el código de barras 2D en tus otros dispositivos para realizar la verificación e impedir los ataques MITM activos.</string>
 </resources>

@@ -49,7 +49,7 @@ dependencies {
 
     implementation 'androidx.viewpager:viewpager:1.0.0'
 
-    playstoreImplementation('com.google.firebase:firebase-messaging:23.3.0') {
+    playstoreImplementation('com.google.firebase:firebase-messaging:23.3.1') {
         exclude group: 'com.google.firebase', module: 'firebase-core'
         exclude group: 'com.google.firebase', module: 'firebase-analytics'
         exclude group: 'com.google.firebase', module: 'firebase-measurement-connector'
@@ -93,7 +93,7 @@ dependencies {
 
     implementation "com.squareup.retrofit2:retrofit:2.9.0"
     implementation "com.squareup.retrofit2:converter-gson:2.9.0"
-    implementation "com.squareup.okhttp3:okhttp:4.10.0"
+    implementation "com.squareup.okhttp3:okhttp:4.11.0"
 
     implementation 'com.google.guava:guava:32.1.3-android'
     implementation 'io.michaelrocks:libphonenumber-android:8.13.17'
@@ -106,7 +106,7 @@ dependencies {
     implementation 'com.github.singpolyma:TokenAutoComplete:bfa93780e0'
     implementation 'com.github.singpolyma:Better-Link-Movement-Method:4df081e1e4'
     implementation 'com.github.singpolyma:android-identicons:3361281bd4'
-    implementation 'im.conversations.webrtc:webrtc-android:117.1.0'
+    implementation 'im.conversations.webrtc:webrtc-android:119.0.0'
     implementation 'com.github.woltapp:blurhash:master'
     implementation 'com.caverock:androidsvg-aar:1.4'
     implementation 'org.tomlj:tomlj:1.1.0'
@@ -123,7 +123,7 @@ ext {
 
 android {
     namespace 'eu.siacs.conversations'
-    compileSdkVersion 34
+    compileSdk 34
 
     defaultConfig {
         minSdkVersion 21
@@ -141,6 +141,9 @@ android {
         abi {
             universalApk true
             enable true
+            reset()
+            //noinspection ChromeOsAbiSupport
+            include project.ext.abiCodes.keySet() as String[]
         }
     }
 
@@ -158,7 +161,8 @@ android {
         targetCompatibility JavaVersion.VERSION_17
     }
 
-    flavorDimensions("mode", "distribution")
+    flavorDimensions += "mode"
+    flavorDimensions += "distribution"
 
     productFlavors {
 
@@ -295,7 +299,7 @@ android {
         buildConfig true
     }
 
-    android.applicationVariants.all { variant ->
+    android.applicationVariants.configureEach { variant ->
         variant.outputs.each { output ->
             def baseAbiVersionCode = project.ext.abiCodes.get(output.getFilter(com.android.build.OutputFile.ABI))
             if (baseAbiVersionCode != null) {

@@ -1653,6 +1653,7 @@ public class ConversationFragment extends XmppFragment
                             && (t instanceof JingleFileTransferConnection
                                     || t instanceof HttpDownloadConnection);
             activity.getMenuInflater().inflate(R.menu.message_context, menu);
+            final MenuItem reportAndBlock = menu.findItem(R.id.action_report_and_block);
             MenuItem openWith = menu.findItem(R.id.open_with);
             MenuItem copyMessage = menu.findItem(R.id.copy_message);
             MenuItem quoteMessage = menu.findItem(R.id.quote_message);
@@ -1676,6 +1677,17 @@ public class ConversationFragment extends XmppFragment
                     m.getStatus() == Message.STATUS_SEND_FAILED
                             && m.getErrorMessage() != null
                             && !Message.ERROR_MESSAGE_CANCELLED.equals(m.getErrorMessage());
+            final Conversational conversational = m.getConversation();
+            if (m.getStatus() == Message.STATUS_RECEIVED && conversational instanceof Conversation c) {
+                final XmppConnection connection = c.getAccount().getXmppConnection();
+                if (c.isWithStranger()
+                        && m.getServerMsgId() != null
+                        && !c.isBlocked()
+                        && connection != null
+                        && connection.getFeatures().spamReporting()) {
+                    reportAndBlock.setVisible(true);
+                }
+            }
             if (!encrypted && !m.getBody().equals("")) {
                 copyMessage.setVisible(true);
             }
@@ -1878,6 +1890,8 @@ public class ConversationFragment extends XmppFragment
                 backPressedLeaveSingleThread.setEnabled(true);
                 setThread(selectedMessage.getThread());
                 refresh();
+            case R.id.action_report_and_block:
+                reportMessage(selectedMessage);
                 return true;
             default:
                 return onOptionsItemSelected(item);
@@ -2639,6 +2653,10 @@ public class ConversationFragment extends XmppFragment
                     activity.xmppConnectionService.getFileBackend().getFile(message);
             ViewUtil.view(activity, file);
         }
+    }
+
+    private void reportMessage(final Message message) {
+        BlockContactDialog.show(activity, conversation.getContact(), message.getServerMsgId());
     }
 
     private void showErrorMessage(final Message message) {

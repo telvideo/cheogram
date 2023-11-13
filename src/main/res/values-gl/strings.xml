@@ -536,7 +536,7 @@
     <string name="this_field_is_required">Este campo é requerido</string>
     <string name="correct_message">Correxir mensaxe</string>
     <string name="send_corrected_message">Enviar mensaxe correxida</string>
-    <string name="no_keys_just_confirm">Xa validaches as impresións dixitais destas persoas de xeito seguro para confiar nelas. Ao escoller \"Feito\" estás simplemente confirmando que %s é parte desta conversa en grupo.</string>
+    <string name="no_keys_just_confirm">Xa confiaches na impresión dixital destas persoas. Ao escoller \"Feito\" estás simplemente confirmando que %s é parte desta conversa en grupo.</string>
     <string name="this_account_is_disabled">Desactivou esta conta</string>
     <string name="security_error_invalid_file_access">Fallo de seguridade: Acceso non válido ao ficheiro!</string>
     <string name="no_application_to_share_uri">Non se atopou unha app para compartir URI</string>
@@ -1014,4 +1014,13 @@
     <string name="outdated_backup_file_format">Estás intentando importar un ficheiro de apoio co formato antigo</string>
     <string name="audiobook">Audiolibro</string>
     <string name="reconnect_on_other_host">Volver conectar noutro servidor</string>
+    <string name="this_account_is_logged_out">Pechaches a sesión desta conta</string>
+    <string name="log_in">Acceder</string>
+    <string name="hide_notification">Agochar notificación</string>
+    <string name="contact_uses_unverified_keys">O teu contacto usa dispositivos non verificados. Escanea o seu código de barras 2D para verficalo e impedir ataques MITM.</string>
+    <string name="log_out">Saír da sesión</string>
+    <string name="account_state_logged_out">Sesión pechada</string>
+    <string name="unverified_devices">Estás a usar dispositivos non verificados. Escanea os códigos de barras 2D nos teus outros dispositivos para verificalos e impedir ataques MITM.</string>
+    <string name="report_spam_and_block">Informar de spam e bloquear conta</string>
+    <string name="report_spam">Informar de spam</string>
 </resources>

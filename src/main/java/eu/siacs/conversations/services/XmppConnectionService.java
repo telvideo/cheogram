@@ -2262,6 +2262,7 @@ public class XmppConnectionService extends Service {
         if (connection == null) {
             Log.d(Config.LOGTAG, account.getJid().asBareJid()+": no connection. ignoring bookmark creation");
         } else if (connection.getFeatures().bookmarks2()) {
+            Log.d(Config.LOGTAG,account.getJid().asBareJid() + ": pushing bookmark via Bookmarks 2");
             final Element item = mIqGenerator.publishBookmarkItem(bookmark);
             pushNodeAndEnforcePublishOptions(account, Namespace.BOOKMARKS2, item, bookmark.getJid().asBareJid().toEscapedString(), PublishOptions.persistentWhitelistAccessMaxItems());
         } else if (connection.getFeatures().bookmarksConversion()) {
@@ -2280,7 +2281,8 @@ public class XmppConnectionService extends Service {
         if (connection == null) return;
 
         if (connection.getFeatures().bookmarks2()) {
-            IqPacket request = mIqGenerator.deleteItem(Namespace.BOOKMARKS2, bookmark.getJid().asBareJid().toEscapedString());
+            final IqPacket request = mIqGenerator.deleteItem(Namespace.BOOKMARKS2, bookmark.getJid().asBareJid().toEscapedString());
+            Log.d(Config.LOGTAG,account.getJid().asBareJid() + ": removing bookmark via Bookmarks 2");
             sendIqPacket(account, request, (a, response) -> {
                 if (response.getType() == IqPacket.TYPE.ERROR) {
                     Log.d(Config.LOGTAG, a.getJid().asBareJid() + ": unable to delete bookmark " + response.getErrorCondition());
@@ -5208,10 +5210,10 @@ public class XmppConnectionService extends Service {
         mDatabaseWriterExecutor.execute(runnable);
     }
 
-    public boolean sendBlockRequest(final Blockable blockable, boolean reportSpam) {
+    public boolean sendBlockRequest(final Blockable blockable, final boolean reportSpam, final String serverMsgId) {
         if (blockable != null && blockable.getBlockedJid() != null) {
             final Jid jid = blockable.getBlockedJid();
-            this.sendIqPacket(blockable.getAccount(), getIqGenerator().generateSetBlockRequest(jid, reportSpam), (a, response) -> {
+            this.sendIqPacket(blockable.getAccount(), getIqGenerator().generateSetBlockRequest(jid, reportSpam, serverMsgId), (a, response) -> {
                 if (response.getType() == IqPacket.TYPE.RESULT) {
                     a.getBlocklist().add(jid);
                     updateBlocklistUi(OnUpdateBlocklist.Status.BLOCKED);

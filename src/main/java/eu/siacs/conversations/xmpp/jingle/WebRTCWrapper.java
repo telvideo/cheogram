@@ -49,6 +49,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.annotation.Nonnull;
@@ -104,7 +105,6 @@ public class WebRTCWrapper {
 
     private final EventCallback eventCallback;
     private final AtomicBoolean readyToReceivedIceCandidates = new AtomicBoolean(false);
-    private final AtomicBoolean rfc3264 = new AtomicBoolean(false);
     private final Queue<IceCandidate> iceCandidates = new LinkedList<>();
     private final AppRTCAudioManager.AudioManagerEvents audioManagerEvents =
             new AppRTCAudioManager.AudioManagerEvents() {
@@ -119,6 +119,8 @@ public class WebRTCWrapper {
     private TrackWrapper<AudioTrack> localAudioTrack = null;
     private TrackWrapper<VideoTrack> localVideoTrack = null;
     private VideoTrack remoteVideoTrack = null;
+
+    private final SettableFuture<Void> iceGatheringComplete = SettableFuture.create();
     private final PeerConnection.Observer peerConnectionObserver =
             new PeerConnection.Observer() {
                 @Override
@@ -153,16 +155,16 @@ public class WebRTCWrapper {
 
                 @Override
                 public void onIceGatheringChange(
-                        PeerConnection.IceGatheringState iceGatheringState) {
+                        final PeerConnection.IceGatheringState iceGatheringState) {
                     Log.d(EXTENDED_LOGGING_TAG, "onIceGatheringChange(" + iceGatheringState + ")");
                     if (iceGatheringState == PeerConnection.IceGatheringState.COMPLETE) {
-                        execute(() -> eventCallback.onIceGatheringComplete(iceCandidates));
+                        iceGatheringComplete.set(null);
                     }
                 }
 
                 @Override
                 public void onIceCandidate(IceCandidate iceCandidate) {
-                    if (readyToReceivedIceCandidates.get() && !rfc3264.get()) {
+                    if (readyToReceivedIceCandidates.get()) {
                         eventCallback.onIceCandidate(iceCandidate);
                     } else {
                         iceCandidates.add(iceCandidate);
@@ -284,7 +286,9 @@ public class WebRTCWrapper {
     }
 
     synchronized void initializePeerConnection(
-            final Set<Media> media, final List<PeerConnection.IceServer> iceServers)
+            final Set<Media> media,
+            final List<PeerConnection.IceServer> iceServers,
+            final boolean trickle)
             throws InitializationException {
         Preconditions.checkState(this.eglBase != null);
         Preconditions.checkNotNull(media);
@@ -311,7 +315,7 @@ public class WebRTCWrapper {
                                         .createAudioDeviceModule())
                         .createPeerConnectionFactory();
 
-        final PeerConnection.RTCConfiguration rtcConfig = buildConfiguration(iceServers, rfc3264.get());
+        final PeerConnection.RTCConfiguration rtcConfig = buildConfiguration(iceServers, trickle);
         final PeerConnection peerConnection =
                 requirePeerConnectionFactory()
                         .createPeerConnection(rtcConfig, peerConnectionObserver);
@@ -426,17 +430,17 @@ public class WebRTCWrapper {
     }
 
     private static PeerConnection.RTCConfiguration buildConfiguration(
-            final List<PeerConnection.IceServer> iceServers, boolean rfc3264) {
+            final List<PeerConnection.IceServer> iceServers, final boolean trickle) {
         final PeerConnection.RTCConfiguration rtcConfig =
                 new PeerConnection.RTCConfiguration(iceServers);
         rtcConfig.tcpCandidatePolicy =
                 PeerConnection.TcpCandidatePolicy.DISABLED; // XEP-0176 doesn't support tcp
-        if (rfc3264) {
+        if (trickle) {
             rtcConfig.continualGatheringPolicy =
-                PeerConnection.ContinualGatheringPolicy.GATHER_ONCE;
+                    PeerConnection.ContinualGatheringPolicy.GATHER_CONTINUALLY;
         } else {
             rtcConfig.continualGatheringPolicy =
-                PeerConnection.ContinualGatheringPolicy.GATHER_CONTINUALLY;
+                    PeerConnection.ContinualGatheringPolicy.GATHER_ONCE;
         }
         rtcConfig.sdpSemantics = PeerConnection.SdpSemantics.UNIFIED_PLAN;
         rtcConfig.rtcpMuxPolicy = PeerConnection.RtcpMuxPolicy.NEGOTIATE;
@@ -444,8 +448,9 @@ public class WebRTCWrapper {
         return rtcConfig;
     }
 
-    void reconfigurePeerConnection(final List<PeerConnection.IceServer> iceServers) {
-        requirePeerConnection().setConfiguration(buildConfiguration(iceServers, rfc3264.get()));
+    void reconfigurePeerConnection(
+            final List<PeerConnection.IceServer> iceServers, final boolean trickle) {
+        requirePeerConnection().setConfiguration(buildConfiguration(iceServers, trickle));
     }
 
     void restartIceAsync() {
@@ -466,7 +471,6 @@ public class WebRTCWrapper {
 
     public void setIsReadyToReceiveIceCandidates(final boolean ready) {
         readyToReceivedIceCandidates.set(ready);
-        if (this.rfc3264.get()) return;
         final int was = iceCandidates.size();
         while (ready && iceCandidates.peek() != null) {
             eventCallback.onIceCandidate(iceCandidates.poll());
@@ -477,13 +481,9 @@ public class WebRTCWrapper {
                 "setIsReadyToReceiveCandidates(" + ready + ") was=" + was + " is=" + is);
     }
 
-    public void setRFC3264(final boolean rfc3264) {
-        // When this feature is enabled, do not trickle candidates
-        this.rfc3264.set(rfc3264);
-    }
-
-    public boolean getRFC3264() {
-        return this.rfc3264.get();
+    public void resetPendingCandidates() {
+        this.readyToReceivedIceCandidates.set(true);
+        this.iceCandidates.clear();
     }
 
     synchronized void close() {
@@ -616,11 +616,7 @@ public class WebRTCWrapper {
         throw new IllegalStateException("Local video track does not exist");
     }
 
-    synchronized SessionDescription getLocalDescription() {
-        return peerConnection.getLocalDescription();
-    }
-
-    synchronized ListenableFuture<SessionDescription> setLocalDescription() {
+    synchronized ListenableFuture<SessionDescription> setLocalDescription(final boolean waitForCandidates) {
         this.setIsReadyToReceiveIceCandidates(false);
         return Futures.transformAsync(
                 getPeerConnectionFuture(),
@@ -634,7 +630,16 @@ public class WebRTCWrapper {
                             new SetSdpObserver() {
                                 @Override
                                 public void onSetSuccess() {
-                                    future.setFuture(getLocalDescriptionFuture());
+                                    final var delay =
+                                            waitForCandidates
+                                                    ? Futures.catching(Futures.withTimeout(iceGatheringComplete, 2, TimeUnit.SECONDS, JingleConnectionManager.SCHEDULED_EXECUTOR_SERVICE), Exception.class, (Exception e) -> { return null; }, MoreExecutors.directExecutor())
+                                                    : Futures.immediateVoidFuture();
+                                    final var delayedSessionDescription =
+                                            Futures.transformAsync(
+                                                    delay,
+                                                    v -> getLocalDescriptionFuture(),
+                                                    MoreExecutors.directExecutor());
+                                    future.setFuture(delayedSessionDescription);
                                 }
 
                                 @Override
@@ -794,8 +799,6 @@ public class WebRTCWrapper {
                 Set<AppRTCAudioManager.AudioDevice> availableAudioDevices);
 
         void onRenegotiationNeeded();
-
-        void onIceGatheringComplete(Collection<IceCandidate> iceCandidates);
     }
 
     private abstract static class SetSdpObserver implements SdpObserver {

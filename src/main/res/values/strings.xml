@@ -539,7 +539,7 @@
     <string name="correct_message">Correct message</string>
     <string name="retract_message">Retract message</string>
     <string name="send_corrected_message">Send corrected message</string>
-    <string name="no_keys_just_confirm">You have already validated this persons fingerprint securely to confirm trust. By selecting “Done” you are just confirming that %s is part of this group chat.</string>
+    <string name="no_keys_just_confirm">You have already trusted this persons fingerprint. By selecting “Done” you are just confirming that %s is part of this group chat.</string>
     <string name="this_account_is_disabled">You have disabled this account</string>
     <string name="this_account_is_logged_out">You have logged out of this account</string>
     <string name="security_error_invalid_file_access">Security error: Invalid file access!</string>
@@ -1027,5 +1027,7 @@
     <string name="log_out">Log out</string>
     <string name="log_in">Log in</string>
     <string name="contact_uses_unverified_keys">Your contact uses unverified devices. Scan their 2D barcode to perform verification and impede active MITM attacks.</string>
-    <string name="unverified_devices">You are using unverified devices. Scan the 2D barcodes of your other devices to perform verification and impede active MITM attack.</string>
+    <string name="unverified_devices">You are using unverified devices. Scan the 2D barcode on your other devices to perform verification and impede active MITM attacks.</string>
+    <string name="report_spam">Report spam</string>
+    <string name="report_spam_and_block">Report spam and block spammer</string>
 </resources>

@@ -2743,7 +2743,7 @@ public class XmppConnection implements Runnable {
         }
 
         public boolean spamReporting() {
-            return hasDiscoFeature(account.getDomain(), "urn:xmpp:reporting:reason:spam:0");
+            return hasDiscoFeature(account.getDomain(), Namespace.REPORTING);
         }
 
         public boolean flexibleOfflineMessageRetrieval() {
@@ -2884,7 +2884,7 @@ public class XmppConnection implements Runnable {
         }
 
         public boolean bookmarks2() {
-            return Config.USE_BOOKMARKS2 || hasDiscoFeature(account.getJid().asBareJid(), Namespace.BOOKMARKS2_COMPAT);
+            return pepPublishOptions() && hasDiscoFeature(account.getJid().asBareJid(), Namespace.BOOKMARKS2_COMPAT);
         }
 
         public boolean externalServiceDiscovery() {
