@@ -10,7 +10,7 @@ import eu.siacs.conversations.xmpp.Jid;
 
 public class BackupFileHeader {
 
-    private static final int VERSION = 2;
+    private static final int VERSION = 1;
 
     private final String app;
     private final Jid jid;
