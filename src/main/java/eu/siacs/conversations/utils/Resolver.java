@@ -96,6 +96,13 @@ public class Resolver {
             Log.d(Config.LOGTAG,"clearing DNS cache");
             ((LruCache) dnsCache).clear();
         }
+
+        final AbstractDnsClient clientSec = DnssecResolverApi.INSTANCE.getClient();
+        final DnsCache dnsCacheSec = clientSec.getCache();
+        if (dnsCacheSec instanceof LruCache) {
+            Log.d(Config.LOGTAG,"clearing DNSSEC cache");
+            ((LruCache) dnsCacheSec).clear();
+        }
     }
 
 
