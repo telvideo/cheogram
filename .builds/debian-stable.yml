@@ -30,7 +30,7 @@ tasks:
 - sentry: |
     cd cheogram-android
     sed -ie 's/<!-- INSERT -->/<meta-data android:name="io.sentry.dsn" android:value="https:\/\/680d470d348a4cc494bf2198eed30c49@o559641.ingest.sentry.io\/6221823" \/>/' src/cheogram/AndroidManifest.xml
-    sed -ie 's/\/\/ INSERT/implementation "io.sentry:sentry-android:6.4.2"/' build.gradle
+    sed -ie 's/\/\/ INSERT/implementation "io.sentry:sentry-android:6.34.0"/' build.gradle
 - build_free: |
     cd cheogram-android
     ./gradlew assembleCheogramFreeDebug
