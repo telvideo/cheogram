@@ -1620,7 +1620,7 @@ public class XmppConnectionService extends Service {
             } else {
                 notification = this.mNotificationService.createForegroundNotification();
                 id = NotificationService.FOREGROUND_NOTIFICATION_ID;
-                startForegroundOrCatch(id, notification, needMic);
+                startForegroundOrCatch(id, notification, needMic || ongoing != null || diallerIntegrationActive.get());
             }
 
             if (!mForceForegroundService.get()) {
