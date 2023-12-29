@@ -1519,7 +1519,7 @@ public class XmppConnectionService extends Service {
         toggleForegroundService();
         setupPhoneStateListener();
         rescanStickers();
-        internalPingExecutor.scheduleAtFixedRate(this::manageAccountConnectionStatesInternal,10,10,TimeUnit.SECONDS);
+        internalPingExecutor.scheduleAtFixedRate(this::manageAccountConnectionStatesInternal,120,120,TimeUnit.SECONDS);
     }
 
 
