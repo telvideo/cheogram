@@ -1834,7 +1834,7 @@ public class Conversation extends AbstractEntity implements Blockable, Comparabl
 
                     if (field.getType().equals(Optional.of("jid-single")) || field.getType().equals(Optional.of("jid-multi"))) {
                         binding.values.setOnItemClickListener((arg0, arg1, pos, id) -> {
-                            new FixedURLSpan("xmpp:" + Jid.ofEscaped(values.getItem(pos).getValue()).toEscapedString(), account).onClick(binding.values);
+                            new FixedURLSpan("xmpp:" + Uri.encode(Jid.ofEscaped(values.getItem(pos).getValue()).toEscapedString(), "@/+"), account).onClick(binding.values);
                         });
                     } else if ("xs:anyURI".equals(datatype)) {
                         binding.values.setOnItemClickListener((arg0, arg1, pos, id) -> {
