@@ -1890,6 +1890,7 @@ public class ConversationFragment extends XmppFragment
                 backPressedLeaveSingleThread.setEnabled(true);
                 setThread(selectedMessage.getThread());
                 refresh();
+                return true;
             case R.id.action_report_and_block:
                 reportMessage(selectedMessage);
                 return true;
