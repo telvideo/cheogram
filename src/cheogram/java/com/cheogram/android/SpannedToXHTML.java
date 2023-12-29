@@ -42,7 +42,8 @@ public class SpannedToXHTML {
 
 	public static boolean isPlainText(Spanned text) {
 		SpannableStringBuilder cleanText = cleanSpans(text);
-		return cleanText.nextSpanTransition(0, cleanText.length(), CharacterStyle.class) >= cleanText.length();
+		CharacterStyle[] style = cleanText.getSpans(0, cleanText.length(), CharacterStyle.class);
+		return style.length < 1;
 	}
 
 	public static Element append(Element out, Spanned text) {
