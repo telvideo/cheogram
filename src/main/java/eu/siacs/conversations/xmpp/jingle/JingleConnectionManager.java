@@ -12,20 +12,6 @@ import com.google.common.collect.Collections2;
 import com.google.common.collect.ComparisonChain;
 import com.google.common.collect.ImmutableSet;
 
-import java.lang.ref.WeakReference;
-import java.security.SecureRandom;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
-
 import eu.siacs.conversations.Config;
 import eu.siacs.conversations.entities.Account;
 import eu.siacs.conversations.entities.Contact;
@@ -39,17 +25,32 @@ import eu.siacs.conversations.services.XmppConnectionService;
 import eu.siacs.conversations.xml.Element;
 import eu.siacs.conversations.xml.Namespace;
 import eu.siacs.conversations.xmpp.Jid;
-import eu.siacs.conversations.xmpp.OnIqPacketReceived;
 import eu.siacs.conversations.xmpp.XmppConnection;
 import eu.siacs.conversations.xmpp.jingle.stanzas.Content;
 import eu.siacs.conversations.xmpp.jingle.stanzas.FileTransferDescription;
 import eu.siacs.conversations.xmpp.jingle.stanzas.GenericDescription;
+import eu.siacs.conversations.xmpp.jingle.stanzas.IbbTransportInfo;
 import eu.siacs.conversations.xmpp.jingle.stanzas.JinglePacket;
 import eu.siacs.conversations.xmpp.jingle.stanzas.Propose;
 import eu.siacs.conversations.xmpp.jingle.stanzas.Reason;
 import eu.siacs.conversations.xmpp.jingle.stanzas.RtpDescription;
+import eu.siacs.conversations.xmpp.jingle.transports.InbandBytestreamsTransport;
+import eu.siacs.conversations.xmpp.jingle.transports.Transport;
 import eu.siacs.conversations.xmpp.stanzas.IqPacket;
 import eu.siacs.conversations.xmpp.stanzas.MessagePacket;
+
+import java.lang.ref.WeakReference;
+import java.security.SecureRandom;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
 public class JingleConnectionManager extends AbstractConnectionManager {
     static final ScheduledExecutorService SCHEDULED_EXECUTOR_SERVICE =
@@ -62,8 +63,6 @@ public class JingleConnectionManager extends AbstractConnectionManager {
 
     private final Cache<PersistableSessionId, TerminatedRtpSession> terminatedSessions =
             CacheBuilder.newBuilder().expireAfterWrite(24, TimeUnit.HOURS).build();
-
-    private final HashMap<Jid, JingleCandidate> primaryCandidates = new HashMap<>();
 
     public JingleConnectionManager(XmppConnectionService service) {
         super(service);
@@ -92,7 +91,7 @@ public class JingleConnectionManager extends AbstractConnectionManager {
             final String descriptionNamespace =
                     content == null ? null : content.getDescriptionNamespace();
             final AbstractJingleConnection connection;
-            if (FileTransferDescription.NAMESPACES.contains(descriptionNamespace)) {
+            if (Namespace.JINGLE_APPS_FILE_TRANSFER.equals(descriptionNamespace)) {
                 connection = new JingleFileTransferConnection(this, id, from);
             } else if (Namespace.JINGLE_APPS_RTP.equals(descriptionNamespace)
                     && isUsingClearNet(account)) {
@@ -170,8 +169,7 @@ public class JingleConnectionManager extends AbstractConnectionManager {
 
     public boolean hasJingleRtpConnection(final Account account) {
         for (AbstractJingleConnection connection : this.connections.values()) {
-            if (connection instanceof JingleRtpConnection) {
-                final JingleRtpConnection rtpConnection = (JingleRtpConnection) connection;
+            if (connection instanceof JingleRtpConnection rtpConnection) {
                 if (rtpConnection.isTerminated()) {
                     continue;
                 }
@@ -185,8 +183,7 @@ public class JingleConnectionManager extends AbstractConnectionManager {
 
     public void notifyPhoneCallStarted() {
         for (AbstractJingleConnection connection : connections.values()) {
-            if (connection instanceof JingleRtpConnection) {
-                final JingleRtpConnection rtpConnection = (JingleRtpConnection) connection;
+            if (connection instanceof JingleRtpConnection rtpConnection) {
                 if (rtpConnection.isTerminated()) {
                     continue;
                 }
@@ -194,7 +191,6 @@ public class JingleConnectionManager extends AbstractConnectionManager {
             }
         }
     }
-
 
     private Optional<RtpSessionProposal> findMatchingSessionProposal(
             final Account account, final Jid with, final Set<Media> media) {
@@ -220,8 +216,7 @@ public class JingleConnectionManager extends AbstractConnectionManager {
 
     private String hasMatchingRtpSession(final Account account, final Jid with, final Set<Media> media) {
         for (AbstractJingleConnection connection : this.connections.values()) {
-            if (connection instanceof JingleRtpConnection) {
-                final JingleRtpConnection rtpConnection = (JingleRtpConnection) connection;
+            if (connection instanceof JingleRtpConnection rtpConnection) {
                 if (rtpConnection.isTerminated()) {
                     continue;
                 }
@@ -281,8 +276,7 @@ public class JingleConnectionManager extends AbstractConnectionManager {
         }
         if ("accept".equals(message.getName()) || "reject".equals(message.getName())) {
             for (AbstractJingleConnection connection : connections.values()) {
-                if (connection instanceof JingleRtpConnection) {
-                    final JingleRtpConnection rtpConnection = (JingleRtpConnection) connection;
+                if (connection instanceof JingleRtpConnection rtpConnection) {
                     final AbstractJingleConnection.Id id = connection.getId();
                     if (id.account == account && id.sessionId.equals(sessionId)) {
                         rtpConnection.deliveryMessage(from, message, serverMsgId, timestamp);
@@ -599,13 +593,10 @@ public class JingleConnectionManager extends AbstractConnectionManager {
         if (old != null) {
             old.cancel();
         }
-        final Account account = message.getConversation().getAccount();
-        final AbstractJingleConnection.Id id = AbstractJingleConnection.Id.of(message);
         final JingleFileTransferConnection connection =
-                new JingleFileTransferConnection(this, id, account.getJid());
-        mXmppConnectionService.markMessage(message, Message.STATUS_WAITING);
-        this.connections.put(id, connection);
-        connection.init(message);
+                new JingleFileTransferConnection(this, message);
+        this.connections.put(connection.getId(), connection);
+        connection.sendSessionInitialize();
     }
 
     public Optional<OngoingRtpSession> getOngoingRtpConnection(final Contact contact) {
@@ -644,15 +635,16 @@ public class JingleConnectionManager extends AbstractConnectionManager {
         final AbstractJingleConnection.Id id = connection.getId();
         if (this.connections.remove(id) == null) {
             throw new IllegalStateException(
-                    String.format("Unable to finish connection with id=%s", id.toString()));
+                    String.format("Unable to finish connection with id=%s", id));
         }
+        // update chat UI to remove 'ongoing call' icon
+        mXmppConnectionService.updateConversationUi();
     }
 
     public boolean fireJingleRtpConnectionStateUpdates() {
         boolean firedUpdates = false;
         for (final AbstractJingleConnection connection : this.connections.values()) {
-            if (connection instanceof JingleRtpConnection) {
-                final JingleRtpConnection jingleRtpConnection = (JingleRtpConnection) connection;
+            if (connection instanceof JingleRtpConnection jingleRtpConnection) {
                 if (jingleRtpConnection.isTerminated()) {
                     continue;
                 }
@@ -661,73 +653,6 @@ public class JingleConnectionManager extends AbstractConnectionManager {
             }
         }
         return firedUpdates;
-    }
-
-    void getPrimaryCandidate(
-            final Account account,
-            final boolean initiator,
-            final OnPrimaryCandidateFound listener) {
-        if (Config.DISABLE_PROXY_LOOKUP) {
-            listener.onPrimaryCandidateFound(false, null);
-            return;
-        }
-        if (!this.primaryCandidates.containsKey(account.getJid().asBareJid())) {
-            final Jid proxy =
-                    account.getXmppConnection().findDiscoItemByFeature(Namespace.BYTE_STREAMS);
-            if (proxy != null) {
-                IqPacket iq = new IqPacket(IqPacket.TYPE.GET);
-                iq.setTo(proxy);
-                iq.query(Namespace.BYTE_STREAMS);
-                account.getXmppConnection()
-                        .sendIqPacket(
-                                iq,
-                                new OnIqPacketReceived() {
-
-                                    @Override
-                                    public void onIqPacketReceived(
-                                            Account account, IqPacket packet) {
-                                        final Element streamhost =
-                                                packet.query()
-                                                        .findChild(
-                                                                "streamhost",
-                                                                Namespace.BYTE_STREAMS);
-                                        final String host =
-                                                streamhost == null
-                                                        ? null
-                                                        : streamhost.getAttribute("host");
-                                        final String port =
-                                                streamhost == null
-                                                        ? null
-                                                        : streamhost.getAttribute("port");
-                                        if (host != null && port != null) {
-                                            try {
-                                                JingleCandidate candidate =
-                                                        new JingleCandidate(nextRandomId(), true);
-                                                candidate.setHost(host);
-                                                candidate.setPort(Integer.parseInt(port));
-                                                candidate.setType(JingleCandidate.TYPE_PROXY);
-                                                candidate.setJid(proxy);
-                                                candidate.setPriority(
-                                                        655360 + (initiator ? 30 : 0));
-                                                primaryCandidates.put(
-                                                        account.getJid().asBareJid(), candidate);
-                                                listener.onPrimaryCandidateFound(true, candidate);
-                                            } catch (final NumberFormatException e) {
-                                                listener.onPrimaryCandidateFound(false, null);
-                                            }
-                                        } else {
-                                            listener.onPrimaryCandidateFound(false, null);
-                                        }
-                                    }
-                                });
-            } else {
-                listener.onPrimaryCandidateFound(false, null);
-            }
-
-        } else {
-            listener.onPrimaryCandidateFound(
-                    true, this.primaryCandidates.get(account.getJid().asBareJid()));
-        }
     }
 
     public void retractSessionProposal(final Account account, final Jid with) {
@@ -831,40 +756,53 @@ public class JingleConnectionManager extends AbstractConnectionManager {
         return false;
     }
 
-    public void deliverIbbPacket(Account account, IqPacket packet) {
+    public void deliverIbbPacket(final Account account, final IqPacket packet) {
         final String sid;
         final Element payload;
+        final InbandBytestreamsTransport.PacketType packetType;
         if (packet.hasChild("open", Namespace.IBB)) {
+            packetType = InbandBytestreamsTransport.PacketType.OPEN;
             payload = packet.findChild("open", Namespace.IBB);
             sid = payload.getAttribute("sid");
         } else if (packet.hasChild("data", Namespace.IBB)) {
+            packetType = InbandBytestreamsTransport.PacketType.DATA;
             payload = packet.findChild("data", Namespace.IBB);
             sid = payload.getAttribute("sid");
         } else if (packet.hasChild("close", Namespace.IBB)) {
+            packetType = InbandBytestreamsTransport.PacketType.CLOSE;
             payload = packet.findChild("close", Namespace.IBB);
             sid = payload.getAttribute("sid");
         } else {
+            packetType = null;
             payload = null;
             sid = null;
         }
-        if (sid != null) {
-            for (final AbstractJingleConnection connection : this.connections.values()) {
-                if (connection instanceof JingleFileTransferConnection) {
-                    final JingleFileTransferConnection fileTransfer =
-                            (JingleFileTransferConnection) connection;
-                    final JingleTransport transport = fileTransfer.getTransport();
-                    if (transport instanceof JingleInBandTransport) {
-                        final JingleInBandTransport inBandTransport =
-                                (JingleInBandTransport) transport;
-                        if (inBandTransport.matches(account, sid)) {
-                            inBandTransport.deliverPayload(packet, payload);
+        if (sid == null) {
+            Log.d(Config.LOGTAG, account.getJid().asBareJid()+": unable to deliver ibb packet. missing sid");
+            account.getXmppConnection()
+                    .sendIqPacket(packet.generateResponse(IqPacket.TYPE.ERROR), null);
+            return;
+        }
+        for (final AbstractJingleConnection connection : this.connections.values()) {
+            if (connection instanceof JingleFileTransferConnection fileTransfer) {
+                final Transport transport = fileTransfer.getTransport();
+                if (transport instanceof InbandBytestreamsTransport inBandTransport) {
+                    if (sid.equals(inBandTransport.getStreamId())) {
+                        if (inBandTransport.deliverPacket(packetType, packet.getFrom(), payload)) {
+                            account.getXmppConnection()
+                                    .sendIqPacket(
+                                            packet.generateResponse(IqPacket.TYPE.RESULT), null);
+                        } else {
+                            account.getXmppConnection()
+                                    .sendIqPacket(
+                                            packet.generateResponse(IqPacket.TYPE.ERROR), null);
                         }
                         return;
                     }
                 }
             }
         }
-        Log.d(Config.LOGTAG, "unable to deliver ibb packet: " + packet.toString());
+        Log.d(Config.LOGTAG, account.getJid().asBareJid()+": unable to deliver ibb packet with sid="+sid);
         account.getXmppConnection()
                 .sendIqPacket(packet.generateResponse(IqPacket.TYPE.ERROR), null);
     }
@@ -970,7 +908,8 @@ public class JingleConnectionManager extends AbstractConnectionManager {
         }
     }
 
-    public void failProceed(Account account, final Jid with, final String sessionId, final String message) {
+    public void failProceed(
+            Account account, final Jid with, final String sessionId, final String message) {
         final AbstractJingleConnection.Id id =
                 AbstractJingleConnection.Id.of(account, with, sessionId);
         final AbstractJingleConnection existingJingleConnection = connections.get(id);
@@ -1044,15 +983,11 @@ public class JingleConnectionManager extends AbstractConnectionManager {
         FAILED;
 
         public RtpEndUserState toEndUserState() {
-            switch (this) {
-                case SEARCHING:
-                case SEARCHING_ACKNOWLEDGED:
-                    return RtpEndUserState.FINDING_DEVICE;
-                case DISCOVERED:
-                    return RtpEndUserState.RINGING;
-                default:
-                    return RtpEndUserState.CONNECTIVITY_ERROR;
-            }
+            return switch (this) {
+                case SEARCHING, SEARCHING_ACKNOWLEDGED -> RtpEndUserState.FINDING_DEVICE;
+                case DISCOVERED -> RtpEndUserState.RINGING;
+                default -> RtpEndUserState.CONNECTIVITY_ERROR;
+            };
         }
     }
 
@@ -1061,10 +996,6 @@ public class JingleConnectionManager extends AbstractConnectionManager {
         public final String sessionId;
         public final Set<Media> media;
         private final Account account;
-
-        private RtpSessionProposal(Account account, Jid with, String sessionId) {
-            this(account, with, sessionId, Collections.emptySet());
-        }
 
         private RtpSessionProposal(Account account, Jid with, String sessionId, Set<Media> media) {
             this.account = account;

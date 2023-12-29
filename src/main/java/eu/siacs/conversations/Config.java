@@ -41,9 +41,10 @@ public final class Config {
 
     public static final String LOGTAG = BuildConfig.APP_NAME.toLowerCase(Locale.US);
 
+    public static final boolean QUICK_LOG = false;
+
     public static final Jid BUG_REPORTS = Jid.of("+14169938000@cheogram.com");
     public static final Uri HELP = Uri.parse("https://cheogram.com");
-
 
     public static final String DOMAIN_LOCK = null; //only allow account creation for this domain
     public static final String MAGIC_CREATE_DOMAIN = "chatterboxtown.us";
@@ -116,7 +117,7 @@ public final class Config {
     public static final boolean OMEMO_PADDING = false;
     public static final boolean PUT_AUTH_TAG_INTO_KEY = true;
     public static final boolean AUTOMATICALLY_COMPLETE_SESSIONS = true;
-    public static final boolean DISABLE_PROXY_LOOKUP = false; //useful to debug ibb
+    public static final boolean DISABLE_PROXY_LOOKUP = false; //disables STUN/TURN and Proxy65 look up (useful to debug IBB fallback)
     public static final boolean USE_DIRECT_JINGLE_CANDIDATES = true;
     public static final boolean DISABLE_HTTP_UPLOAD = false;
     public static final boolean EXTENDED_SM_LOGGING = false; // log stanza counts

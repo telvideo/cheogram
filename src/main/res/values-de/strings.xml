@@ -128,7 +128,7 @@
     <string name="pref_notification_grace_period_summary">Die Zeitspanne, in der Benachrichtigungen nach der Erkennung von Aktivitäten auf einem deiner anderen Geräte unterdrückt werden.</string>
     <string name="pref_advanced_options">Erweitert</string>
     <string name="pref_never_send_crash">Niemals Absturzberichte senden</string>
-    <string name="pref_never_send_crash_summary">Mit dem Einsenden von Absturzberichten hilfst du bei der Weiterentwicklung</string>
+    <string name="pref_never_send_crash_summary">Durch das Einsenden von Absturzberichten hilfst du bei der Weiterentwicklung</string>
     <string name="pref_confirm_messages">Lese- und Empfangsbestätigung senden</string>
     <string name="pref_confirm_messages_summary">Informiere deine Kontakte, wenn du eine Nachricht empfangen und gelesen hast</string>
     <string name="pref_prevent_screenshots">Screenshots verhindern</string>
@@ -264,7 +264,7 @@
     <string name="error_saving_avatar">Profilbild kann nicht gespeichert werden</string>
     <string name="or_long_press_for_default">(Oder klicke lange, um den Standard wiederherzustellen)</string>
     <string name="error_publish_avatar_no_server_support">Dein Server unterstützt die Veröffentlichung von Profilbildern nicht</string>
-    <string name="private_message">private Nachricht:</string>
+    <string name="private_message">private Nachricht</string>
     <string name="private_message_to">an %s</string>
     <string name="send_private_message_to">Private Nachricht an %s senden</string>
     <string name="connect">Verbinden</string>
@@ -534,7 +534,7 @@
     <string name="this_field_is_required">Dieses Feld ist erforderlich</string>
     <string name="correct_message">Nachricht korrigieren</string>
     <string name="send_corrected_message">Korrigierte Nachricht senden</string>
-    <string name="no_keys_just_confirm">Du hast den Fingerabdruck dieser Person bereits sicher verifiziert, um das Vertrauen zu bestätigen. Durch Auswählen von \"Fertig\" bestätigst du, dass %s Teil dieses Gruppenchats ist.</string>
+    <string name="no_keys_just_confirm">Du hast den Fingerabdruck dieser Person bereits verifiziert. Durch Auswählen von \"Fertig\" bestätigst du nur, dass %s Teil dieses Gruppenchats ist.</string>
     <string name="this_account_is_disabled">Du hast dieses Konto deaktiviert</string>
     <string name="security_error_invalid_file_access">Sicherheitsfehler: Dateizugriff nicht erlaubt!</string>
     <string name="no_application_to_share_uri">Keine App zum Teilen der URI gefunden</string>
@@ -905,7 +905,7 @@
     <string name="rtp_state_incoming_video_call">Eingehender Videoanruf</string>
     <string name="rtp_state_content_add_video">Umschalten auf Videoanruf?</string>
     <string name="rtp_state_content_add">Zusätzliche Audiospuren hinzufügen?</string>
-    <string name="rtp_state_connecting">Verbinden</string>
+    <string name="rtp_state_connecting">Verbindet</string>
     <string name="rtp_state_connected">Verbunden</string>
     <string name="rtp_state_reconnecting">Erneut verbinden</string>
     <string name="rtp_state_accepting_call">Anruf annehmen</string>
@@ -1017,5 +1017,7 @@
     <string name="contact_uses_unverified_keys">Dein Kontakt verwendet nicht verifizierte Geräte. Scanne deren 2D-Barcode, um eine Verifizierung durchzuführen und aktive MITM-Angriffe zu verhindern.</string>
     <string name="log_out">Abmelden</string>
     <string name="account_state_logged_out">Abgemeldet</string>
-    <string name="unverified_devices">Du verwendest nicht verifizierte Geräte. Scanne die 2D-Barcodes deiner anderen Geräte, um eine Verifizierung durchzuführen und aktive MITM-Angriffe zu verhindern.</string>
+    <string name="unverified_devices">Du verwendest nicht verifizierte Geräte. Scanne den 2D-Barcode auf deinen anderen Geräten, um eine Verifizierung durchzuführen und aktive MITM-Angriffe zu verhindern.</string>
+    <string name="report_spam">Spam melden</string>
+    <string name="report_spam_and_block">Spam melden und Spammer blockieren</string>
 </resources>
