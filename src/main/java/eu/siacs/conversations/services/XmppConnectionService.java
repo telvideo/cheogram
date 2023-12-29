@@ -769,6 +769,7 @@ public class XmppConnectionService extends Service {
     public void rescanStickers() {
         long msToRescan = (mLastStickerRescan + 600000L) - SystemClock.elapsedRealtime();
         if (msToRescan > 0) return;
+        Log.d(Config.LOGTAG, "rescanStickers");
 
         mLastStickerRescan = SystemClock.elapsedRealtime();
         mStickerScanExecutor.execute(() -> {
@@ -1066,6 +1067,7 @@ public class XmppConnectionService extends Service {
     }
 
     private synchronized void manageAccountConnectionStates(final String action, final Bundle extras) {
+        Log.d(Config.LOGTAG, "manageAccountConnectionStates: " + action);
         final String pushedAccountHash = extras == null ? null : extras.getString("account");
         final boolean interactive = Arrays.asList(ACTION_TRY_AGAIN).contains(action);
         WakeLockHelper.acquire(wakeLock);
@@ -1089,6 +1091,7 @@ public class XmppConnectionService extends Service {
             }
             long msToMucPing = (mLastMucPing + (Config.PING_MAX_INTERVAL * 2000L)) - SystemClock.elapsedRealtime();
             if (msToMucPing <= 0) {
+                Log.d(Config.LOGTAG, "ping MUCs");
                 mLastMucPing = SystemClock.elapsedRealtime();
                 for (Conversation c : getConversations()) {
                     if (c.getMode() == Conversation.MODE_MULTI && c.getMucOptions().online()) {
