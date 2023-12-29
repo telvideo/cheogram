@@ -1849,7 +1849,7 @@ public class XmppConnectionService extends Service {
         }
 
         MessagePacket packet = null;
-        final boolean addToConversation = !message.edited() && message.getQuoteableBody() != null;
+        final boolean addToConversation = !message.edited() && message.getRawBody() != null;
         boolean saveInDb = addToConversation;
         message.setStatus(Message.STATUS_WAITING);
 
@@ -1893,11 +1893,11 @@ public class XmppConnectionService extends Service {
                                         }
                                         params.setName(HttpConnectionManager.extractFilenameFromResponse(response));
 
-                                        if (link.toString().equals(message.getQuoteableBody())) {
+                                        if (link.toString().equals(message.getRawBody())) {
                                             Element fallback = new Element("fallback", "urn:xmpp:fallback:0").setAttribute("for", Namespace.OOB);
                                             fallback.addChild("body", "urn:xmpp:fallback:0");
                                             message.addPayload(fallback);
-                                        } else if (message.getQuoteableBody().indexOf(link.toString()) >= 0) {
+                                        } else if (message.getRawBody().indexOf(link.toString()) >= 0) {
                                             // Part of the real body, not just a fallback
                                             Element fallback = new Element("fallback", "urn:xmpp:fallback:0").setAttribute("for", Namespace.OOB);
                                             fallback.addChild("body", "urn:xmpp:fallback:0")

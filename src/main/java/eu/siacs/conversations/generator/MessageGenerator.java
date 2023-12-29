@@ -112,7 +112,7 @@ public class MessageGenerator extends AbstractGenerator {
                     packet.addChild("fallback", "urn:xmpp:fallback:0").setAttribute("for", Namespace.OOB)
                         .addChild("body", "urn:xmpp:fallback:0");
                 } else {
-                    long start = message.getQuoteableBody().length();
+                    long start = message.getRawBody().codePointCount(0, message.getRawBody().length());
                     message.appendBody(fileParams.url);
                     packet.addChild("fallback", "urn:xmpp:fallback:0").setAttribute("for", Namespace.OOB)
                         .addChild("body", "urn:xmpp:fallback:0")
@@ -123,7 +123,7 @@ public class MessageGenerator extends AbstractGenerator {
 
             packet.addChild("x", Namespace.OOB).addChild("url").setContent(fileParams.url);
         }
-        if (message.getQuoteableBody() != null) packet.setBody(message.getQuoteableBody());
+        if (message.getRawBody() != null) packet.setBody(message.getRawBody());
         return packet;
     }
 

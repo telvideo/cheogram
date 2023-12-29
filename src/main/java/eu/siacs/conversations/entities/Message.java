@@ -507,18 +507,25 @@ public class Message extends AbstractEntity implements AvatarService.Avatarable 
     }
 
     public String getQuoteableBody() {
+        if (this.body == null) return null;
+
+        StringBuilder body = bodyMinusFallbacks("http://jabber.org/protocol/address").first;
+        return body.toString();
+    }
+
+    public String getRawBody() {
         return this.body;
     }
 
-    public String getBody() {
+    private Pair<StringBuilder, Boolean> bodyMinusFallbacks(String... fallbackNames) {
         StringBuilder body = new StringBuilder(this.body);
 
-        List<Element> fallbacks = getFallbacks("http://jabber.org/protocol/address", Namespace.OOB);
+        List<Element> fallbacks = getFallbacks(fallbackNames);
         List<Pair<Integer, Integer>> spans = new ArrayList<>();
         for (Element fallback : fallbacks) {
             for (Element span : fallback.getChildren()) {
                 if (!span.getName().equals("body") && !span.getNamespace().equals("urn:xmpp:fallback:0")) continue;
-                if (span.getAttribute("start") == null || span.getAttribute("end") == null) return "";
+                if (span.getAttribute("start") == null || span.getAttribute("end") == null) return new Pair<>(new StringBuilder(""), true);
                 spans.add(new Pair(parseInt(span.getAttribute("start")), parseInt(span.getAttribute("end"))));
             }
         }
@@ -530,9 +537,16 @@ public class Message extends AbstractEntity implements AvatarService.Avatarable 
             }
         } catch (final IndexOutOfBoundsException e) { spans.clear(); }
 
-        if (spans.isEmpty() && getOob() != null) {
+        return new Pair<>(body, !spans.isEmpty());
+    }
+
+    public String getBody() {
+        Pair<StringBuilder, Boolean> result = bodyMinusFallbacks("http://jabber.org/protocol/address", Namespace.OOB);
+        StringBuilder body = result.first;
+
+        if (!result.second && getOob() != null) {
             return body.toString().replace(getOob().toString(), "");
-        } else if (spans.isEmpty() && isGeoUri()) {
+        } else if (!result.second && isGeoUri()) {
             return "";
         } else {
             return body.toString();

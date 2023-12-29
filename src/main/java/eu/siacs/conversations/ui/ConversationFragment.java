@@ -1795,7 +1795,7 @@ public class ConversationFragment extends XmppFragment
                             final Message previousReaction = conversation.findMessageReactingTo(reactions.getAttribute("id"), null);
                             if (previousReaction != null) reactions = previousReaction.getReactions();
                             for (Element el : reactions.getChildren()) {
-                                if (message.getQuoteableBody().endsWith(el.getContent())) {
+                                if (message.getRawBody().endsWith(el.getContent())) {
                                     reactions.removeChild(el);
                                 }
                             }

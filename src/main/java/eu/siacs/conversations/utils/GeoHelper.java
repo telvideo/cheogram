@@ -72,7 +72,7 @@ public class GeoHelper {
 		final ArrayList<Intent> intents = new ArrayList<>();
 		final GeoPoint geoPoint;
 		try {
-			geoPoint = parseGeoPoint(message.getQuoteableBody());
+			geoPoint = parseGeoPoint(message.getRawBody());
 		} catch (IllegalArgumentException e) {
 			return intents;
 		}
@@ -113,7 +113,7 @@ public class GeoHelper {
 	}
 
 	public static void view(Context context, Message message) {
-		final GeoPoint geoPoint = parseGeoPoint(message.getQuoteableBody());
+		final GeoPoint geoPoint = parseGeoPoint(message.getRawBody());
 		final String label = getLabel(context, message);
 		context.startActivity(geoIntent(geoPoint,label));
 	}
@@ -126,7 +126,7 @@ public class GeoHelper {
 
 	public static boolean openInOsmAnd(Context context, Message message) {
 		try {
-			final GeoPoint geoPoint = parseGeoPoint(message.getQuoteableBody());
+			final GeoPoint geoPoint = parseGeoPoint(message.getRawBody());
 			final String label = getLabel(context, message);
 			return geoIntent(geoPoint, label).resolveActivity(context.getPackageManager()) != null;
 		} catch (IllegalArgumentException e) {
