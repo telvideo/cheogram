@@ -184,6 +184,12 @@ public class ConnectionService extends android.telecom.ConnectionService {
 		String withJid = extras.getString("with");
 		String sessionId = extras.getString("sessionId");
 
+		if (xmppConnectionService == null) {
+			return Connection.createFailedConnection(
+				new DisconnectCause(DisconnectCause.ERROR)
+			);
+		}
+
 		Account account = xmppConnectionService.findAccountByJid(Jid.of(accountJid));
 		Jid with = Jid.of(withJid);
 
