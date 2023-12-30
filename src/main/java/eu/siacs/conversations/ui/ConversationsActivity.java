@@ -806,7 +806,7 @@ public class ConversationsActivity extends XmppActivity implements OnConversatio
             final Conversation conversation = ((ConversationFragment) mainFragment).getConversation();
             if (conversation != null) {
                 actionBar.setTitle(conversation.getName());
-                actionBar.setDisplayHomeAsUpEnabled(!xmppConnectionService.isOnboarding());
+                actionBar.setDisplayHomeAsUpEnabled(!xmppConnectionService.isOnboarding() || !conversation.getJid().equals(Jid.of("cheogram.com")));
                 ActionBarUtil.setActionBarOnClickListener(
                         binding.toolbar,
                         (v) -> { if(!xmppConnectionService.isOnboarding()) openConversationDetails(conversation); }
