@@ -288,6 +288,20 @@
                     android:divider="@android:color/transparent"
                     android:dividerHeight="0dp"></ListView>
 
+                <TextView
+                    android:id="@+id/commands_note"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@+id/commands_view"
+                    android:visibility="gone"
+                    android:text="If you have made payment, hold tight for your notification. Otherwise you can pick up where you left off."
+                    android:gravity="center"
+                    android:minHeight="?android:attr/listPreferredItemHeightSmall"
+                    android:paddingLeft="8dp"
+                    android:paddingRight="8dp"
+                    android:textAppearance="@style/TextAppearance.Conversations.Body1"
+                    android:textColor="?attr/edit_text_color" />
+
                 <ProgressBar
                     android:id="@+id/commands_view_progressbar"
                     android:layout_width="match_parent"

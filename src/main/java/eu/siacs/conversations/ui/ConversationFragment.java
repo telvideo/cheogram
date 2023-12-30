@@ -3130,6 +3130,8 @@ public class ConversationFragment extends XmppFragment
             refreshCommands(false);
         }
 
+        binding.commandsNote.setVisibility(activity.xmppConnectionService.isOnboarding() ? View.VISIBLE : View.GONE);
+
         return true;
     }
 
