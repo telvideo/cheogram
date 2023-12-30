@@ -1038,7 +1038,7 @@ public class XmppConnectionService extends Service {
                 }
                 return START_NOT_STICKY;
         }
-        manageAccountConnectionStates(action, intent == null ? null : intent.getExtras());
+        new Thread(() -> manageAccountConnectionStates(action, intent == null ? null : intent.getExtras())).start();
         if (SystemClock.elapsedRealtime() - mLastExpiryRun.get() >= Config.EXPIRY_INTERVAL) {
             expireOldMessages();
         }
