@@ -36,6 +36,7 @@
         android:minHeight="53dp">
 
         <LinearLayout
+            android:minWidth="110dp"
             android:layout_width="wrap_content"
             android:layout_height="fill_parent"
             android:gravity="center_vertical"
@@ -47,7 +48,7 @@
                 layout="@layout/message_content" />
 
             <com.wefika.flowlayout.FlowLayout
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_gravity="left"
                 android:orientation="horizontal"
