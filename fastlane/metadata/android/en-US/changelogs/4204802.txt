@@ -1,0 +1,8 @@
+* Fix for Android 14 dialler losing microphone access after some time
+* Do not show extended addressing fallback in quotes
+* Fix for backspacing the space after a sticker
+* Fixed minimum width on chat bubbles with more aggressive wrapping
+* Escape URI properly when taping a jabber-single field in Command UI
+* Do not ask to block when using "show only this thread"
+* Merge upstream fixes to SASL2/BIND2/FAST
+* Merge upstream file transfer improvements, including WebRTCDataChannel support

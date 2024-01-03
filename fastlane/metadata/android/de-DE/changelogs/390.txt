@@ -1,1 +1,0 @@
-* Möglichkeit zur Aufnahme einer Sprachnachricht, wenn der Anrufer beschäftigt ist

@@ -1,2 +1,0 @@
-* Suche auf Android <= 5 korrigiert
-* Optimierung des Speicherverbrauchs
