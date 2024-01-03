@@ -535,7 +535,8 @@ public class MessageParser extends AbstractParser implements OnMessagePacketRece
 
         final boolean conversationIsProbablyMuc = isTypeGroupChat || mucUserElement != null || account.getXmppConnection().getMucServersWithholdAccount().contains(counterpart.getDomain().toEscapedString());
         final Element webxdc = packet.findChild("x", "urn:xmpp:webxdc:0");
-        if (webxdc != null) {
+        final Element thread = packet.findChild("thread");
+        if (webxdc != null && thread != null) {
             final Conversation conversation = mXmppConnectionService.findOrCreateConversation(account, counterpart.asBareJid(), conversationIsProbablyMuc, false, query, false);
             Jid webxdcSender = counterpart.asBareJid();
             if (conversation.getMode() == Conversation.MODE_MULTI) {
@@ -549,7 +550,7 @@ public class MessageParser extends AbstractParser implements OnMessagePacketRece
                 conversation,
                 remoteMsgId,
                 counterpart,
-                packet.findChild("thread"),
+                thread,
                 body == null ? null : body.content,
                 webxdc.findChildContent("document", "urn:xmpp:webxdc:0"),
                 webxdc.findChildContent("summary", "urn:xmpp:webxdc:0"),
