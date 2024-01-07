@@ -4,5 +4,9 @@
     android:id="@+id/command"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
-    style="?android:attr/buttonStyleSmall" />
+    style="?android:attr/buttonStyleSmall"
+    android:background="@drawable/pill"
+    android:paddingLeft="10dp"
+    android:paddingRight="10dp"
+    />
 </layout>

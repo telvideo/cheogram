@@ -4,6 +4,10 @@
     <Button
         android:id="@+id/download_button"
         style="?android:attr/buttonStyleSmall"
+        android:background="@drawable/pill"
+        android:paddingLeft="10dp"
+        android:paddingRight="10dp"
+        android:layout_marginBottom="5dp"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:longClickable="true"
