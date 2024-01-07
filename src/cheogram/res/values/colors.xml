@@ -3,6 +3,8 @@
 	<color name="splash_screen_background">#7401cf</color>
 	<color name="splash_screen_status_bar">#7401cf</color>
 	<color name="perpy">#7401CF</color>
+	<color name="perpy_desaturated_light">#8534e0</color>
+	<color name="perpy_desaturated">#6c29b8</color>
 	<color name="black_perpy">#1E0036</color>
 	<color name="yeller">#FFC700</color>
 
