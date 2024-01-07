@@ -31,7 +31,6 @@
         android:paddingTop="5dp"
         android:paddingBottom="5dp"
         android:layout_toLeftOf="@+id/message_photo"
-        android:elevation="3dp"
         android:background="@drawable/message_bubble_sent"
         android:longClickable="true"
         android:minHeight="53dp">

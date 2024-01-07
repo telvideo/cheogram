@@ -4,10 +4,10 @@
         <shape android:shape="rectangle">
             <corners
                 android:radius="0dp"
-                android:bottomLeftRadius="2dp"
-                android:bottomRightRadius="2dp"
+                android:bottomLeftRadius="16dp"
+                android:bottomRightRadius="16dp"
                 android:topLeftRadius="0dp"
-                android:topRightRadius="2dp" />
+                android:topRightRadius="16dp" />
             <padding
                 android:bottom="0dp"
                 android:left="5dp"
@@ -28,25 +28,5 @@
                 android:strokeColor="?message_bubble_received_bg"
                 android:fillColor="?message_bubble_received_bg"/>
         </vector>
-    </item>
-    <item android:gravity="top|left" android:top="-0.5dp" android:left="1dp" android:right="-2dp">
-        <shape android:shape="rectangle">
-            <corners
-                android:radius="0dp"
-                android:bottomLeftRadius="0dp"
-                android:bottomRightRadius="0dp"
-                android:topLeftRadius="0dp"
-                android:topRightRadius="2dp" />
-            <padding
-                android:bottom="0dp"
-                android:left="0dp"
-                android:right="0dp"
-                android:top="0dp" />
-            <size android:height="1dp" />
-            <gradient
-                android:startColor="?message_bubble_shadow_dark_top"
-                android:endColor="?message_bubble_shadow_light"
-                android:angle="90"/>
-        </shape>
     </item>
 </layer-list>

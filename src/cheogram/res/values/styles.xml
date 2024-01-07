@@ -2,7 +2,7 @@
 
 <style name="ShapeAppearanceOverlay.Photo" parent="ShapeAppearance.MaterialComponents.SmallComponent">
 	<item name="cornerFamily">rounded</item>
-	<item name="cornerSize">2dp</item>
+	<item name="cornerSize">@dimen/avatar_radius</item>
 </style>
 
 <style name="ShapeAppearanceOverlay.IncomingCall" parent="ShapeAppearance.MaterialComponents.SmallComponent">
