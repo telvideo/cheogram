@@ -19,7 +19,7 @@
     <integer name="auto_accept_filesize">3490000</integer>
     <string name="picture_compression">auto</string>
     <bool name="use_green_background">true</bool>
-    <string name="quick_action">recent</string>
+    <string name="quick_action">none</string>
     <bool name="show_dynamic_tags">true</bool>
     <bool name="btbv">true</bool>
     <integer name="automatic_message_deletion">0</integer>
