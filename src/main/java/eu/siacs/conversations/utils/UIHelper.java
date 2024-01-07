@@ -618,15 +618,15 @@ public class UIHelper {
     public static ListItem.Tag getTagForStatus(Context context, Presence.Status status) {
         switch (status) {
             case CHAT:
-                return new ListItem.Tag(context.getString(R.string.presence_chat), 0xff259b24);
+                return new ListItem.Tag(context.getString(R.string.presence_chat), 0xff4ab04a);
             case AWAY:
-                return new ListItem.Tag(context.getString(R.string.presence_away), 0xffff9800);
+                return new ListItem.Tag(context.getString(R.string.presence_away), 0xfff8b990);
             case XA:
-                return new ListItem.Tag(context.getString(R.string.presence_xa), 0xfff44336);
+                return new ListItem.Tag(context.getString(R.string.presence_xa), 0xff397975);
             case DND:
-                return new ListItem.Tag(context.getString(R.string.presence_dnd), 0xfff44336);
+                return new ListItem.Tag(context.getString(R.string.presence_dnd), 0xffe97975);
             default:
-                return new ListItem.Tag(context.getString(R.string.presence_online), 0xff259b24);
+                return new ListItem.Tag(context.getString(R.string.presence_online), 0xff4ab04a);
         }
     }
 
