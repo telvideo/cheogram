@@ -32,6 +32,8 @@ package eu.siacs.conversations.ui.util;
 import android.app.Activity;
 import android.content.SharedPreferences;
 import android.content.res.TypedArray;
+import android.graphics.PorterDuff;
+import android.graphics.drawable.Drawable;
 import android.preference.PreferenceManager;
 
 import eu.siacs.conversations.R;
@@ -80,111 +82,51 @@ public class SendButtonTool {
 		}
 	}
 
-	public static int getSendButtonImageResource(Activity activity, SendButtonAction action, Presence.Status status) {
+	public static int colorForStatus(Activity activity, Presence.Status status) {
+		switch (status) {
+		case CHAT:
+		case ONLINE:
+			return 0xff4ab04a;
+		case AWAY:
+			return 0xfff8b990;
+		case XA:
+		case DND:
+			return 0xffe97975;
+		default:
+			return StyledAttributes.getColor(activity, R.attr.icon_tint);
+		}
+	}
+
+	public static Drawable getSendButtonImageResource(Activity activity, SendButtonAction action, Presence.Status status, boolean canSend) {
+		final Drawable d;
 		switch (action) {
 			case TEXT:
-				switch (status) {
-					case CHAT:
-					case ONLINE:
-						return R.drawable.ic_send_text_online;
-					case AWAY:
-						return R.drawable.ic_send_text_away;
-					case XA:
-					case DND:
-						return R.drawable.ic_send_text_dnd;
-					default:
-						return getThemeResource(activity, R.attr.ic_send_text_offline, R.drawable.ic_send_text_offline);
-				}
+				d = canSend ?
+					activity.getResources().getDrawable(R.drawable.ic_send_text_online) :
+					activity.getResources().getDrawable(R.drawable.ic_attach_file_white_24dp);
+				break;
 			case RECORD_VIDEO:
-				switch (status) {
-					case CHAT:
-					case ONLINE:
-						return R.drawable.ic_send_videocam_online;
-					case AWAY:
-						return R.drawable.ic_send_videocam_away;
-					case XA:
-					case DND:
-						return R.drawable.ic_send_videocam_dnd;
-					default:
-						return getThemeResource(activity, R.attr.ic_send_videocam_offline, R.drawable.ic_send_videocam_offline);
-				}
+				d = activity.getResources().getDrawable(R.drawable.ic_send_videocam_online);
+				break;
 			case TAKE_PHOTO:
-				switch (status) {
-					case CHAT:
-					case ONLINE:
-						return R.drawable.ic_send_photo_online;
-					case AWAY:
-						return R.drawable.ic_send_photo_away;
-					case XA:
-					case DND:
-						return R.drawable.ic_send_photo_dnd;
-					default:
-						return getThemeResource(activity, R.attr.ic_send_photo_offline, R.drawable.ic_send_photo_offline);
-				}
+				d = activity.getResources().getDrawable(R.drawable.ic_send_photo_online);
+				break;
 			case RECORD_VOICE:
-				switch (status) {
-					case CHAT:
-					case ONLINE:
-						return R.drawable.ic_send_voice_online;
-					case AWAY:
-						return R.drawable.ic_send_voice_away;
-					case XA:
-					case DND:
-						return R.drawable.ic_send_voice_dnd;
-					default:
-						return getThemeResource(activity, R.attr.ic_send_voice_offline, R.drawable.ic_send_voice_offline);
-				}
+				d = activity.getResources().getDrawable(R.drawable.ic_send_voice_online);
+				break;
 			case SEND_LOCATION:
-				switch (status) {
-					case CHAT:
-					case ONLINE:
-						return R.drawable.ic_send_location_online;
-					case AWAY:
-						return R.drawable.ic_send_location_away;
-					case XA:
-					case DND:
-						return R.drawable.ic_send_location_dnd;
-					default:
-						return getThemeResource(activity, R.attr.ic_send_location_offline, R.drawable.ic_send_location_offline);
-				}
+				d = activity.getResources().getDrawable(R.drawable.ic_send_location_online);
+				break;
 			case CANCEL:
-				switch (status) {
-					case CHAT:
-					case ONLINE:
-						return R.drawable.ic_send_cancel_online;
-					case AWAY:
-						return R.drawable.ic_send_cancel_away;
-					case XA:
-					case DND:
-						return R.drawable.ic_send_cancel_dnd;
-					default:
-						return getThemeResource(activity, R.attr.ic_send_cancel_offline, R.drawable.ic_send_cancel_offline);
-				}
+				d = activity.getResources().getDrawable(R.drawable.ic_send_cancel_online);
+				break;
 			case CHOOSE_PICTURE:
-				switch (status) {
-					case CHAT:
-					case ONLINE:
-						return R.drawable.ic_send_picture_online;
-					case AWAY:
-						return R.drawable.ic_send_picture_away;
-					case XA:
-					case DND:
-						return R.drawable.ic_send_picture_dnd;
-					default:
-						return getThemeResource(activity, R.attr.ic_send_picture_offline, R.drawable.ic_send_picture_offline);
-				}
+				d = activity.getResources().getDrawable(R.drawable.ic_send_picture_online);
+				break;
+			default:
+				return null;
 		}
-		return getThemeResource(activity, R.attr.ic_send_text_offline, R.drawable.ic_send_text_offline);
+		d.mutate().setColorFilter(colorForStatus(activity, status), PorterDuff.Mode.SRC_IN);
+		return d;
 	}
-
-	private static int getThemeResource(Activity activity, int r_attr_name, int r_drawable_def) {
-		int[] attrs = {r_attr_name};
-		TypedArray ta = activity.getTheme().obtainStyledAttributes(attrs);
-
-		int res = ta.getResourceId(0, r_drawable_def);
-		ta.recycle();
-
-		return res;
-	}
-
 }

@@ -3658,8 +3658,8 @@ public class ConversationFragment extends XmppFragment
         this.binding.textSendButton.setTag(action);
         final Activity activity = getActivity();
         if (activity != null) {
-            this.binding.textSendButton.setImageResource(
-                    SendButtonTool.getSendButtonImageResource(activity, action, status));
+            this.binding.textSendButton.setImageDrawable(
+                    SendButtonTool.getSendButtonImageResource(activity, action, status, text.length() > 0 || hasAttachments));
         }
 
         ViewGroup.LayoutParams params = binding.threadIdenticonLayout.getLayoutParams();
