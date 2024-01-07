@@ -2,6 +2,7 @@ package com.cheogram.android;
 
 import android.app.Activity;
 import android.content.Context;
+import android.graphics.PorterDuff;
 import android.graphics.Rect;
 import android.util.AttributeSet;
 import android.view.LayoutInflater;
@@ -35,7 +36,7 @@ public class TagEditorView extends TokenCompleteTextView<ListItem.Tag> {
 		LayoutInflater inflater = (LayoutInflater) getContext().getSystemService(Activity.LAYOUT_INFLATER_SERVICE);
 		final TextView tv = (TextView) inflater.inflate(R.layout.list_item_tag, (ViewGroup) getParent(), false);
 		tv.setText(tag.getName());
-		tv.setBackgroundColor(tag.getColor());
+		tv.getBackground().mutate().setColorFilter(tag.getColor(), PorterDuff.Mode.SRC_IN);
 		return tv;
 	}
 

@@ -7,6 +7,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.graphics.PorterDuff;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Build;
@@ -605,7 +606,7 @@ public class ContactDetailsActivity extends OmemoActivity implements OnAccountUp
             for (final ListItem.Tag tag : tagList) {
                 final TextView tv = (TextView) inflater.inflate(R.layout.list_item_tag, binding.tags, false);
                 tv.setText(tag.getName());
-                tv.setBackgroundColor(tag.getColor());
+                tv.getBackground().mutate().setColorFilter(tag.getColor(), PorterDuff.Mode.SRC_IN);
                 binding.tags.addView(tv);
             }
         }

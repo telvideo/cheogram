@@ -9,6 +9,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.graphics.PorterDuff;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -740,6 +741,9 @@ public class StartConversationActivity extends XmppActivity implements XmppConne
         boolean showDynamicTags = preferences.getBoolean(SettingsActivity.SHOW_DYNAMIC_TAGS, getResources().getBoolean(R.bool.show_dynamic_tags));
         if (showDynamicTags) {
             RecyclerView tags = mSearchView.findViewById(R.id.tags);
+            androidx.recyclerview.widget.DividerItemDecoration spacer = new androidx.recyclerview.widget.DividerItemDecoration(tags.getContext(), LinearLayoutManager.HORIZONTAL);
+            spacer.setDrawable(getResources().getDrawable(R.drawable.horizontal_space));
+            tags.addItemDecoration(spacer);
             tags.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
             tags.setAdapter(mTagsAdapter);
         }
@@ -1568,7 +1572,7 @@ public class StartConversationActivity extends XmppActivity implements XmppConne
 
             public void setTag(ListItem.Tag tag) {
                 tv.setText(tag.getName());
-                tv.setBackgroundColor(tag.getColor());
+                tv.getBackground().mutate().setColorFilter(tag.getColor(), PorterDuff.Mode.SRC_IN);
             }
         }
 

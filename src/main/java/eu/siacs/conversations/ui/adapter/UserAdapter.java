@@ -3,6 +3,7 @@ package eu.siacs.conversations.ui.adapter;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.IntentSender;
+import android.graphics.PorterDuff;
 import android.view.ContextMenu;
 import android.view.LayoutInflater;
 import android.widget.TextView;
@@ -127,13 +128,13 @@ public class UserAdapter extends ListAdapter<MucOptions.User, UserAdapter.ViewHo
         for (MucOptions.Hat hat : getPseudoHats(viewHolder.binding.getRoot().getContext(), user)) {
             TextView tv = (TextView) LayoutInflater.from(viewHolder.binding.getRoot().getContext()).inflate(R.layout.list_item_tag, viewHolder.binding.tags, false);
             tv.setText(hat.toString());
-            tv.setBackgroundColor(hat.getColor());
+            tv.getBackground().mutate().setColorFilter(hat.getColor(), PorterDuff.Mode.SRC_IN);
             viewHolder.binding.tags.addView(tv);
         }
         for (MucOptions.Hat hat : user.getHats()) {
             TextView tv = (TextView) LayoutInflater.from(viewHolder.binding.getRoot().getContext()).inflate(R.layout.list_item_tag, viewHolder.binding.tags, false);
             tv.setText(hat.toString());
-            tv.setBackgroundColor(hat.getColor());
+            tv.getBackground().mutate().setColorFilter(hat.getColor(), PorterDuff.Mode.SRC_IN);
             viewHolder.binding.tags.addView(tv);
         }
 

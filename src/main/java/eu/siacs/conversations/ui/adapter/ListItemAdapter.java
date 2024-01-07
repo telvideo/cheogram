@@ -1,6 +1,7 @@
 package eu.siacs.conversations.ui.adapter;
 
 import android.content.SharedPreferences;
+import android.graphics.PorterDuff;
 import android.preference.PreferenceManager;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -79,7 +80,7 @@ public class ListItemAdapter extends ArrayAdapter<ListItem> {
 			for (ListItem.Tag tag : tags) {
 				TextView tv = (TextView) inflater.inflate(R.layout.list_item_tag, viewHolder.tags, false);
 				tv.setText(tag.getName());
-				tv.setBackgroundColor(tag.getColor());
+				tv.getBackground().mutate().setColorFilter(tag.getColor(), PorterDuff.Mode.SRC_IN);
 				tv.setOnClickListener(this.onTagTvClick);
 				viewHolder.tags.addView(tv);
 			}

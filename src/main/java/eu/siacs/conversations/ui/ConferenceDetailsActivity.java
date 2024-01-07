@@ -5,6 +5,7 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.PorterDuff;
 import android.net.Uri;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
@@ -659,7 +660,7 @@ public class ConferenceDetailsActivity extends XmppActivity implements OnConvers
             for (final ListItem.Tag tag : tagList) {
                 final TextView tv = (TextView) inflater.inflate(R.layout.list_item_tag, binding.tags, false);
                 tv.setText(tag.getName());
-                tv.setBackgroundColor(tag.getColor());
+                tv.getBackground().mutate().setColorFilter(tag.getColor(), PorterDuff.Mode.SRC_IN);
                 binding.tags.addView(tv);
             }
         }
