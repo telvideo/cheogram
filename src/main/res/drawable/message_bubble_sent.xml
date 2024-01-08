@@ -4,10 +4,10 @@
         <shape android:shape="rectangle">
             <corners
                 android:radius="0dp"
-                android:bottomLeftRadius="16dp"
+                android:bottomLeftRadius="@dimen/bubble_radius"
                 android:bottomRightRadius="0dp"
-                android:topLeftRadius="16dp"
-                android:topRightRadius="16dp" />
+                android:topLeftRadius="@dimen/bubble_radius"
+                android:topRightRadius="@dimen/bubble_radius" />
             <padding
                 android:bottom="0dp"
                 android:left="5dp"
