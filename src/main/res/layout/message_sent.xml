@@ -37,7 +37,7 @@
         android:minHeight="53dp">
 
         <LinearLayout
-            android:minWidth="110dp"
+            android:minWidth="111dp"
             android:layout_width="wrap_content"
             android:layout_height="fill_parent"
             android:gravity="center_vertical"
@@ -65,7 +65,7 @@
             <com.wefika.flowlayout.FlowLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_gravity="right"
+                android:gravity="top|right"
                 android:orientation="horizontal"
                 android:paddingBottom="2dp">
 
@@ -73,11 +73,11 @@
                     android:id="@+id/message_subject"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_gravity="center_vertical"
                     android:layout_marginRight="4sp"
+                    android:layout_marginEnd="4sp"
                     android:accessibilityTraversalAfter="@id/message_photo"
                     android:accessibilityTraversalBefore="@id/message_time"
-                    android:gravity="center_vertical"
+                    android:gravity="center_vertical|right"
                     android:textAppearance="@style/TextAppearance.Conversations.Caption.OnDark.Bold"
                     android:visibility="gone" />
 
@@ -85,12 +85,11 @@
                     android:id="@+id/message_time"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_gravity="center_vertical"
                     android:layout_marginEnd="4sp"
                     android:layout_marginRight="4sp"
                     android:accessibilityTraversalAfter="@id/message_photo"
                     android:accessibilityTraversalBefore="@id/message_content"
-                    android:gravity="center_vertical"
+                    android:gravity="center_vertical|right"
                     android:text="@string/sending"
                     android:textAppearance="@style/TextAppearance.Conversations.Caption" />
 
@@ -107,7 +106,6 @@
                     android:id="@+id/security_indicator"
                     android:layout_width="?attr/TextSizeCaption"
                     android:layout_height="?attr/TextSizeCaption"
-                    android:layout_gravity="center_vertical"
                     android:alpha="0.54"
                     android:gravity="center_vertical"
                     android:src="@drawable/ic_lock_black_18dp" />
@@ -116,7 +114,6 @@
                     android:id="@+id/edit_indicator"
                     android:layout_width="?attr/TextSizeCaption"
                     android:layout_height="?attr/TextSizeCaption"
-                    android:layout_gravity="center_vertical"
                     android:alpha="0.54"
                     android:gravity="center_vertical"
                     android:src="@drawable/ic_mode_edit_black_18dp" />
@@ -125,7 +122,6 @@
                     android:id="@+id/indicator_received"
                     android:layout_width="?attr/TextSizeSubhead"
                     android:layout_height="?attr/TextSizeSubhead"
-                    android:layout_gravity="center_vertical"
                     android:alpha="0.54"
                     android:gravity="center_vertical"
                     android:src="@drawable/ic_done_black_18dp" />
