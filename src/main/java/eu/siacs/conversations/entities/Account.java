@@ -248,7 +248,7 @@ public class Account extends AbstractEntity implements AvatarService.Avatarable 
 
         return ColorUtils.setAlphaComponent(
             getAvatarBackgroundColor(),
-            dark ? 20 : 15
+            dark ? 25 : 20
         );
     }
 
