@@ -498,6 +498,7 @@ public class EnterJidDialog extends DialogFragment implements OnBackendConnected
 
         public String getLabel(Contact gateway) {
             String type = getType(gateway);
+            if ("pstn".equals(type)) return "📞";
             if (type != null) return type;
 
             return gateway.getDisplayName();
