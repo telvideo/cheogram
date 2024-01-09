@@ -294,7 +294,7 @@
                     android:layout_height="wrap_content"
                     android:layout_below="@+id/commands_view"
                     android:visibility="gone"
-                    android:text="If you have made payment, hold tight for your notification. Otherwise you can pick up where you left off."
+                    android:text="If you have made payment via Bitcoin, eTransfer, or mail, hold tight for your notification. Otherwise you can pick up where you left off (you may be asked a few of the same questions but it will generally not ask you to pay again if you already did, etc)."
                     android:gravity="center"
                     android:minHeight="?android:attr/listPreferredItemHeightSmall"
                     android:paddingLeft="8dp"
