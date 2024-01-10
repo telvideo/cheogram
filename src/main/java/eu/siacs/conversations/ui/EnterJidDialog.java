@@ -182,7 +182,7 @@ public class EnterJidDialog extends DialogFragment implements OnBackendConnected
                 if (account == null) return;
 
                 for (final Contact contact : account.getRoster().getContacts()) {
-                    if (contact.showInRoster() && (contact.getPresences().anyIdentity("gateway", null) || contact.getPresences().anySupport("jabber:iq:gateway"))) {
+                    if (contact.showInRoster() && contact.getPresences().size() > 0 && (contact.getPresences().anyIdentity("gateway", null) || contact.getPresences().anySupport("jabber:iq:gateway"))) {
                         context.xmppConnectionService.fetchFromGateway(account, contact.getJid(), null, (final String prompt, String errorMessage) -> {
                             if (prompt == null && !contact.getPresences().anyIdentity("gateway", null)) return;
 
