@@ -1906,7 +1906,9 @@ public class XmppConnectionService extends Service {
                                             message.addPayload(fallback);
                                         }
 
+                                        final int encryption = message.getEncryption();
                                         getHttpConnectionManager().createNewDownloadConnection(message, false, (file) -> {
+                                            message.setEncryption(encryption);
                                             synchronized (message.getConversation()) {
                                                 if (message.getStatus() == Message.STATUS_WAITING) sendMessage(message, true, true, false);
                                             }
