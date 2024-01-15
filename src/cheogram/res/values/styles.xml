@@ -7,18 +7,18 @@
 
 <style name="ShapeAppearanceOverlay.MessageImageIn" parent="ShapeAppearance.MaterialComponents.SmallComponent">
 	<item name="cornerFamily">rounded</item>
-	<item name="cornerSizeTopLeft">0dp</item>
-	<item name="cornerSizeTopRight">@dimen/bubble_radius</item>
-	<item name="cornerSizeBottomLeft">0dp</item>
-	<item name="cornerSizeBottomRight">0dp</item>
+	<item name="cornerSizeTopLeft">@dimen/image_radius</item>
+	<item name="cornerSizeTopRight">@dimen/image_radius</item>
+	<item name="cornerSizeBottomLeft">@dimen/image_radius</item>
+	<item name="cornerSizeBottomRight">@dimen/image_radius</item>
 </style>
 
 <style name="ShapeAppearanceOverlay.MessageImageOut" parent="ShapeAppearance.MaterialComponents.SmallComponent">
 	<item name="cornerFamily">rounded</item>
-	<item name="cornerSizeTopLeft">@dimen/bubble_radius</item>
-	<item name="cornerSizeTopRight">@dimen/bubble_radius</item>
-	<item name="cornerSizeBottomLeft">0dp</item>
-	<item name="cornerSizeBottomRight">0dp</item>
+	<item name="cornerSizeTopLeft">@dimen/image_radius</item>
+	<item name="cornerSizeTopRight">@dimen/image_radius</item>
+	<item name="cornerSizeBottomLeft">@dimen/image_radius</item>
+	<item name="cornerSizeBottomRight">@dimen/image_radius</item>
 </style>
 
 <style name="ShapeAppearanceOverlay.IncomingCall" parent="ShapeAppearance.MaterialComponents.SmallComponent">
