@@ -1195,7 +1195,7 @@ public class AxolotlService implements OnAdvancedStreamFeaturesLoaded {
         if (message.hasFileOnRemoteHost()) {
             content = message.getFileParams().url;
         } else {
-            content = message.getBody();
+            content = message.getRawBody();
         }
         try {
             axolotlMessage.encrypt(content);
