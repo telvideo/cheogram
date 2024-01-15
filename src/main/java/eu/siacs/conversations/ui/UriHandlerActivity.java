@@ -160,6 +160,8 @@ public class UriHandlerActivity extends AppCompatActivity {
         final XmppUri xmppUri = new XmppUri(uri);
         final List<Jid> accounts = DatabaseBackend.getInstance(this).getAccountJids(false);
 
+        if (uri == null) return true;
+
         if (uri.getScheme().equals("sgnl")) {
             stickers = Uri.parse("https://stickers.cheogram.com/signal/" + uri.getQueryParameter("pack_id") + "," + uri.getQueryParameter("pack_key"));
             if (hasStoragePermission(1)) downloadStickers();
