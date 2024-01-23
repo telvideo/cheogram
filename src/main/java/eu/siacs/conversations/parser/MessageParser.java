@@ -573,7 +573,7 @@ public class MessageParser extends AbstractParser implements OnMessagePacketRece
             }
         }
 
-        if ((body != null || pgpEncrypted != null || (axolotlEncrypted != null && axolotlEncrypted.hasChild("payload")) || !attachments.isEmpty() || html != null) && !isMucStatusMessage) {
+        if ((body != null || pgpEncrypted != null || (axolotlEncrypted != null && axolotlEncrypted.hasChild("payload")) || !attachments.isEmpty() || html != null || (packet.hasChild("subject") && packet.hasChild("thread"))) && !isMucStatusMessage) {
             final Conversation conversation = mXmppConnectionService.findOrCreateConversation(account, counterpart.asBareJid(), conversationIsProbablyMuc, false, query, false);
             final boolean conversationMultiMode = conversation.getMode() == Conversation.MODE_MULTI;
 
@@ -673,7 +673,7 @@ public class MessageParser extends AbstractParser implements OnMessagePacketRece
             } else if (body == null && !attachments.isEmpty()) {
                 message = new Message(conversation, "", Message.ENCRYPTION_NONE, status);
             } else {
-                message = new Message(conversation, body == null ? "HTML-only message" : body.content, Message.ENCRYPTION_NONE, status);
+                message = new Message(conversation, body == null ? null : body.content, Message.ENCRYPTION_NONE, status);
                 if (body != null && body.count > 1) {
                     message.setBodyLanguage(body.language);
                 }
