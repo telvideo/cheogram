@@ -286,8 +286,8 @@ public class Resolver {
         final Question question = new Question(dnsName, Record.TYPE.getType(type));
         try {
             ResolverResult<D> result = DnssecResolverApi.INSTANCE.resolve(question);
-            if (!result.isAuthenticData()) {
-                Log.d(Config.LOGTAG, "DNSSEC validation failed: " + result.getUnverifiedReasons());
+            if (result.wasSuccessful() && !result.isAuthenticData()) {
+                Log.d(Config.LOGTAG, "DNSSEC validation failed for " + type.getSimpleName() + " : " + result.getUnverifiedReasons());
             }
             return result;
         } catch (DnssecValidationFailedException e) {
