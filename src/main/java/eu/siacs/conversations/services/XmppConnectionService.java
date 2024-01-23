@@ -658,12 +658,13 @@ public class XmppConnectionService extends Service {
         return this.mAvatarService;
     }
 
-    public void attachLocationToConversation(final Conversation conversation, final Uri uri, final UiCallback<Message> callback) {
+    public void attachLocationToConversation(final Conversation conversation, final Uri uri, final String subject, final UiCallback<Message> callback) {
         int encryption = conversation.getNextEncryption();
         if (encryption == Message.ENCRYPTION_PGP) {
             encryption = Message.ENCRYPTION_DECRYPTED;
         }
         Message message = new Message(conversation, uri.toString(), encryption);
+        if (subject != null && subject.length() > 0) message.setSubject(subject);
         message.setThread(conversation.getThread());
         Message.configurePrivateMessage(message);
         if (encryption == Message.ENCRYPTION_DECRYPTED) {
@@ -674,7 +675,7 @@ public class XmppConnectionService extends Service {
         }
     }
 
-    public void attachFileToConversation(final Conversation conversation, final Uri uri, final String type, final UiCallback<Message> callback) {
+    public void attachFileToConversation(final Conversation conversation, final Uri uri, final String type, final String subject, final UiCallback<Message> callback) {
         final Message message;
         if (conversation.getReplyTo() == null) {
             message = new Message(conversation, "", conversation.getNextEncryption());
@@ -685,6 +686,8 @@ public class XmppConnectionService extends Service {
         if (conversation.getNextEncryption() == Message.ENCRYPTION_PGP) {
             message.setEncryption(Message.ENCRYPTION_DECRYPTED);
         }
+        if (subject.length() > 0) message.setSubject(subject);
+        if (subject != null && subject.length() > 0) message.setSubject(subject);
         message.setThread(conversation.getThread());
         if (!Message.configurePrivateFileMessage(message)) {
             message.setCounterpart(conversation.getNextCounterpart());
@@ -700,7 +703,7 @@ public class XmppConnectionService extends Service {
         }
     }
 
-    public void attachImageToConversation(final Conversation conversation, final Uri uri,  final String type, final UiCallback<Message> callback) {
+    public void attachImageToConversation(final Conversation conversation, final Uri uri, final String type, final String subject, final UiCallback<Message> callback) {
         final String mimeType = MimeUtils.guessMimeTypeFromUriAndMime(this, uri, type);
         final String compressPictures = getCompressPicturesPreference();
 
@@ -709,7 +712,7 @@ public class XmppConnectionService extends Service {
                 || (mimeType != null && mimeType.endsWith("/gif"))
                 || getFileBackend().unusualBounds(uri)) {
             Log.d(Config.LOGTAG, conversation.getAccount().getJid().asBareJid() + ": not compressing picture. sending as file");
-            attachFileToConversation(conversation, uri, mimeType, callback);
+            attachFileToConversation(conversation, uri, mimeType, subject, callback);
             return;
         }
         final Message message;
@@ -723,6 +726,7 @@ public class XmppConnectionService extends Service {
         if (conversation.getNextEncryption() == Message.ENCRYPTION_PGP) {
             message.setEncryption(Message.ENCRYPTION_DECRYPTED);
         }
+        if (subject != null && subject.length() > 0) message.setSubject(subject);
         message.setThread(conversation.getThread());
         if (!Message.configurePrivateFileMessage(message)) {
             message.setCounterpart(conversation.getNextCounterpart());
@@ -734,7 +738,7 @@ public class XmppConnectionService extends Service {
                 getFileBackend().copyImageToPrivateStorage(message, uri);
             } catch (FileBackend.ImageCompressionException e) {
                 Log.d(Config.LOGTAG, "unable to compress image. fall back to file transfer", e);
-                attachFileToConversation(conversation, uri, mimeType, callback);
+                attachFileToConversation(conversation, uri, mimeType, subject, callback);
                 return;
             } catch (final FileBackend.FileCopyException e) {
                 callback.error(e.getResId(), message);

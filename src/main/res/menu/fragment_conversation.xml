@@ -61,6 +61,11 @@
                 android:id="@+id/attach_location"
                 android:icon="?attr/ic_attach_location"
                 android:title="@string/send_location" />
+
+            <item
+                android:id="@+id/attach_subject"
+                android:icon="@drawable/subject"
+                android:title="Add Subject" />
         </menu>
     </item>
     <item

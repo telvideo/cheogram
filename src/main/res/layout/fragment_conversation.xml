@@ -105,17 +105,6 @@
                         android:layout_toEndOf="@+id/thread_identicon_layout"
                         android:layout_toRightOf="@+id/thread_identicon_layout"
                         android:orientation="vertical">
-    
-                        <TextView
-                            android:id="@+id/text_input_hint"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="8dp"
-                            android:maxLines="1"
-                            android:paddingLeft="8dp"
-                            android:paddingRight="8dp"
-                            android:textAppearance="@style/TextAppearance.Conversations.Caption.Highlight"
-                            android:visibility="gone" />
 
                         <androidx.recyclerview.widget.RecyclerView
                             android:id="@+id/media_preview"
@@ -129,6 +118,29 @@
                             tools:listitem="@layout/media_preview">
 
                         </androidx.recyclerview.widget.RecyclerView>
+
+                        <eu.siacs.conversations.ui.widget.EditMessage
+                            android:id="@+id/textinput_subject"
+                            style="@style/Widget.Conversations.EditText"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:hint="Subject"
+                            android:maxLines="1"
+                            android:padding="8dp"
+                            android:imeOptions="flagNoExtractUi"
+                            android:inputType="textShortMessage|textMultiLine|textCapSentences"
+                            android:visibility="gone" />
+
+                        <TextView
+                            android:id="@+id/text_input_hint"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="8dp"
+                            android:maxLines="1"
+                            android:paddingLeft="8dp"
+                            android:paddingRight="8dp"
+                            android:textAppearance="@style/TextAppearance.Conversations.Caption.Highlight"
+                            android:visibility="gone" />
 
                         <eu.siacs.conversations.ui.widget.EditMessage
                             android:id="@+id/textinput"

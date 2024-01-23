@@ -518,7 +518,7 @@ public class Message extends AbstractEntity implements AvatarService.Avatarable 
     }
 
     private Pair<StringBuilder, Boolean> bodyMinusFallbacks(String... fallbackNames) {
-        StringBuilder body = new StringBuilder(this.body);
+        StringBuilder body = new StringBuilder(this.body == null ? "" : this.body);
 
         List<Element> fallbacks = getFallbacks(fallbackNames);
         List<Pair<Integer, Integer>> spans = new ArrayList<>();
@@ -541,6 +541,8 @@ public class Message extends AbstractEntity implements AvatarService.Avatarable 
     }
 
     public String getBody() {
+        if (body == null) return "";
+
         Pair<StringBuilder, Boolean> result = bodyMinusFallbacks("http://jabber.org/protocol/address", Namespace.OOB);
         StringBuilder body = result.first;
 
@@ -568,8 +570,8 @@ public class Message extends AbstractEntity implements AvatarService.Avatarable 
     }
 
     public synchronized void setBody(Spanned span) {
-        setBody(span.toString());
-        if (SpannedToXHTML.isPlainText(span)) {
+        setBody(span == null ? null : span.toString());
+        if (span == null || SpannedToXHTML.isPlainText(span)) {
             this.payloads.remove(getHtml(true));
         } else {
             final Element body = getOrMakeHtml();

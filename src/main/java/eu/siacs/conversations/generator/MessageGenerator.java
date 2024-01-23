@@ -64,6 +64,7 @@ public class MessageGenerator extends AbstractGenerator {
             packet.addChild("replace", "urn:xmpp:message-correct:0").setAttribute("id", message.getEditedIdWireFormat());
         }
         if (!legacyEncryption) {
+            if (message.getSubject() != null && message.getSubject().length() > 0) packet.addChild("subject").setContent(message.getSubject());
             // Legacy encryption can't handle advanced payloads
             for (Element el : message.getPayloads()) {
                 packet.addChild(el);
