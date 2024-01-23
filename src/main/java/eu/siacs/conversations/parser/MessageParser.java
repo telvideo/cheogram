@@ -959,7 +959,7 @@ public class MessageParser extends AbstractParser implements OnMessagePacketRece
             }
 
             if (isTypeGroupChat) {
-                if (packet.hasChild("subject")) { //TODO usually we would want to check for lack of body; however some servers do set a body :(
+                if (packet.hasChild("subject") && !packet.hasChild("thread")) { // already know it has no body from above
                     if (conversation != null && conversation.getMode() == Conversation.MODE_MULTI) {
                         conversation.setHasMessagesLeftOnServer(conversation.countMessages() > 0);
                         final LocalizedContent subject = packet.findInternationalizedChildContentInDefaultNamespace("subject");
