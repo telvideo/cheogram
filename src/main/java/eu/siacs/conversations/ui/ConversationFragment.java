@@ -149,6 +149,7 @@ import eu.siacs.conversations.ui.util.ScrollState;
 import eu.siacs.conversations.ui.util.SendButtonAction;
 import eu.siacs.conversations.ui.util.SendButtonTool;
 import eu.siacs.conversations.ui.util.ShareUtil;
+import eu.siacs.conversations.ui.util.StyledAttributes;
 import eu.siacs.conversations.ui.util.ViewUtil;
 import eu.siacs.conversations.ui.widget.EditMessage;
 import eu.siacs.conversations.utils.AccountUtils;
@@ -1565,6 +1566,7 @@ public class ConversationFragment extends XmppFragment
         conversation.setReplyTo(message);
         if (message == null) {
             binding.contextPreview.setVisibility(View.GONE);
+            binding.textsend.setBackgroundResource(R.drawable.textsend);
             return;
         }
 
@@ -1573,6 +1575,7 @@ public class ConversationFragment extends XmppFragment
         messageListAdapter.handleTextQuotes(body, activity.isDarkTheme());
         binding.contextPreviewText.setText(body);
         binding.contextPreview.setVisibility(View.VISIBLE);
+        binding.textsend.setBackgroundColor(StyledAttributes.getColor(activity, R.attr.color_background_primary));
     }
 
     private void setThread(Element thread) {
