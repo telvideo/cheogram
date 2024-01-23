@@ -945,7 +945,7 @@ public class ConversationFragment extends XmppFragment
         if (body == null) body = new SpannableStringBuilder("");
         final Conversation conversation = this.conversation;
         final boolean hasSubject = binding.textinputSubject.getText().length() > 0;
-        if (conversation == null || body.length() == 0) { // (conversation.getThread() == null || !hasSubject))) https://issues.prosody.im/1838
+        if (conversation == null || (body.length() == 0 && (conversation.getThread() == null || !hasSubject))) {
             binding.textSendButton.showContextMenu(0, 0);
             return;
         }
@@ -3683,7 +3683,7 @@ public class ConversationFragment extends XmppFragment
         final Activity activity = getActivity();
         if (activity != null) {
             this.binding.textSendButton.setImageDrawable(
-                    SendButtonTool.getSendButtonImageResource(activity, action, status, text.length() > 0 || hasAttachments)); // || (c.getThread() != null && binding.textinputSubject.getText().length() > 0))); https://issues.prosody.im/1838
+                    SendButtonTool.getSendButtonImageResource(activity, action, status, text.length() > 0 || hasAttachments || (c.getThread() != null && binding.textinputSubject.getText().length() > 0)));
         }
 
         ViewGroup.LayoutParams params = binding.threadIdenticonLayout.getLayoutParams();
