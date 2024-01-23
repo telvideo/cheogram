@@ -1172,11 +1172,15 @@ public class MessageAdapter extends ArrayAdapter<Message> {
         }
 
         if (type == RECEIVED || type == SENT) {
-            if (message.getSubject() == null) {
+            String subject = message.getSubject();
+            if (subject == null && message.getThread() != null) {
+                subject = ((Conversation) message.getConversation()).getThread(message.getThread().getContent()).getSubject();
+            }
+            if (subject == null) {
                 viewHolder.subject.setVisibility(View.GONE);
             } else {
                 viewHolder.subject.setVisibility(View.VISIBLE);
-                viewHolder.subject.setText(message.getSubject());
+                viewHolder.subject.setText(subject);
             }
         }
 
