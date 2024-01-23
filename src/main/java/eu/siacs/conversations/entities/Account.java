@@ -655,7 +655,13 @@ public class Account extends AbstractEntity implements AvatarService.Avatarable 
         }
     }
 
-    public boolean areBookmarksLoaded() { return bookmarksLoaded; }
+    public boolean areBookmarksLoaded() {
+        // No way to tell if old PEP bookmarks are all loaded yet if they are empty
+        // because we don't manually fetch them...
+        if (getXmppConnection().getFeatures().bookmarksConversion()) return true;
+
+        return bookmarksLoaded;
+    }
 
     public void setBookmarks(final Map<Jid, Bookmark> bookmarks) {
         synchronized (this.bookmarks) {
