@@ -18,12 +18,16 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.databinding.DataBindingUtil;
+
+import com.cheogram.android.Util;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -36,6 +40,7 @@ import java.util.stream.Collectors;
 import eu.siacs.conversations.Config;
 import eu.siacs.conversations.R;
 import eu.siacs.conversations.databinding.ActivityMucDetailsBinding;
+import eu.siacs.conversations.databinding.ThreadRowBinding;
 import eu.siacs.conversations.entities.Account;
 import eu.siacs.conversations.entities.Bookmark;
 import eu.siacs.conversations.entities.Contact;
@@ -61,6 +66,7 @@ import eu.siacs.conversations.utils.AccountUtils;
 import eu.siacs.conversations.utils.Compatibility;
 import eu.siacs.conversations.utils.StringUtils;
 import eu.siacs.conversations.utils.StylingHelper;
+import eu.siacs.conversations.utils.UIHelper;
 import eu.siacs.conversations.utils.XmppUri;
 import eu.siacs.conversations.xmpp.Jid;
 import eu.siacs.conversations.xmpp.XmppConnection;
@@ -227,6 +233,10 @@ public class ConferenceDetailsActivity extends XmppActivity implements OnConvers
         this.binding.users.setAdapter(mUserPreviewAdapter);
         GridManager.setupLayoutManager(this, this.binding.media, R.dimen.media_size);
         GridManager.setupLayoutManager(this, this.binding.users, R.dimen.media_size);
+        this.binding.recentThreads.setOnItemClickListener((a0, v, pos, a3) -> {
+            final Conversation.Thread thread = (Conversation.Thread) binding.recentThreads.getAdapter().getItem(pos);
+            switchToConversation(mConversation, null, false, null, false, true, null, thread.getThreadId());
+        });
         this.binding.invite.setOnClickListener(v -> inviteToConversation(mConversation));
         this.binding.showUsers.setOnClickListener(v -> {
             Intent intent = new Intent(this, MucUsersActivity.class);
@@ -650,6 +660,17 @@ public class ConferenceDetailsActivity extends XmppActivity implements OnConvers
             return;
         }
 
+        final List<Conversation.Thread> recentThreads = mConversation.recentThreads();
+        if (recentThreads.isEmpty()) {
+            this.binding.recentThreadsWrapper.setVisibility(View.GONE);
+        } else {
+            final ThreadAdapter threads = new ThreadAdapter();
+            threads.addAll(recentThreads);
+            this.binding.recentThreads.setAdapter(threads);
+            this.binding.recentThreadsWrapper.setVisibility(View.VISIBLE);
+            Util.justifyListViewHeightBasedOnChildren(binding.recentThreads);
+        }
+
         List<ListItem.Tag> tagList = bookmark.getTags(this);
         if (tagList.size() == 0 || !showDynamicTags) {
             binding.tags.setVisibility(View.GONE);
@@ -746,4 +767,20 @@ public class ConferenceDetailsActivity extends XmppActivity implements OnConvers
         }
     }
 
+    class ThreadAdapter extends ArrayAdapter<Conversation.Thread> {
+        ThreadAdapter() { super(ConferenceDetailsActivity.this, 0); }
+
+        @Override
+        public View getView(int position, View view, @NonNull ViewGroup parent) {
+            final ThreadRowBinding binding = DataBindingUtil.inflate(LayoutInflater.from(parent.getContext()), R.layout.thread_row, parent, false);
+            final Conversation.Thread item = getItem(position);
+
+            binding.threadIdenticon.setColor(UIHelper.getColorForName(item.getThreadId()));
+            binding.threadIdenticon.setHash(UIHelper.identiconHash(item.getThreadId()));
+
+            binding.threadSubject.setText(item.getDisplay());
+
+            return binding.getRoot();
+        }
+    }
 }

@@ -659,7 +659,7 @@ public class Conversation extends AbstractEntity implements Blockable, Comparabl
             if (mthread != null) {
                 Thread thread = threads.get(mthread.getContent());
                 if (thread == null) {
-                    thread = new Thread();
+                    thread = new Thread(mthread.getContent());
                     threads.put(mthread.getContent(), thread);
                 }
                 if (thread.subject == null && (m.getSubject() != null && (m.getRawBody() == null || m.getRawBody().length() == 0))) {
@@ -682,6 +682,13 @@ public class Conversation extends AbstractEntity implements Blockable, Comparabl
 
     public Thread getThread(String id) {
         return threads.get(id);
+    }
+
+    public List<Thread> recentThreads() {
+        final ArrayList<Thread> recent = new ArrayList<>();
+        recent.addAll(threads.values());
+        recent.sort((a, b) -> b.getLastTime() == a.getLastTime() ? 0 : (b.getLastTime() > a.getLastTime() ? 1 : -1));
+        return recent.size() < 5 ? recent : recent.subList(0, 5);
     }
 
     @Override
@@ -3312,13 +3319,37 @@ public class Conversation extends AbstractEntity implements Blockable, Comparabl
         protected Message subject = null;
         protected Message first = null;
         protected Message last = null;
+        protected final String threadId;
 
-        protected Thread() {}
+        protected Thread(final String threadId) {
+            this.threadId = threadId;
+        }
+
+        public String getThreadId() {
+            return threadId;
+        }
 
         public String getSubject() {
             if (subject == null) return null;
 
             return subject.getSubject();
+        }
+
+        public String getDisplay() {
+            final String s = getSubject();
+            if (s != null) return s;
+
+            if (first != null) {
+                return first.getBody();
+            }
+
+            return "";
+        }
+
+        public long getLastTime() {
+            if (last == null) return 0;
+
+            return last.getTimeSent();
         }
     }
 }

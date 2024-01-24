@@ -116,6 +116,7 @@ public class ConversationsActivity extends XmppActivity implements OnConversatio
     public static final String EXTRA_DO_NOT_APPEND = "do_not_append";
     public static final String EXTRA_POST_INIT_ACTION = "post_init_action";
     public static final String POST_ACTION_RECORD_VOICE = "record_voice";
+    public static final String EXTRA_THREAD = "threadId";
     public static final String EXTRA_TYPE = "type";
     public static final String EXTRA_NODE = "node";
     public static final String EXTRA_JID = "jid";
