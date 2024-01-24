@@ -88,7 +88,7 @@ public class SendButtonTool {
 		case ONLINE:
 			return 0xff4ab04a;
 		case AWAY:
-			return 0xfff8b990;
+			return 0xfff69c44;
 		case XA:
 		case DND:
 			return 0xffe97975;
