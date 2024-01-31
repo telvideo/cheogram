@@ -162,13 +162,13 @@ public class UriHandlerActivity extends AppCompatActivity {
 
         if (uri == null) return true;
 
-        if (uri.getScheme().equals("sgnl")) {
+        if ("sgnl".equals(uri.getScheme())) {
             stickers = Uri.parse("https://stickers.cheogram.com/signal/" + uri.getQueryParameter("pack_id") + "," + uri.getQueryParameter("pack_key"));
             if (hasStoragePermission(1)) downloadStickers();
             return false;
         }
 
-        if (uri.getScheme().equals("https") && uri.getHost().equals("signal.art")) {
+        if ("https".equals(uri.getScheme()) && "signal.art".equals(uri.getHost())) {
             android.net.UrlQuerySanitizer q = new android.net.UrlQuerySanitizer();
             q.setAllowUnregisteredParamaters(true);
             q.parseQuery(uri.getFragment());
