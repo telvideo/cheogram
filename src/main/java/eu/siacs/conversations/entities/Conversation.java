@@ -3151,14 +3151,16 @@ public class Conversation extends AbstractEntity implements Blockable, Comparabl
                             View v2 = getView();
                             loading = true;
 
-                            loadingTimer.schedule(new TimerTask() {
-                                @Override
-                                public void run() {
-                                    loadingHasBeenLong = true;
-                                    if (v == null && v2 == null) return;
-                                    (v == null ? v2 : v).post(() -> notifyDataSetChanged());
-                                }
-                            }, 3000);
+                            try {
+                                loadingTimer.schedule(new TimerTask() {
+                                    @Override
+                                    public void run() {
+                                        loadingHasBeenLong = true;
+                                        if (v == null && v2 == null) return;
+                                        (v == null ? v2 : v).post(() -> notifyDataSetChanged());
+                                    }
+                                }, 3000);
+                            } catch (final IllegalStateException e) { }
 
                             if (v == null && v2 == null) return;
                             (v == null ? v2 : v).post(() -> notifyDataSetChanged());
