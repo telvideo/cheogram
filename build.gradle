@@ -25,6 +25,8 @@ repositories {
 
 def tags = grgit.tag.list().findAll { it.dateTime != null }.sort { it.dateTime }
 
+// ROOT INSERT
+
 configurations {
     playstoreImplementation
     freeImplementation

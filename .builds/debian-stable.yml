@@ -11,11 +11,14 @@ packages:
 - openjdk-17-jdk-headless
 - android-sdk
 secrets:
-- 7eed327c-05c7-49b4-baed-a4d8785588d5
-- b412b263-bdde-410b-997e-6326aba90132
 - 6b782fde-a43b-4988-b102-38fa541bb788
+- 7eed327c-05c7-49b4-baed-a4d8785588d5
+- b1f1df57-d41c-45d9-9684-b66d3fa8d063
+- b412b263-bdde-410b-997e-6326aba90132
 environment:
   ANDROID_SDK_ROOT: /home/build/android
+  SENTRY_ORG: mboa
+  SENTRY_PROJECT: android
 tasks:
 - sdk: |
     wget -qO android.zip https://dl.google.com/android/repository/commandlinetools-linux-6987402_latest.zip
@@ -31,10 +34,17 @@ tasks:
     cd cheogram-android
     sed -ie 's/<!-- INSERT -->/<meta-data android:name="io.sentry.dsn" android:value="https:\/\/680d470d348a4cc494bf2198eed30c49@o559641.ingest.sentry.io\/6221823" \/>/' src/cheogram/AndroidManifest.xml
     sed -ie 's/\/\/ PLUGIN INSERT/id "io.sentry.android.gradle" version "4.2.0"/' build.gradle
+    sed -ie 's/\/\/ ROOT INSERT/sentry { includeSourceContext = true }/' build.gradle
 - build_free: |
+    set +x
+    export SENTRY_AUTH_TOKEN=$(cat ~/sentry_auth_token)
+    set -x
     cd cheogram-android
     ./gradlew assembleCheogramFreeDebug
 - build_google_play: |
+    set +x
+    export SENTRY_AUTH_TOKEN=$(cat ~/sentry_auth_token)
+    set -x
     cd cheogram-android
     mkdir -p src/playstore/res/values/
     mv ~/push.xml src/playstore/res/values/
