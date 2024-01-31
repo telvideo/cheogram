@@ -622,9 +622,9 @@ public class UIHelper {
             case AWAY:
                 return new ListItem.Tag(context.getString(R.string.presence_away), 0xfff69c44);
             case XA:
-                return new ListItem.Tag(context.getString(R.string.presence_xa), 0xffe97975);
+                return new ListItem.Tag(context.getString(R.string.presence_xa), 0xffe7524a);
             case DND:
-                return new ListItem.Tag(context.getString(R.string.presence_dnd), 0xffe97975);
+                return new ListItem.Tag(context.getString(R.string.presence_dnd), 0xffe7524a);
             default:
                 return new ListItem.Tag(context.getString(R.string.presence_online), 0xff4ab04a);
         }

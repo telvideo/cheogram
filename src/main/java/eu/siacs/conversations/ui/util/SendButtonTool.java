@@ -91,7 +91,7 @@ public class SendButtonTool {
 			return 0xfff69c44;
 		case XA:
 		case DND:
-			return 0xffe97975;
+			return 0xffe7524a;
 		default:
 			return StyledAttributes.getColor(activity, R.attr.icon_tint);
 		}
