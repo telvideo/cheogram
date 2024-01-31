@@ -12,6 +12,7 @@ buildscript {
 
 plugins {
     id 'org.ajoberstar.grgit' version '4.1.1'
+    // PLUGIN INSERT
 }
 
 apply plugin: 'com.android.application'
@@ -113,7 +114,6 @@ dependencies {
     implementation 'com.tbuonomo:dotsindicator:4.2'
     implementation 'com.github.Priyansh-Kedia:OpenGraphParser:2.5.6'
     implementation 'me.xdrop:fuzzywuzzy:1.4.0'
-    // INSERT
 }
 
 ext {
