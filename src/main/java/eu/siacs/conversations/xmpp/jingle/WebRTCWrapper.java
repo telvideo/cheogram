@@ -780,7 +780,11 @@ public class WebRTCWrapper {
     }
 
     Optional<VideoTrack> getLocalVideoTrack() {
-        return TrackWrapper.get(peerConnection, this.localVideoTrack);
+        try {
+            return TrackWrapper.get(peerConnection, this.localVideoTrack);
+        } catch (IllegalStateException e) {
+            return Optional.absent();
+        }
     }
 
     Optional<VideoTrack> getRemoteVideoTrack() {
