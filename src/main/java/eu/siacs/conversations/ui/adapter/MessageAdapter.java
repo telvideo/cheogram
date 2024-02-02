@@ -25,6 +25,7 @@ import android.text.style.URLSpan;
 import android.util.DisplayMetrics;
 import android.util.LruCache;
 import android.view.accessibility.AccessibilityEvent;
+import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
@@ -86,6 +87,7 @@ import eu.siacs.conversations.services.MessageArchiveService;
 import eu.siacs.conversations.services.NotificationService;
 import eu.siacs.conversations.ui.ConversationFragment;
 import eu.siacs.conversations.ui.ConversationsActivity;
+import eu.siacs.conversations.ui.SettingsActivity;
 import eu.siacs.conversations.ui.XmppActivity;
 import eu.siacs.conversations.ui.service.AudioPlayer;
 import eu.siacs.conversations.ui.text.DividerSpan;
@@ -306,7 +308,7 @@ public class MessageAdapter extends ArrayAdapter<Message> {
                 break;
             default:
                 if (mForceNames || multiReceived || (message.getTrueCounterpart() != null && message.getContact() != null)) {
-                    info = UIHelper.getMessageDisplayName(message);
+                    info = UIHelper.getMessageDisplayName(message).replace(' ', '\u00A0');
                 }
                 break;
         }
@@ -351,28 +353,28 @@ public class MessageAdapter extends ArrayAdapter<Message> {
 
         final String formattedTime = UIHelper.readableTimeDifferenceFull(getContext(), message.getMergedTimeSent());
         final String bodyLanguage = message.getBodyLanguage();
-        final String bodyLanguageInfo = bodyLanguage == null ? "" : String.format(" \u00B7 %s", bodyLanguage.toUpperCase(Locale.US));
+        final String bodyLanguageInfo = bodyLanguage == null ? "" : String.format("\u00A0\u00B7 %s", bodyLanguage.toUpperCase(Locale.US));
         if (message.getStatus() <= Message.STATUS_RECEIVED) {
             if ((filesize != null) && (info != null)) {
-                viewHolder.time.setText(formattedTime + " \u00B7 " + filesize + " \u00B7 " + info + bodyLanguageInfo);
+                viewHolder.time.setText(formattedTime + "\u00A0\u00B7" + filesize + "\u00A0\u00B7 " + info + bodyLanguageInfo);
             } else if ((filesize == null) && (info != null)) {
-                viewHolder.time.setText(formattedTime + " \u00B7 " + info + bodyLanguageInfo);
+                viewHolder.time.setText(formattedTime + "\u00A0\u00B7 " + info + bodyLanguageInfo);
             } else if ((filesize != null) && (info == null)) {
-                viewHolder.time.setText(formattedTime + " \u00B7 " + filesize + bodyLanguageInfo);
+                viewHolder.time.setText(formattedTime + "\u00A0\u00B7 " + filesize + bodyLanguageInfo);
             } else {
                 viewHolder.time.setText(formattedTime + bodyLanguageInfo);
             }
         } else {
             if ((filesize != null) && (info != null)) {
-                viewHolder.time.setText(filesize + " \u00B7 " + info + bodyLanguageInfo);
+                viewHolder.time.setText(filesize + "\u00A0\u00B7 " + info + bodyLanguageInfo);
             } else if ((filesize == null) && (info != null)) {
                 if (error) {
-                    viewHolder.time.setText(info + " \u00B7 " + formattedTime + bodyLanguageInfo);
+                    viewHolder.time.setText(info + "\u00A0\u00B7 " + formattedTime + bodyLanguageInfo);
                 } else {
                     viewHolder.time.setText(info);
                 }
             } else if ((filesize != null) && (info == null)) {
-                viewHolder.time.setText(filesize + " \u00B7 " + formattedTime + bodyLanguageInfo);
+                viewHolder.time.setText(filesize + "\u00A0\u00B7 " + formattedTime + bodyLanguageInfo);
             } else {
                 viewHolder.time.setText(formattedTime + bodyLanguageInfo);
             }
@@ -882,6 +884,8 @@ public class MessageAdapter extends ArrayAdapter<Message> {
                     break;
                 case SENT:
                     view = activity.getLayoutInflater().inflate(R.layout.message_sent, parent, false);
+                    viewHolder.status_line = view.findViewById(R.id.status_line);
+                    viewHolder.message_box_inner = view.findViewById(R.id.message_box_inner);
                     viewHolder.message_box = view.findViewById(R.id.message_box);
                     viewHolder.contact_picture = view.findViewById(R.id.message_photo);
                     viewHolder.download_button = view.findViewById(R.id.download_button);
@@ -897,6 +901,8 @@ public class MessageAdapter extends ArrayAdapter<Message> {
                     break;
                 case RECEIVED:
                     view = activity.getLayoutInflater().inflate(R.layout.message_received, parent, false);
+                    viewHolder.status_line = view.findViewById(R.id.status_line);
+                    viewHolder.message_box_inner = view.findViewById(R.id.message_box_inner);
                     viewHolder.message_box = view.findViewById(R.id.message_box);
                     viewHolder.contact_picture = view.findViewById(R.id.message_photo);
                     viewHolder.download_button = view.findViewById(R.id.download_button);
@@ -1070,6 +1076,9 @@ public class MessageAdapter extends ArrayAdapter<Message> {
         });
         viewHolder.messageBody.setAccessibilityDelegate(null);
 
+        final String theme = activity == null ? null : PreferenceManager.getDefaultSharedPreferences(activity).getString(SettingsActivity.THEME, activity.getResources().getString(R.string.theme));
+        boolean footerWrap = type == SENT && "oledblack".equals(theme);
+
         final Transferable transferable = message.getTransferable();
         final boolean unInitiatedButKnownSize = MessageUtils.unInitiatedButKnownSize(message);
         if (unInitiatedButKnownSize || message.isDeleted() || (transferable != null && transferable.getStatus() != Transferable.STATUS_UPLOADING)) {
@@ -1083,6 +1092,9 @@ public class MessageAdapter extends ArrayAdapter<Message> {
         } else if (message.isFileOrImage() && message.getEncryption() != Message.ENCRYPTION_PGP && message.getEncryption() != Message.ENCRYPTION_DECRYPTION_FAILED) {
             if (message.getFileParams().width > 0 && message.getFileParams().height > 0) {
                 displayMediaPreviewMessage(viewHolder, message, darkBackground, type);
+                if (!"oledblack".equals(theme) && viewHolder.image.getLayoutParams().width > metrics.density * 110) {
+                    footerWrap = true;
+                }
             } else if (message.getFileParams().runtime > 0) {
                 displayAudioMessage(viewHolder, message, darkBackground, type);
             } else if ("application/xdc+zip".equals(message.getFileParams().getMediaType()) && message.getConversation() instanceof Conversation && message.getThread() != null && !message.getFileParams().getCids().isEmpty()) {
@@ -1133,6 +1145,11 @@ public class MessageAdapter extends ArrayAdapter<Message> {
                 displayTextMessage(viewHolder, message, darkBackground, type);
             }
         }
+
+        viewHolder.message_box_inner.setMinimumWidth(footerWrap ? (int) (110 * metrics.density) : 0);
+        LinearLayout.LayoutParams statusParams = (LinearLayout.LayoutParams) viewHolder.status_line.getLayoutParams();
+        statusParams.width = footerWrap ? ViewGroup.LayoutParams.MATCH_PARENT : ViewGroup.LayoutParams.WRAP_CONTENT;
+        viewHolder.status_line.setLayoutParams(statusParams);
 
         if (type == RECEIVED) {
             if (commands != null && conversation instanceof Conversation) {
@@ -1279,7 +1296,9 @@ public class MessageAdapter extends ArrayAdapter<Message> {
         public Button load_more_messages;
         public ImageView edit_indicator;
         public RelativeLayout audioPlayer;
+        protected View status_line;
         protected LinearLayout message_box;
+        protected View message_box_inner;
         protected Button download_button;
         protected ImageView image;
         protected ImageView indicator;
