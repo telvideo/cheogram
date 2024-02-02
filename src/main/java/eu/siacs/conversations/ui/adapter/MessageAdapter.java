@@ -692,7 +692,7 @@ public class MessageAdapter extends ArrayAdapter<Message> {
                 if (height < 1) height = 1080;
 
                 viewHolder.image.setVisibility(View.VISIBLE);
-                imagePreviewLayout(width, height, viewHolder.image);
+                imagePreviewLayout(width, height, viewHolder.image, message.getBody() != null && message.getBody().length() > 0);
                 activity.loadBitmap(message, viewHolder.image);
                 viewHolder.image.setOnClickListener(v -> ConversationFragment.downloadFile(activity, message));
 
@@ -790,12 +790,12 @@ public class MessageAdapter extends ArrayAdapter<Message> {
         viewHolder.audioPlayer.setVisibility(View.GONE);
         viewHolder.image.setVisibility(View.VISIBLE);
         final FileParams params = message.getFileParams();
-        imagePreviewLayout(params.width, params.height, viewHolder.image);
+        imagePreviewLayout(params.width, params.height, viewHolder.image, message.getBody() != null && message.getBody().length() > 0);
         activity.loadBitmap(message, viewHolder.image);
         viewHolder.image.setOnClickListener(v -> openDownloadable(message));
     }
 
-    private void imagePreviewLayout(int w, int h, ImageView image) {
+    private void imagePreviewLayout(int w, int h, ImageView image, boolean topMargin) {
         final float target = activity.getResources().getDimension(R.dimen.image_preview_width);
         final int scaledW;
         final int scaledH;
@@ -813,7 +813,8 @@ public class MessageAdapter extends ArrayAdapter<Message> {
             scaledH = (int) (h / ((double) w / target));
         }
         final LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(scaledW, scaledH);
-        layoutParams.setMargins(0, (int) (metrics.density * 4), 0, (int) (metrics.density * 4));
+        layoutParams.setMargins(0, topMargin ? (int) (metrics.density * 4) : 0, 0, (int) (metrics.density * 4));
+        layoutParams.gravity = Gravity.CENTER;
         image.setLayoutParams(layoutParams);
     }
 

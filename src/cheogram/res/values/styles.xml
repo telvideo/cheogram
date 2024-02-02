@@ -5,15 +5,7 @@
 	<item name="cornerSize">@dimen/avatar_radius</item>
 </style>
 
-<style name="ShapeAppearanceOverlay.MessageImageIn" parent="ShapeAppearance.MaterialComponents.SmallComponent">
-	<item name="cornerFamily">rounded</item>
-	<item name="cornerSizeTopLeft">@dimen/image_radius</item>
-	<item name="cornerSizeTopRight">@dimen/image_radius</item>
-	<item name="cornerSizeBottomLeft">@dimen/image_radius</item>
-	<item name="cornerSizeBottomRight">@dimen/image_radius</item>
-</style>
-
-<style name="ShapeAppearanceOverlay.MessageImageOut" parent="ShapeAppearance.MaterialComponents.SmallComponent">
+<style name="ShapeAppearanceOverlay.MessageImage" parent="ShapeAppearance.MaterialComponents.SmallComponent">
 	<item name="cornerFamily">rounded</item>
 	<item name="cornerSizeTopLeft">@dimen/image_radius</item>
 	<item name="cornerSizeTopRight">@dimen/image_radius</item>

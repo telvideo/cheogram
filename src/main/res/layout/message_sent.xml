@@ -45,19 +45,6 @@
             android:clipToPadding="false"
             android:padding="2dp">
 
-            <com.google.android.material.imageview.ShapeableImageView
-                android:id="@+id/message_image"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:translationY="-5dp"
-                android:layout_marginBottom="4dp"
-                android:adjustViewBounds="true"
-                android:background="@color/black87"
-                android:longClickable="true"
-                android:scaleType="centerCrop"
-                app:strokeColor="@color/custom_theme_accent"
-                app:shapeAppearance="@style/ShapeAppearanceOverlay.MessageImageOut" />
-
             <include
                 android:id="@+id/message_content"
                 layout="@layout/message_content" />
