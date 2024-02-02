@@ -2679,10 +2679,14 @@ public class XmppConnectionService extends Service {
     }
 
     public Conversation findOrCreateConversation(final Account account, final Jid jid, final boolean muc, final boolean joinAfterCreate, final boolean async) {
-        return this.findOrCreateConversation(account, jid, muc, joinAfterCreate, null, async);
+        return this.findOrCreateConversation(account, jid, muc, joinAfterCreate, null, async, null);
     }
 
     public Conversation findOrCreateConversation(final Account account, final Jid jid, final boolean muc, final boolean joinAfterCreate, final MessageArchiveService.Query query, final boolean async) {
+        return this.findOrCreateConversation(account, jid, muc, joinAfterCreate, query, async, null);
+    }
+
+    public Conversation findOrCreateConversation(final Account account, final Jid jid, final boolean muc, final boolean joinAfterCreate, final MessageArchiveService.Query query, final boolean async, final String password) {
         synchronized (this.conversations) {
             Conversation conversation = find(account, jid);
             if (conversation != null) {
@@ -2696,6 +2700,7 @@ public class XmppConnectionService extends Service {
                 if (muc) {
                     conversation.setMode(Conversation.MODE_MULTI);
                     conversation.setContactJid(jid);
+                    if (password != null) conversation.getMucOptions().setPassword(password);
                 } else {
                     conversation.setMode(Conversation.MODE_SINGLE);
                     conversation.setContactJid(jid.asBareJid());
@@ -2713,6 +2718,7 @@ public class XmppConnectionService extends Service {
                 if (muc) {
                     conversation = new Conversation(conversationName, account, jid,
                             Conversation.MODE_MULTI);
+                    if (password != null) conversation.getMucOptions().setPassword(password);
                 } else {
                     conversation = new Conversation(conversationName, account, jid.asBareJid(),
                             Conversation.MODE_SINGLE);

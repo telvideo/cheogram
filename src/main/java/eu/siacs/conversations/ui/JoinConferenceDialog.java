@@ -28,14 +28,16 @@ import eu.siacs.conversations.ui.util.DelayedHintHelper;
 public class JoinConferenceDialog extends DialogFragment implements OnBackendConnected {
 
 	private static final String PREFILLED_JID_KEY = "prefilled_jid";
+	private static final String PREFILLED_PASSWORD_KEY = "prefilled_password";
 	private static final String ACCOUNTS_LIST_KEY = "activated_accounts_list";
 	private JoinConferenceDialogListener mListener;
 	private KnownHostsAdapter knownHostsAdapter;
 
-	public static JoinConferenceDialog newInstance(String prefilledJid, List<String> accounts) {
+	public static JoinConferenceDialog newInstance(String prefilledJid, String password, List<String> accounts) {
 		JoinConferenceDialog dialog = new JoinConferenceDialog();
 		Bundle bundle = new Bundle();
 		bundle.putString(PREFILLED_JID_KEY, prefilledJid);
+		bundle.putString(PREFILLED_PASSWORD_KEY, password);
 		bundle.putStringArrayList(ACCOUNTS_LIST_KEY, (ArrayList<String>) accounts);
 		dialog.setArguments(bundle);
 		return dialog;
@@ -66,9 +68,9 @@ public class JoinConferenceDialog extends DialogFragment implements OnBackendCon
 		builder.setNegativeButton(R.string.cancel, null);
 		AlertDialog dialog = builder.create();
 		dialog.show();
-		dialog.getButton(DialogInterface.BUTTON_POSITIVE).setOnClickListener(view -> mListener.onJoinDialogPositiveClick(dialog, binding.account, binding.accountJidLayout, binding.jid, binding.bookmark.isChecked()));
+		dialog.getButton(DialogInterface.BUTTON_POSITIVE).setOnClickListener(view -> mListener.onJoinDialogPositiveClick(dialog, binding.account, binding.accountJidLayout, binding.jid, binding.jid.getText().toString().equals(getArguments().getString(PREFILLED_JID_KEY)) ? getArguments().getString(PREFILLED_PASSWORD_KEY) : null, binding.bookmark.isChecked()));
 		binding.jid.setOnEditorActionListener((v, actionId, event) -> {
-			mListener.onJoinDialogPositiveClick(dialog, binding.account, binding.accountJidLayout, binding.jid, binding.bookmark.isChecked());
+			mListener.onJoinDialogPositiveClick(dialog, binding.account, binding.accountJidLayout, binding.jid, binding.jid.getText().toString().equals(getArguments().getString(PREFILLED_JID_KEY)) ? getArguments().getString(PREFILLED_PASSWORD_KEY) : null, binding.bookmark.isChecked());
 			return true;
 		});
 		return dialog;
@@ -117,6 +119,6 @@ public class JoinConferenceDialog extends DialogFragment implements OnBackendCon
 	}
 
 	public interface JoinConferenceDialogListener {
-		void onJoinDialogPositiveClick(Dialog dialog, Spinner spinner, TextInputLayout jidLayout, AutoCompleteTextView jid, boolean isBookmarkChecked);
+		void onJoinDialogPositiveClick(Dialog dialog, Spinner spinner, TextInputLayout jidLayout, AutoCompleteTextView jid, String password, boolean isBookmarkChecked);
 	}
 }

@@ -612,6 +612,9 @@ public class ConversationsActivity extends XmppActivity implements OnConversatio
         if (xmppUri.isValidJid() && !xmppUri.hasFingerprints()) {
             final Conversation conversation = xmppConnectionService.findUniqueConversationByJid(xmppUri);
             if (conversation != null) {
+                if (xmppUri.getParameter("password") != null) {
+                    xmppConnectionService.providePasswordForMuc(conversation, xmppUri.getParameter("password"));
+                }
                 if (xmppUri.isAction("command")) {
                     startCommand(conversation.getAccount(), xmppUri.getJid(), xmppUri.getParameter("node"));
                 } else {

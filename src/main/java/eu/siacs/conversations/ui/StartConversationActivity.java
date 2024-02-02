@@ -621,14 +621,14 @@ public class StartConversationActivity extends XmppActivity implements XmppConne
     }
 
     @SuppressLint("InflateParams")
-    protected void showJoinConferenceDialog(final String prefilledJid) {
+    protected void showJoinConferenceDialog(final String prefilledJid, final Invite invite) {
         FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
         Fragment prev = getSupportFragmentManager().findFragmentByTag(FRAGMENT_TAG_DIALOG);
         if (prev != null) {
             ft.remove(prev);
         }
         ft.addToBackStack(null);
-        JoinConferenceDialog joinConferenceFragment = JoinConferenceDialog.newInstance(prefilledJid, mActivatedAccounts);
+        JoinConferenceDialog joinConferenceFragment = JoinConferenceDialog.newInstance(prefilledJid, invite.getParameter("password"), mActivatedAccounts);
         joinConferenceFragment.show(ft, FRAGMENT_TAG_DIALOG);
     }
 
@@ -1032,10 +1032,13 @@ public class StartConversationActivity extends XmppActivity implements XmppConne
         final Conversation muc = xmppConnectionService.findFirstMuc(invite.getJid(), invite.account);
         if (invite.isAction(XmppUri.ACTION_JOIN) || (contacts.isEmpty() && muc != null)) {
             if (muc != null && !invite.forceDialog) {
+                if (invite.getParameter("password") != null) {
+                    xmppConnectionService.providePasswordForMuc(muc, invite.getParameter("password"));
+                }
                 switchToConversationDoNotAppend(muc, invite.getBody());
                 return true;
             } else {
-                showJoinConferenceDialog(invite.getJid().asBareJid().toEscapedString());
+                showJoinConferenceDialog(invite.getJid().asBareJid().toEscapedString(), invite);
                 return false;
             }
         } else if (contacts.size() == 0) {
@@ -1229,7 +1232,7 @@ public class StartConversationActivity extends XmppActivity implements XmppConne
     }
 
     @Override
-    public void onJoinDialogPositiveClick(Dialog dialog, Spinner spinner, TextInputLayout layout, AutoCompleteTextView jid, boolean isBookmarkChecked) {
+    public void onJoinDialogPositiveClick(Dialog dialog, Spinner spinner, TextInputLayout layout, AutoCompleteTextView jid, String password, boolean isBookmarkChecked) {
         if (!xmppConnectionServiceBound) {
             return;
         }
@@ -1262,20 +1265,21 @@ public class StartConversationActivity extends XmppActivity implements XmppConne
             } else {
                 bookmark = new Bookmark(account, conferenceJid.asBareJid());
                 bookmark.setAutojoin(getBooleanPreference("autojoin", R.bool.autojoin));
+                if (password != null) bookmark.setPassword(password);
                 final String nick = conferenceJid.getResource();
                 if (nick != null && !nick.isEmpty() && !nick.equals(MucOptions.defaultNick(account))) {
                     bookmark.setNick(nick);
                 }
                 xmppConnectionService.createBookmark(account, bookmark);
                 final Conversation conversation = xmppConnectionService
-                        .findOrCreateConversation(account, conferenceJid, true, true, true);
+                        .findOrCreateConversation(account, conferenceJid, true, true, null, true, password);
                 bookmark.setConversation(conversation);
                 dialog.dismiss();
                 switchToConversation(conversation);
             }
         } else {
             final Conversation conversation = xmppConnectionService
-                    .findOrCreateConversation(account, conferenceJid, true, true, true);
+                    .findOrCreateConversation(account, conferenceJid, true, true, null, true, password);
             dialog.dismiss();
             switchToConversation(conversation);
         }
