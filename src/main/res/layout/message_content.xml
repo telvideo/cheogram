@@ -32,6 +32,7 @@
         android:layout_marginBottom="5dp"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_gravity="center"
         android:longClickable="true"
         android:visibility="gone"/>
 
@@ -40,6 +41,7 @@
         android:visibility="gone"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_gravity="center"
         android:divider="@android:color/transparent"
         android:dividerHeight="0dp"></ListView>
 
