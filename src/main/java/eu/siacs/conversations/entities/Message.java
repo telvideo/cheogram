@@ -126,6 +126,7 @@ public class Message extends AbstractEntity implements AvatarService.Avatarable 
     protected Jid counterpart;
     protected Jid trueCounterpart;
     protected String body;
+    protected SpannableStringBuilder spannableBody = null;
     protected String subject;
     protected String encryptedBody;
     protected long timeSent;
@@ -584,6 +585,7 @@ public class Message extends AbstractEntity implements AvatarService.Avatarable 
         final Element oldHtml = getHtml(true);
         if (oldHtml != null) this.payloads.remove(oldHtml);
         if (html != null) addPayload(html);
+        this.spannableBody = null;
     }
 
     public synchronized void setBody(String body) {
@@ -591,6 +593,7 @@ public class Message extends AbstractEntity implements AvatarService.Avatarable 
         this.isGeoUri = null;
         this.isEmojisOnly = null;
         this.treatAsDownloadable = null;
+        this.spannableBody = null;
     }
 
     public synchronized void appendBody(Spanned append) {
@@ -606,6 +609,7 @@ public class Message extends AbstractEntity implements AvatarService.Avatarable 
         this.isGeoUri = null;
         this.isEmojisOnly = null;
         this.treatAsDownloadable = null;
+        this.spannableBody = null;
     }
 
     public String getSubject() {
@@ -977,22 +981,36 @@ public class Message extends AbstractEntity implements AvatarService.Avatarable 
     }
 
     public SpannableStringBuilder getSpannableBody(GetThumbnailForCid thumbnailer, Drawable fallbackImg) {
+        if (spannableBody != null) return new SpannableStringBuilder(spannableBody);
+
         final Element html = getHtml();
         if (html == null || Build.VERSION.SDK_INT < 24) {
-            return new SpannableStringBuilder(MessageUtils.filterLtrRtl(getBody()).trim());
+            spannableBody = new SpannableStringBuilder(MessageUtils.filterLtrRtl(getBody()).trim());
         } else {
+            boolean[] anyfallbackimg = new boolean[]{ false };
+
             SpannableStringBuilder spannable = new SpannableStringBuilder(Html.fromHtml(
                 MessageUtils.filterLtrRtl(html.toString()).trim(),
                 Html.FROM_HTML_MODE_COMPACT,
                 (source) -> {
                    try {
-                       if (thumbnailer == null || source == null) return fallbackImg;
+                       if (thumbnailer == null || source == null) {
+                           anyfallbackimg[0] = true;
+                           return fallbackImg;
+                       }
                        Cid cid = BobTransfer.cid(new URI(source));
-                       if (cid == null) return fallbackImg;
+                       if (cid == null) {
+                           anyfallbackimg[0] = true;
+                           return fallbackImg;
+                       }
                        Drawable thumbnail = thumbnailer.getThumbnail(cid);
-                       if (thumbnail == null) return fallbackImg;
+                       if (thumbnail == null) {
+                           anyfallbackimg[0] = true;
+                           return fallbackImg;
+                       }
                        return thumbnail;
                    } catch (final URISyntaxException e) {
+                       anyfallbackimg[0] = true;
                        return fallbackImg;
                    }
                 },
@@ -1018,8 +1036,11 @@ public class Message extends AbstractEntity implements AvatarService.Avatarable 
             // https://stackoverflow.com/a/10187511/8611
             int i = spannable.length();
             while(--i >= 0 && Character.isWhitespace(spannable.charAt(i))) { }
-            return (SpannableStringBuilder) spannable.subSequence(0, i+1);
+            if (anyfallbackimg[0]) return (SpannableStringBuilder) spannable.subSequence(0, i+1);
+            spannableBody = (SpannableStringBuilder) spannable.subSequence(0, i+1);
         }
+
+        return new SpannableStringBuilder(spannableBody);
     }
 
     public SpannableStringBuilder getMergedBody() {
