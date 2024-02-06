@@ -547,7 +547,10 @@ public class Message extends AbstractEntity implements AvatarService.Avatarable 
         Pair<StringBuilder, Boolean> result = bodyMinusFallbacks("http://jabber.org/protocol/address", Namespace.OOB);
         StringBuilder body = result.first;
 
-        if (!result.second && getOob() != null) {
+        final String aesgcm = MessageUtils.aesgcmDownloadable(body.toString());
+        if (!result.second && aesgcm != null) {
+            return body.toString().replace(aesgcm, "");
+        } else if (!result.second && getOob() != null) {
             return body.toString().replace(getOob().toString(), "");
         } else if (!result.second && isGeoUri()) {
             return "";

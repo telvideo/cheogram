@@ -108,6 +108,33 @@ public class MessageUtils {
         return validAesGcm || validOob;
     }
 
+    public static String aesgcmDownloadable(final String body) {
+        final String[] lines = body.split("\n");
+        if (lines.length == 0) {
+            return null;
+        }
+        for (final String line : lines) {
+            if (line.contains("\\s+")) {
+                return null;
+            }
+        }
+        final URI uri;
+        try {
+            uri = new URI(lines[0]);
+        } catch (final URISyntaxException e) {
+            return null;
+        }
+        if (!URL.WELL_KNOWN_SCHEMES.contains(uri.getScheme())) {
+            return null;
+        }
+        final String ref = uri.getFragment();
+        final String protocol = uri.getScheme();
+        final boolean encrypted = ref != null && AesGcmURL.IV_KEY.matcher(ref).matches();
+        final boolean followedByDataUri = lines.length == 2 && lines[1].startsWith("data:");
+        final boolean validAesGcm = AesGcmURL.PROTOCOL_NAME.equalsIgnoreCase(protocol) && encrypted && (lines.length == 1 || followedByDataUri);
+        return validAesGcm ? lines[0] : null;
+    }
+
     public static String filterLtrRtl(String body) {
         return LTR_RTL.matcher(body).replaceFirst(EMPTY_STRING);
     }
