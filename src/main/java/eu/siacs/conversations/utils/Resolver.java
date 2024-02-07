@@ -16,6 +16,7 @@ import java.lang.reflect.Field;
 import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -55,6 +56,116 @@ public class Resolver {
 
     private static XmppConnectionService SERVICE = null;
 
+    private static List<String> DNSSECLESS_TLDS = Arrays.asList(
+        "ae",
+        "aero",
+        "ai",
+        "al",
+        "ao",
+        "aq",
+        "as",
+        "ba",
+        "bb",
+        "bd",
+        "bf",
+        "bi",
+        "bj",
+        "bn",
+        "bo",
+        "bs",
+        "bw",
+        "cd",
+        "cf",
+        "cg",
+        "ci",
+        "ck",
+        "cm",
+        "cu",
+        "cv",
+        "cw",
+        "dj",
+        "dm",
+        "do",
+        "ec",
+        "eg",
+        "eh",
+        "er",
+        "et",
+        "fj",
+        "fk",
+        "ga",
+        "ge",
+        "gf",
+        "gh",
+        "gm",
+        "gp",
+        "gq",
+        "gt",
+        "gu",
+        "hm",
+        "ht",
+        "im",
+        "ir",
+        "je",
+        "jm",
+        "jo",
+        "ke",
+        "kh",
+        "km",
+        "kn",
+        "kp",
+        "kz",
+        "ls",
+        "mg",
+        "mh",
+        "mk",
+        "ml",
+        "mm",
+        "mo",
+        "mp",
+        "mq",
+        "ms",
+        "mt",
+        "mu",
+        "mv",
+        "mw",
+        "mz",
+        "ne",
+        "ng",
+        "ni",
+        "np",
+        "nr",
+        "om",
+        "pa",
+        "pf",
+        "pg",
+        "pk",
+        "pn",
+        "ps",
+        "py",
+        "qa",
+        "rw",
+        "sd",
+        "sl",
+        "sm",
+        "so",
+        "sr",
+        "sv",
+        "sy",
+        "sz",
+        "tc",
+        "td",
+        "tg",
+        "tj",
+        "to",
+        "tr",
+        "va",
+        "vg",
+        "vi",
+        "ye",
+        "zm",
+        "zw"
+    );
 
     public static void init(XmppConnectionService service) {
         Resolver.SERVICE = service;
@@ -284,18 +395,20 @@ public class Resolver {
 
     private static <D extends Data> ResolverResult<D> resolveWithFallback(DnsName dnsName, Class<D> type) throws IOException {
         final Question question = new Question(dnsName, Record.TYPE.getType(type));
-        try {
-            ResolverResult<D> result = DnssecResolverApi.INSTANCE.resolve(question);
-            if (result.wasSuccessful() && !result.isAuthenticData()) {
-                Log.d(Config.LOGTAG, "DNSSEC validation failed for " + type.getSimpleName() + " : " + result.getUnverifiedReasons());
+        if (!DNSSECLESS_TLDS.contains(dnsName.getLabels()[0].toString())) {
+            try {
+                ResolverResult<D> result = DnssecResolverApi.INSTANCE.resolve(question);
+                if (result.wasSuccessful() && !result.isAuthenticData()) {
+                    Log.d(Config.LOGTAG, "DNSSEC validation failed for " + type.getSimpleName() + " : " + result.getUnverifiedReasons());
+                }
+                return result;
+            } catch (DnssecValidationFailedException e) {
+                Log.d(Config.LOGTAG, Resolver.class.getSimpleName() + ": error resolving " + type.getSimpleName() + " with DNSSEC. Trying DNS instead.", e);
+            } catch (IOException e) {
+                throw e;
+            } catch (Throwable throwable) {
+                Log.d(Config.LOGTAG, Resolver.class.getSimpleName() + ": error resolving " + type.getSimpleName() + " with DNSSEC. Trying DNS instead.", throwable);
             }
-            return result;
-        } catch (DnssecValidationFailedException e) {
-            Log.d(Config.LOGTAG, Resolver.class.getSimpleName() + ": error resolving " + type.getSimpleName() + " with DNSSEC. Trying DNS instead.", e);
-        } catch (IOException e) {
-            throw e;
-        } catch (Throwable throwable) {
-            Log.d(Config.LOGTAG, Resolver.class.getSimpleName() + ": error resolving " + type.getSimpleName() + " with DNSSEC. Trying DNS instead.", throwable);
         }
         return ResolverApi.INSTANCE.resolve(question);
     }
