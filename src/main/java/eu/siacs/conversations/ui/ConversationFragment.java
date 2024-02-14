@@ -1390,6 +1390,7 @@ public class ConversationFragment extends XmppFragment
         binding.requestVoice.setOnClickListener((v) -> {
             activity.xmppConnectionService.requestVoice(conversation.getAccount(), conversation.getJid());
             binding.requestVoice.setVisibility(View.GONE);
+            Toast.makeText(activity, "Your request has been sent to the moderators", Toast.LENGTH_SHORT).show();
         });
 
         binding.scrollToBottomButton.setOnClickListener(this.mScrollButtonListener);
