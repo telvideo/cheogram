@@ -88,7 +88,7 @@ public class HttpDownloadConnection implements Transferable {
             } else if (message.isOOb() && fileParams.url != null) {
                 mUrl = AesGcmURL.of(fileParams.url);
             } else {
-                mUrl = AesGcmURL.of(message.getBody().split("\n")[0]);
+                mUrl = AesGcmURL.of(message.getRawBody().split("\n")[0]);
             }
             final AbstractConnectionManager.Extension extension = AbstractConnectionManager.Extension.of(mUrl.encodedPath());
             if (VALID_CRYPTO_EXTENSIONS.contains(extension.main)) {
@@ -113,7 +113,7 @@ public class HttpDownloadConnection implements Transferable {
             } else {
                 knownFileSize = message.getFileParams().size;
             }
-            Log.d(Config.LOGTAG,"knownFileSize: "+knownFileSize+", body="+message.getBody());
+            Log.d(Config.LOGTAG,"knownFileSize: "+knownFileSize+", body="+message.getRawBody());
             if (knownFileSize != null && interactive) {
                 if (message.getEncryption() == Message.ENCRYPTION_AXOLOTL
                         && this.file.getKey() != null) {
