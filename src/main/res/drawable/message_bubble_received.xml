@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:left="15dp" android:top="1dp">
+    <item android:left="7dp" android:top="0dp">
         <shape android:shape="rectangle">
             <corners
                 android:radius="0dp"
@@ -17,7 +17,7 @@
             <solid android:color="?message_bubble_received_bg" />
         </shape>
     </item>
-    <item android:bottom="2dp" android:gravity="top|left" android:width="10dp" android:height="10dp" android:top="1dp">
+    <item android:left="-5dp" android:gravity="top|left" android:width="7dp" android:height="7dp" android:top="0dp">
         <vector
            android:width="24dp"
            android:height="24dp"
