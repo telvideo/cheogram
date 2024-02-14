@@ -30,6 +30,7 @@ public class LocationProvider {
             if (tm == null) {
                 return getUserCountryFallback();
             }
+            Log.d(Config.LOGTAG, "SIM Operator: " + tm.getSimOperator());
             final String simCountry = tm.getSimOperator().equals("20801") ? "us" : tm.getSimCountryIso();
             final String networkCountry = tm.getPhoneType() == TelephonyManager.PHONE_TYPE_CDMA ? null : tm.getNetworkCountryIso(); // if device is not 3G would be unreliable
             if (preferNetwork && networkCountry != null && networkCountry.length() == 2) {
