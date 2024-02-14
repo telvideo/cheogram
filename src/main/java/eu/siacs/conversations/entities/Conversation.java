@@ -88,6 +88,7 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeParseException;
 import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -120,6 +121,7 @@ import eu.siacs.conversations.databinding.CommandResultFieldBinding;
 import eu.siacs.conversations.databinding.CommandSearchListFieldBinding;
 import eu.siacs.conversations.databinding.CommandSpinnerFieldBinding;
 import eu.siacs.conversations.databinding.CommandTextFieldBinding;
+import eu.siacs.conversations.databinding.CommandSliderFieldBinding;
 import eu.siacs.conversations.databinding.CommandWebviewBinding;
 import eu.siacs.conversations.databinding.DialogQuickeditBinding;
 import eu.siacs.conversations.http.HttpConnectionManager;
@@ -2385,6 +2387,64 @@ public class Conversation extends AbstractEntity implements Blockable, Comparabl
                 public void onTextChanged(CharSequence s, int start, int count, int after) { }
             }
 
+            class SliderFieldViewHolder extends ViewHolder<CommandSliderFieldBinding> {
+                public SliderFieldViewHolder(CommandSliderFieldBinding binding) { super(binding); }
+                protected Field field = null;
+
+                @Override
+                public void bind(Item item) {
+                    field = (Field) item;
+                    setTextOrHide(binding.label, field.getLabel());
+                    setTextOrHide(binding.desc, field.getDesc());
+                    final Element validate = field.el.findChild("validate", "http://jabber.org/protocol/xdata-validate");
+                    final String datatype = validate == null ? null : validate.getAttribute("datatype");
+                    final Element range = validate == null ? null : validate.findChild("range", "http://jabber.org/protocol/xdata-validate");
+                    final boolean open = validate != null && validate.findChild("open", "http://jabber.org/protocol/xdata-validate") != null;
+                    Float min = null;
+                    try { min = range.getAttribute("min") == null ? null : Float.valueOf(range.getAttribute("min")); } catch (NumberFormatException e) { }
+                    Float max = null;
+                    try { max = range.getAttribute("max") == null ? null : Float.valueOf(range.getAttribute("max"));  } catch (NumberFormatException e) { }
+
+                    List<Float> options = field.getOptions().stream().map(o -> Float.valueOf(o.getValue())).collect(Collectors.toList());
+                    Collections.sort(options);
+                    if (!open && options.size() > 0) {
+                        min = options.get(0);
+                        max = options.get(options.size()-1);
+                    }
+
+                    if (field.getValues().size() > 0) binding.slider.setValue(Float.valueOf(field.getValue().getContent()));
+                    binding.slider.setValueFrom(min == null ? Float.MIN_VALUE : min);
+                    binding.slider.setValueTo(max == null ? Float.MAX_VALUE : max);
+                    if ("xs:integer".equals(datatype) || "xs:int".equals(datatype) || "xs:long".equals(datatype) || "xs:short".equals(datatype) || "xs:byte".equals(datatype)) {
+                        binding.slider.setStepSize(1);
+                    } else {
+                        binding.slider.setStepSize(0);
+                    }
+
+                    if (!open && options.size() > 0) {
+                        float step = -1;
+                        Float prev = null;
+                        for (final Float option : options) {
+                            if (prev != null) {
+                                float nextStep = option - prev;
+                                if (step > 0 && step != nextStep) {
+                                    step = -1;
+                                    break;
+                                }
+                                step = nextStep;
+                            }
+                            prev = option;
+                        }
+                        if (step > 0) binding.slider.setStepSize(step);
+                        // NOTE: if step == -1 and !open then the widget will allow illegal values
+                    }
+
+                    binding.slider.addOnChangeListener((slider, value, fromUser) -> {
+                        field.setValues(List.of(new DecimalFormat().format(value)));
+                    });
+                }
+            }
+
             class WebViewHolder extends ViewHolder<CommandWebviewBinding> {
                 public WebViewHolder(CommandWebviewBinding binding) { super(binding); }
                 protected String boundUrl = "";
@@ -2551,14 +2611,24 @@ public class Conversation extends AbstractEntity implements Blockable, Comparabl
                     if (formType.equals("result") || fieldType.equals("fixed")) {
                         viewType = TYPE_RESULT_FIELD;
                     } else if (formType.equals("form")) {
+                        final Element validate = el.findChild("validate", "http://jabber.org/protocol/xdata-validate");
+                        final String datatype = validate == null ? null : validate.getAttribute("datatype");
+                        final Element range = validate == null ? null : validate.findChild("range", "http://jabber.org/protocol/xdata-validate");
                         if (fieldType.equals("boolean")) {
                             if (fillableFieldCount == 1 && actionsAdapter.countExceptCancel() < 1) {
                                 viewType = TYPE_BUTTON_GRID_FIELD;
                             } else {
                                 viewType = TYPE_CHECKBOX_FIELD;
                             }
+                        } else if (
+                            range != null && (
+                                "xs:integer".equals(datatype) || "xs:int".equals(datatype) || "xs:long".equals(datatype) || "xs:short".equals(datatype) || "xs:byte".equals(datatype) ||
+                                "xs:decimal".equals(datatype) || "xs:double".equals(datatype)
+                            )
+                        ) {
+                            // has a range and is numeric, use a slider
+                            viewType = TYPE_SLIDER_FIELD;
                         } else if (fieldType.equals("list-single")) {
-                            Element validate = el.findChild("validate", "http://jabber.org/protocol/xdata-validate");
                             if (fillableFieldCount == 1 && actionsAdapter.countExceptCancel() < 1) {
                                 viewType = TYPE_BUTTON_GRID_FIELD;
                             } else if (Option.forField(el).size() > 9) {
@@ -2666,6 +2736,7 @@ public class Conversation extends AbstractEntity implements Blockable, Comparabl
             final int TYPE_SEARCH_LIST_FIELD = 11;
             final int TYPE_ITEM_CARD = 12;
             final int TYPE_BUTTON_GRID_FIELD = 13;
+            final int TYPE_SLIDER_FIELD = 14;
 
             protected boolean executing = false;
             protected boolean loading = false;
@@ -3053,6 +3124,10 @@ public class Conversation extends AbstractEntity implements Blockable, Comparabl
                     case TYPE_TEXT_FIELD: {
                         CommandTextFieldBinding binding = DataBindingUtil.inflate(LayoutInflater.from(container.getContext()), R.layout.command_text_field, container, false);
                         return new TextFieldViewHolder(binding);
+                    }
+                    case TYPE_SLIDER_FIELD: {
+                        CommandSliderFieldBinding binding = DataBindingUtil.inflate(LayoutInflater.from(container.getContext()), R.layout.command_slider_field, container, false);
+                        return new SliderFieldViewHolder(binding);
                     }
                     case TYPE_PROGRESSBAR: {
                         CommandProgressBarBinding binding = DataBindingUtil.inflate(LayoutInflater.from(container.getContext()), R.layout.command_progress_bar, container, false);

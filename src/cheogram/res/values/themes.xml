@@ -7,6 +7,10 @@
         <item name="colorAccent">@color/black_perpy</item>
         <item name="popupOverlayStyle">@style/ThemeOverlay.AppCompat.Light</item>
 
+        <item name="colorOnPrimary">?edit_text_color</item>
+        <item name="colorOnBackground">?colorPrimaryDark</item>
+        <item name="colorSurface">?colorPrimaryDark</item>
+
         <item name="message_bubble_received_bg">@color/perpy_desaturated_light</item>
         <item name="message_bubble_sent_bg">?color_background_primary</item>
         <item name="message_bubble_shadow_light">#00CCCCCC</item>
