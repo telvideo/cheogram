@@ -737,7 +737,9 @@ public class FileBackend {
             }
             return new ByteArrayInputStream(data);
         }
-        return mXmppConnectionService.getContentResolver().openInputStream(uri);
+        final InputStream is = mXmppConnectionService.getContentResolver().openInputStream(uri);
+        if (is == null) throw new FileNotFoundException("File not found");
+        return is;
     }
 
     private void copyFileToPrivateStorage(File file, Uri uri) throws FileCopyException {
