@@ -2156,8 +2156,6 @@ public class FileBackend {
         try {
             SVG svg = SVG.getFromInputStream(mXmppConnectionService.getContentResolver().openInputStream(uri));
             svg.setDocumentPreserveAspectRatio(com.caverock.androidsvg.PreserveAspectRatio.FULLSCREEN);
-            svg.setDocumentWidth("100%");
-            svg.setDocumentHeight("100%");
 
             float w = svg.getDocumentWidth();
             float h = svg.getDocumentHeight();
@@ -2167,6 +2165,9 @@ public class FileBackend {
             float left = (size - outWidth) / 2;
             float top = (size - outHeight) / 2;
             RectF target = new RectF(left, top, left + outWidth, top + outHeight);
+            if (svg.getDocumentViewBox() == null) svg.setDocumentViewBox(0, 0, w, h);
+            svg.setDocumentWidth("100%");
+            svg.setDocumentHeight("100%");
 
             Bitmap output = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888);
             Canvas canvas = new Canvas(output);
@@ -2196,6 +2197,7 @@ public class FileBackend {
             float w = svg.getDocumentWidth();
             float h = svg.getDocumentHeight();
             Rect r = rectForSize(w < 1 ? size : (int) w, h < 1 ? size : (int) h, size);
+            if (svg.getDocumentViewBox() == null) svg.setDocumentViewBox(0, 0, w, h);
             svg.setDocumentWidth("100%");
             svg.setDocumentHeight("100%");
 
