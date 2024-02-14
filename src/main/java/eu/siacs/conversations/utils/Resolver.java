@@ -8,6 +8,7 @@ import androidx.annotation.NonNull;
 
 import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.net.InetAddresses;
 import com.google.common.primitives.Ints;
 
@@ -20,6 +21,7 @@ import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 //import de.gultsch.minidns.AndroidDNSClient;
 import org.minidns.AbstractDnsClient;
@@ -167,6 +169,12 @@ public class Resolver {
         "zw"
     );
 
+    protected static final Map<String, String> knownSRV = ImmutableMap.of(
+        "_xmpp-client._tcp.yax.im", "xmpp.yaxim.org",
+        "_xmpps-client._tcp.yax.im", "xmpp.yaxim.org",
+        "_xmpp-server._tcp.yax.im", "xmpp.yaxim.org"
+    );
+
     public static void init(XmppConnectionService service) {
         Resolver.SERVICE = service;
         DnsClient.removeDNSServerLookupMechanism(AndroidUsingExec.INSTANCE);
@@ -304,7 +312,8 @@ public class Resolver {
     }
 
     private static List<Result> resolveSrv(String domain, final boolean directTls) throws IOException {
-        DnsName dnsName = DnsName.from((directTls ? DIRECT_TLS_SERVICE : STARTTLS_SERVICE) + "._tcp." + domain);
+        final String dnsNameS = (directTls ? DIRECT_TLS_SERVICE : STARTTLS_SERVICE) + "._tcp." + domain;
+        DnsName dnsName = DnsName.from(dnsNameS);
         ResolverResult<SRV> result = resolveWithFallback(dnsName, SRV.class);
         final List<Result> results = new ArrayList<>();
         final List<Thread> threads = new ArrayList<>();
@@ -312,8 +321,9 @@ public class Resolver {
             if (record.name.length() == 0 && record.priority == 0) {
                 continue;
             }
+            final boolean authentic = result.isAuthenticData() || record.target.toString().equals(knownSRV.get(dnsNameS));
             threads.add(new Thread(() -> {
-                final List<Result> ipv4s = resolveIp(record, A.class, result.isAuthenticData(), directTls);
+                final List<Result> ipv4s = resolveIp(record, A.class, authentic, directTls);
                 if (ipv4s.size() == 0) {
                     Result resolverResult = Result.fromRecord(record, directTls);
                     resolverResult.authenticated = result.isAuthenticData();
@@ -325,7 +335,7 @@ public class Resolver {
 
             }));
             threads.add(new Thread(() -> {
-                final List<Result> ipv6s = resolveIp(record, AAAA.class, result.isAuthenticData(), directTls);
+                final List<Result> ipv6s = resolveIp(record, AAAA.class, authentic, directTls);
                 synchronized (results) {
                     results.addAll(ipv6s);
                 }
@@ -347,7 +357,7 @@ public class Resolver {
     private static <D extends InternetAddressRR> List<Result> resolveIp(SRV srv, Class<D> type, boolean authenticated, boolean directTls) {
         List<Result> list = new ArrayList<>();
         try {
-            ResolverResult<D> results = resolveWithFallback(srv.name, type);
+            ResolverResult<D> results = resolveWithFallback(srv.target, type);
             for (D record : results.getAnswersOrEmptySet()) {
                 Result resolverResult = Result.fromRecord(srv, directTls);
                 resolverResult.authenticated = results.isAuthenticData() && authenticated;
