@@ -283,7 +283,7 @@ public class Conversation extends AbstractEntity implements Blockable, Comparabl
         synchronized (this.messages) {
             for (int i = messages.size() - 1; i >= 0; --i) {
                 final Message message = messages.get(i);
-                if (message.getSubject() != null && (message.getRawBody() == null || message.getRawBody().length() == 0)) continue;
+                if (message.getSubject() != null && !message.isOOb() && (message.getRawBody() == null || message.getRawBody().length() == 0)) continue;
                 if (message.isRead()) {
                     return first;
                 } else {
@@ -298,7 +298,7 @@ public class Conversation extends AbstractEntity implements Blockable, Comparabl
         final boolean multi = mode == Conversation.MODE_MULTI;
         synchronized (this.messages) {
             for (final Message message : Lists.reverse(this.messages)) {
-                if (message.getSubject() != null && (message.getRawBody() == null || message.getRawBody().length() == 0)) continue;
+                if (message.getSubject() != null && !message.isOOb() && (message.getRawBody() == null || message.getRawBody().length() == 0)) continue;
                 if (message.getStatus() == Message.STATUS_RECEIVED) {
                     final String serverMsgId = message.getServerMsgId();
                     if (serverMsgId != null && multi) {
@@ -669,14 +669,14 @@ public class Conversation extends AbstractEntity implements Blockable, Comparabl
                     thread = new Thread(mthread.getContent());
                     threads.put(mthread.getContent(), thread);
                 }
-                if (thread.subject == null && (m.getSubject() != null && (m.getRawBody() == null || m.getRawBody().length() == 0))) {
+                if (thread.subject == null && (m.getSubject() != null && !m.isOOb() && (m.getRawBody() == null || m.getRawBody().length() == 0))) {
                     thread.subject = m;
                 } else {
                     if (thread.last == null) thread.last = m;
                     thread.first = m;
                 }
             }
-            if (m.wasMergedIntoPrevious() || (m.getSubject() != null && (m.getRawBody() == null || m.getRawBody().length() == 0)) || (getLockThread() && !extraIds.contains(m.replyId()) && (mthread == null || !mthread.getContent().equals(getThread() == null ? "" : getThread().getContent())))) {
+            if (m.wasMergedIntoPrevious() || (m.getSubject() != null && !m.isOOb() && (m.getRawBody() == null || m.getRawBody().length() == 0)) || (getLockThread() && !extraIds.contains(m.replyId()) && (mthread == null || !mthread.getContent().equals(getThread() == null ? "" : getThread().getContent())))) {
                 iterator.remove();
             } else if (getLockThread() && mthread != null) {
                 Element reply = m.getReply();
@@ -1297,7 +1297,7 @@ public class Conversation extends AbstractEntity implements Blockable, Comparabl
         synchronized (this.messages) {
             int count = 0;
             for(final Message message : Lists.reverse(this.messages)) {
-                if (message.getSubject() != null && (message.getRawBody() == null || message.getRawBody().length() == 0)) continue;
+                if (message.getSubject() != null && !message.isOOb() && (message.getRawBody() == null || message.getRawBody().length() == 0)) continue;
                 if (message.isRead()) {
                     if (message.getType() == Message.TYPE_RTP_SESSION) {
                         continue;
@@ -1314,7 +1314,7 @@ public class Conversation extends AbstractEntity implements Blockable, Comparabl
         int count = 0;
         synchronized (this.messages) {
             for (Message message : messages) {
-                if (message.getSubject() != null && (message.getRawBody() == null || message.getRawBody().length() == 0)) continue;
+                if (message.getSubject() != null && !message.isOOb() && (message.getRawBody() == null || message.getRawBody().length() == 0)) continue;
                 if (message.getStatus() == Message.STATUS_RECEIVED) {
                     ++count;
                 }
