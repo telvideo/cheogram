@@ -2402,7 +2402,8 @@ public class Conversation extends AbstractEntity implements Blockable, Comparabl
                     final Element validate = field.el.findChild("validate", "http://jabber.org/protocol/xdata-validate");
                     final String datatype = validate == null ? null : validate.getAttribute("datatype");
                     final Element range = validate == null ? null : validate.findChild("range", "http://jabber.org/protocol/xdata-validate");
-                    final boolean open = validate != null && validate.findChild("open", "http://jabber.org/protocol/xdata-validate") != null;
+                    // NOTE: range also implies open, so we don't have to be bound by the options strictly
+                    // Also, we don't have anywhere to put labels so we show only values, which might sometimes be bad...
                     Float min = null;
                     try { min = range.getAttribute("min") == null ? null : Float.valueOf(range.getAttribute("min")); } catch (NumberFormatException e) { }
                     Float max = null;
@@ -2410,9 +2411,10 @@ public class Conversation extends AbstractEntity implements Blockable, Comparabl
 
                     List<Float> options = field.getOptions().stream().map(o -> Float.valueOf(o.getValue())).collect(Collectors.toList());
                     Collections.sort(options);
-                    if (!open && options.size() > 0) {
-                        min = options.get(0);
-                        max = options.get(options.size()-1);
+                    if (options.size() > 0) {
+                        // min/max should be on the range, but if you have options and didn't put them on the range we can imply
+                        if (min == null) min = options.get(0);
+                        if (max == null) max = options.get(options.size()-1);
                     }
 
                     if (field.getValues().size() > 0) binding.slider.setValue(Float.valueOf(field.getValue().getContent()));
@@ -2424,7 +2426,7 @@ public class Conversation extends AbstractEntity implements Blockable, Comparabl
                         binding.slider.setStepSize(0);
                     }
 
-                    if (!open && options.size() > 0) {
+                    if (options.size() > 0) {
                         float step = -1;
                         Float prev = null;
                         for (final Float option : options) {
@@ -2439,7 +2441,6 @@ public class Conversation extends AbstractEntity implements Blockable, Comparabl
                             prev = option;
                         }
                         if (step > 0) binding.slider.setStepSize(step);
-                        // NOTE: if step == -1 and !open then the widget will allow illegal values
                     }
 
                     binding.slider.addOnChangeListener((slider, value, fromUser) -> {
