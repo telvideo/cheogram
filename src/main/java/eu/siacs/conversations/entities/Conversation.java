@@ -2030,10 +2030,13 @@ public class Conversation extends AbstractEntity implements Blockable, Comparabl
 
                     options = field.getOptions();
                     binding.list.setOnItemClickListener((parent, view, position, id) -> {
-                        Set<String> values = new HashSet<>(field.getValues());
-                        for (final String value : field.getValues()) {
-                            if (filteredValues.contains(value)) {
-                                values.remove(value);
+                        Set<String> values = new HashSet<>();
+                        if (multi) {
+                            values.addAll(field.getValues());
+                            for (final String value : field.getValues()) {
+                                if (filteredValues.contains(value)) {
+                                    values.remove(value);
+                                }
                             }
                         }
 
