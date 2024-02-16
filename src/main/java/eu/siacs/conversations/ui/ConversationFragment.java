@@ -387,7 +387,7 @@ public class ConversationFragment extends XmppFragment
                                                                     .populateWithMessages(
                                                                             ConversationFragment
                                                                                     .this
-                                                                                    .messageList);
+                                                                                    .messageList, activity.xmppConnectionService);
                                                             try {
                                                                 updateStatusMessages();
                                                             } catch (IllegalStateException e) {
@@ -772,7 +772,7 @@ public class ConversationFragment extends XmppFragment
                 return i;
             } else {
                 Message next = messages.get(i);
-                while (next != null && next.wasMergedIntoPrevious()) {
+                while (next != null && next.wasMergedIntoPrevious(activity.xmppConnectionService)) {
                     if (uuid.equals(next.getUuid())) {
                         return i;
                     }
@@ -2657,7 +2657,7 @@ public class ConversationFragment extends XmppFragment
                     }
                 }
                 if (message != null) {
-                    while (message.next() != null && message.next().wasMergedIntoPrevious()) {
+                    while (message.next() != null && message.next().wasMergedIntoPrevious(activity.xmppConnectionService)) {
                         message = message.next();
                     }
                     return message;
@@ -3567,7 +3567,7 @@ public class ConversationFragment extends XmppFragment
                 if (messageListAdapter.hasSelection()) {
                     if (notifyConversationRead) binding.messagesView.postDelayed(this::refresh, 1000L);
                 } else {
-                    conversation.populateWithMessages(this.messageList);
+                    conversation.populateWithMessages(this.messageList, activity.xmppConnectionService);
                     updateStatusMessages();
                     this.messageListAdapter.notifyDataSetChanged();
                 }
@@ -4293,10 +4293,15 @@ public class ConversationFragment extends XmppFragment
                         tcp != null
                                 ? conversation.getMucOptions().findOrCreateUserByRealJid(tcp, cp)
                                 : null;
+                final String occupantId = message.getOccupantId();
+                final User userByOccupantId =
+                        occupantId != null
+                                ? conversation.getMucOptions().findUserByOccupantId(occupantId)
+                                : null;
                 final User user =
                         userByRealJid != null
                                 ? userByRealJid
-                                : conversation.getMucOptions().findUserByFullJid(cp);
+                                : (userByOccupantId != null ? userByOccupantId : conversation.getMucOptions().findUserByFullJid(cp));
                 if (user == null) return;
                 popupMenu.inflate(R.menu.muc_details_context);
                 final Menu menu = popupMenu.getMenu();

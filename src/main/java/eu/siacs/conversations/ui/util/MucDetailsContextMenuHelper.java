@@ -10,6 +10,7 @@ import android.view.ContextMenu;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.databinding.DataBindingUtil;
@@ -102,7 +103,7 @@ public final class MucDetailsContextMenuHelper {
         return new Pair<>(items.toArray(new CharSequence[items.size()]), actions.toArray(new Integer[actions.size()]));
     }
 
-    public static void configureMucDetailsContextMenu(Activity activity, Menu menu, Conversation conversation, User user) {
+    public static void configureMucDetailsContextMenu(XmppActivity activity, Menu menu, Conversation conversation, User user) {
         final MucOptions mucOptions = conversation.getMucOptions();
         final boolean advancedMode = PreferenceManager.getDefaultSharedPreferences(activity).getBoolean("advanced_muc_mode", false);
         final boolean isGroupChat = mucOptions.isPrivateAndNonAnonymous();
@@ -111,6 +112,16 @@ public final class MucDetailsContextMenuHelper {
         MenuItem blockAvatar = menu.findItem(R.id.action_block_avatar);
         if (user != null && user.getAvatar() != null) {
             blockAvatar.setVisible(true);
+        }
+
+        MenuItem muteParticipant = menu.findItem(R.id.action_mute_participant);
+        MenuItem unmuteParticipant = menu.findItem(R.id.action_unmute_participant);
+        if (user != null && user.getOccupantId() != null) {
+            if (activity.xmppConnectionService.isMucUserMuted(user)) {
+                unmuteParticipant.setVisible(true);
+            } else {
+                muteParticipant.setVisible(true);
+            }
         }
 
         if (user != null && user.getRealJid() != null) {
@@ -209,6 +220,20 @@ public final class MucDetailsContextMenuHelper {
                         activity.xmppConnectionService.updateConversationUi();
                     })
                     .setNegativeButton(R.string.no, null).show();
+                return true;
+            case R.id.action_mute_participant:
+                if (activity.xmppConnectionService.muteMucUser(user)) {
+                    activity.xmppConnectionService.updateConversationUi();
+                } else {
+                    Toast.makeText(activity, "Failed to mute", Toast.LENGTH_SHORT).show();
+                }
+                return true;
+            case R.id.action_unmute_participant:
+                if (activity.xmppConnectionService.unmuteMucUser(user)) {
+                    activity.xmppConnectionService.updateConversationUi();
+                } else {
+                    Toast.makeText(activity, "Failed to unmute", Toast.LENGTH_SHORT).show();
+                }
                 return true;
             case R.id.start_conversation:
                 startConversation(user, activity);

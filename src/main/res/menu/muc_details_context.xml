@@ -13,6 +13,14 @@
         android:title="Block Avatar"
         android:visible="false" />
     <item
+        android:id="@+id/action_mute_participant"
+        android:title="Mute Locally"
+        android:visible="false" />
+    <item
+        android:id="@+id/action_unmute_participant"
+        android:title="Unmute Locally"
+        android:visible="false" />
+    <item
         android:id="@+id/invite"
         android:title="@string/invite_again"
         android:visible="false" />

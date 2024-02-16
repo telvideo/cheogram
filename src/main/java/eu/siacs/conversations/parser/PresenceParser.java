@@ -69,6 +69,7 @@ public class PresenceParser extends AbstractParser implements
 				hats = packet.findChild("hats", "xmpp:prosody.im/protocol/hats:1");
 			}
 			if (hats == null) hats = new Element("hats", "urn:xmpp:hats:0");
+			final Element occupantId = packet.findChild("occupant-id", "urn:xmpp:occupant-id:0");
 			Avatar avatar = Avatar.parsePresence(packet.findChild("x", "vcard-temp:x:update"));
 			final List<String> codes = getStatusCodes(x);
 			if (type == null) {
@@ -76,7 +77,7 @@ public class PresenceParser extends AbstractParser implements
 					Element item = x.findChild("item");
 					if (item != null && !from.isBareJid()) {
 						mucOptions.setError(MucOptions.Error.NONE);
-						MucOptions.User user = parseItem(conversation, item, from, nick == null ? null : nick.getContent(), hats);
+						MucOptions.User user = parseItem(conversation, item, from, occupantId, nick == null ? null : nick.getContent(), hats);
 						if (codes.contains(MucOptions.STATUS_CODE_SELF_PRESENCE) || (codes.contains(MucOptions.STATUS_CODE_ROOM_CREATED) && jid.equals(InvalidJid.getNullForInvalid(item.getAttributeAsJid("jid"))))) {
 							if (mucOptions.setOnline()) {
 								mXmppConnectionService.getAvatarService().clear(mucOptions);
@@ -180,7 +181,7 @@ public class PresenceParser extends AbstractParser implements
 				} else if (!from.isBareJid()){
 					Element item = x.findChild("item");
 					if (item != null) {
-						mucOptions.updateUser(parseItem(conversation, item, from, nick == null ? null : nick.getContent(), hats));
+						mucOptions.updateUser(parseItem(conversation, item, from, occupantId, nick == null ? null : nick.getContent(), hats));
 					}
 					MucOptions.User user = mucOptions.deleteUser(from);
 					if (user != null) {

@@ -56,7 +56,7 @@ public class MucOptions {
         this.account = conversation.getAccount();
         this.conversation = conversation;
         final String nick = getProposedNick(conversation.getAttribute("mucNick"));
-        this.self = new User(this, createJoinJid(nick), nick, new HashSet<>());
+        this.self = new User(this, createJoinJid(nick), null, nick, new HashSet<>());
         this.self.affiliation = Affiliation.of(conversation.getAttribute("affiliation"));
         this.self.role = Role.of(conversation.getAttribute("role"));
     }
@@ -342,10 +342,24 @@ public class MucOptions {
         return null;
     }
 
+    public User findUserByOccupantId(final String id) {
+        if (id == null) {
+            return null;
+        }
+        synchronized (users) {
+            for (User user : users) {
+                if (id.equals(user.getOccupantId())) {
+                    return user;
+                }
+            }
+        }
+        return null;
+    }
+
     public User findOrCreateUserByRealJid(Jid jid, Jid fullJid) {
         User user = findUserByRealJid(jid);
         if (user == null) {
-            user = new User(this, fullJid, null, new HashSet<>());
+            user = new User(this, fullJid, null, null, new HashSet<>());
             user.setRealJid(jid);
         }
         return user;
@@ -544,7 +558,7 @@ public class MucOptions {
     private List<User> getFallbackUsersFromCryptoTargets() {
         List<User> users = new ArrayList<>();
         for (Jid jid : conversation.getAcceptedCryptoTargets()) {
-            User user = new User(this, null, null, new HashSet<>());
+            User user = new User(this, null, null, null, new HashSet<>());
             user.setRealJid(jid);
             users.add(user);
         }
@@ -832,16 +846,26 @@ public class MucOptions {
         private final MucOptions options;
         private ChatState chatState = Config.DEFAULT_CHAT_STATE;
         protected Set<Hat> hats;
+        protected String occupantId;
 
-        public User(MucOptions options, Jid fullJid, final String nick, final Set<Hat> hats) {
+        public User(MucOptions options, Jid fullJid, final String occupantId, final String nick, final Set<Hat> hats) {
             this.options = options;
             this.fullJid = fullJid;
+            this.occupantId = occupantId;
             this.nick = nick;
             this.hats = hats;
         }
 
         public String getName() {
             return fullJid == null ? null : fullJid.getResource();
+        }
+
+        public Jid getMuc() {
+            return fullJid == null ? null : fullJid.asBareJid();
+        }
+
+        public String getOccupantId() {
+            return occupantId;
         }
 
         public String getNick() {

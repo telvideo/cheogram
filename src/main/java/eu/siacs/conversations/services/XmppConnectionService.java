@@ -65,6 +65,7 @@ import com.cheogram.android.WebxdcUpdate;
 import com.google.common.base.Objects;
 import com.google.common.base.Optional;
 import com.google.common.base.Strings;
+import com.google.common.collect.Multimap;
 import com.google.common.io.Files;
 
 import com.kedia.ogparser.JsoupProxy;
@@ -258,6 +259,7 @@ public class XmppConnectionService extends Service {
         }
     };
     public DatabaseBackend databaseBackend;
+    private Multimap<String, String> mutedMucUsers;
     private final ReplacingSerialSingleThreadExecutor mContactMergerExecutor = new ReplacingSerialSingleThreadExecutor("ContactMerger");
     private final ReplacingSerialSingleThreadExecutor mStickerScanExecutor = new ReplacingSerialSingleThreadExecutor("StickerScan");
     private long mLastActivity = 0;
@@ -619,6 +621,24 @@ public class XmppConnectionService extends Service {
             throw new BlockedMediaException();
         }
         this.databaseBackend.saveCid(cid, file, url);
+    }
+
+    public boolean muteMucUser(MucOptions.User user) {
+        boolean muted = databaseBackend.muteMucUser(user);
+        if (!muted) return false;
+        mutedMucUsers.put(user.getMuc().toString(), user.getOccupantId());
+        return true;
+    }
+
+    public boolean unmuteMucUser(MucOptions.User user) {
+        boolean unmuted = databaseBackend.unmuteMucUser(user);
+        if (!unmuted) return false;
+        mutedMucUsers.remove(user.getMuc().toString(), user.getOccupantId());
+        return true;
+    }
+
+    public boolean isMucUserMuted(MucOptions.User user) {
+        return mutedMucUsers.containsEntry("" + user.getMuc(), user.getOccupantId());
     }
 
     public void blockMedia(File f) {
@@ -2408,6 +2428,7 @@ public class XmppConnectionService extends Service {
                 if (DatabaseBackend.requiresMessageIndexRebuild()) {
                     DatabaseBackend.getInstance(this).rebuildMessagesIndex();
                 }
+                mutedMucUsers = databaseBackend.loadMutedMucUsers();
                 final long deletionDate = getAutomaticMessageDeletionDate();
                 mLastExpiryRun.set(SystemClock.elapsedRealtime());
                 if (deletionDate > 0) {

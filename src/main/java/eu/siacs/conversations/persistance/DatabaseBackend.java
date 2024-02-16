@@ -14,6 +14,8 @@ import android.util.Log;
 import com.cheogram.android.WebxdcUpdate;
 
 import com.google.common.base.Stopwatch;
+import com.google.common.collect.Multimap;
+import com.google.common.collect.HashMultimap;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -52,6 +54,7 @@ import eu.siacs.conversations.entities.Contact;
 import eu.siacs.conversations.entities.Conversation;
 import eu.siacs.conversations.entities.DownloadableFile;
 import eu.siacs.conversations.entities.Message;
+import eu.siacs.conversations.entities.MucOptions;
 import eu.siacs.conversations.entities.PresenceTemplate;
 import eu.siacs.conversations.entities.Roster;
 import eu.siacs.conversations.entities.ServiceDiscoveryResult;
@@ -318,6 +321,22 @@ public class DatabaseBackend extends SQLiteOpenHelper {
                 );
                 db.execSQL("CREATE UNIQUE INDEX cheogram.webxdc_message_id_index ON webxdc_updates (" + Message.CONVERSATION + ", message_id)");
                 db.execSQL("PRAGMA cheogram.user_version = 9");
+            }
+
+            if(cheogramVersion < 10) {
+                db.execSQL(
+                    "CREATE TABLE cheogram.muted_participants (" +
+                    "muc_jid TEXT NOT NULL, " +
+                    "occupant_id TEXT NOT NULL, " +
+                    "nick TEXT NOT NULL," +
+                    "PRIMARY KEY (muc_jid, occupant_id)" +
+                    ")"
+                );
+                db.execSQL(
+                    "ALTER TABLE cheogram." + Message.TABLENAME + " " +
+                    "ADD COLUMN occupant_id TEXT"
+                );
+                db.execSQL("PRAGMA cheogram.user_version = 10");
             }
 
             db.setTransactionSuccessful();
@@ -861,6 +880,41 @@ public class DatabaseBackend extends SQLiteOpenHelper {
     public void clearBlockedMedia() {
         SQLiteDatabase db = this.getWritableDatabase();
         db.execSQL("DELETE FROM cheogram.blocked_media");
+    }
+
+    public Multimap<String, String> loadMutedMucUsers() {
+        Multimap<String, String> result = HashMultimap.create();
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = db.query("cheogram.muted_participants", new String[]{"muc_jid", "occupant_id"}, null, null, null, null, null);
+        while (cursor.moveToNext()) {
+            result.put(cursor.getString(0), cursor.getString(1));
+        }
+        cursor.close();
+        return result;
+    }
+
+    public boolean muteMucUser(MucOptions.User user) {
+        if (user.getMuc() == null || user.getOccupantId() == null) return false;
+
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues cv = new ContentValues();
+        cv.put("muc_jid", user.getMuc().toString());
+        cv.put("occupant_id", user.getOccupantId());
+        cv.put("nick", user.getNick());
+        db.insertWithOnConflict("cheogram.muted_participants", null, cv, SQLiteDatabase.CONFLICT_REPLACE);
+
+        return true;
+    }
+
+    public boolean unmuteMucUser(MucOptions.User user) {
+        if (user.getMuc() == null || user.getOccupantId() == null) return false;
+
+        SQLiteDatabase db = this.getWritableDatabase();
+        String where = "muc_jid=? AND occupant_id=?";
+        String[] whereArgs = {user.getMuc().toString(), user.getOccupantId()};
+        db.delete("cheogram.muted_participants", where, whereArgs);
+
+        return true;
     }
 
     public void insertWebxdcUpdate(final WebxdcUpdate update) {

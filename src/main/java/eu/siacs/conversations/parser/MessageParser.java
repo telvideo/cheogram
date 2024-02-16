@@ -728,6 +728,8 @@ public class MessageParser extends AbstractParser implements OnMessagePacketRece
             }
             if (conversationMultiMode) {
                 message.setMucUser(conversation.getMucOptions().findUserByFullJid(counterpart));
+                final Element occupantId = packet.findChild("occupant-id", "urn:xmpp:occupant-id:0");
+                if (occupantId != null) message.setOccupantId(occupantId.getAttribute("id"));
                 final Jid fallback = conversation.getMucOptions().getTrueCounterpart(counterpart);
                 Jid trueCounterpart;
                 if (message.getEncryption() == Message.ENCRYPTION_AXOLOTL) {

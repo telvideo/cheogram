@@ -79,6 +79,7 @@ import eu.siacs.conversations.entities.Conversational;
 import eu.siacs.conversations.entities.DownloadableFile;
 import eu.siacs.conversations.entities.Message.FileParams;
 import eu.siacs.conversations.entities.Message;
+import eu.siacs.conversations.entities.MucOptions;
 import eu.siacs.conversations.entities.Roster;
 import eu.siacs.conversations.entities.RtpSessionStatus;
 import eu.siacs.conversations.entities.Transferable;
@@ -1081,7 +1082,12 @@ public class MessageAdapter extends ArrayAdapter<Message> {
 
         final Transferable transferable = message.getTransferable();
         final boolean unInitiatedButKnownSize = MessageUtils.unInitiatedButKnownSize(message);
-        if (unInitiatedButKnownSize || message.isDeleted() || (transferable != null && transferable.getStatus() != Transferable.STATUS_UPLOADING)) {
+
+        final boolean muted = message.getStatus() == Message.STATUS_RECEIVED && conversation.getMode() == Conversation.MODE_MULTI && activity.xmppConnectionService.isMucUserMuted(new MucOptions.User(null, conversation.getJid(), message.getOccupantId(), null, null));
+        if (muted) {
+            // Muted MUC participant
+            displayInfoMessage(viewHolder, "Muted", darkBackground);
+        } else if (unInitiatedButKnownSize || message.isDeleted() || (transferable != null && transferable.getStatus() != Transferable.STATUS_UPLOADING)) {
             if (unInitiatedButKnownSize || (message.isDeleted() && message.getModerated() == null) || transferable != null && transferable.getStatus() == Transferable.STATUS_OFFER) {
                 displayDownloadableMessage(viewHolder, message, activity.getString(R.string.download_x_file, UIHelper.getFileDescriptionString(activity, message)), darkBackground, type);
             } else if (transferable != null && transferable.getStatus() == Transferable.STATUS_OFFER_CHECK_FILESIZE) {
@@ -1152,7 +1158,7 @@ public class MessageAdapter extends ArrayAdapter<Message> {
         viewHolder.status_line.setLayoutParams(statusParams);
 
         if (type == RECEIVED) {
-            if (commands != null && conversation instanceof Conversation) {
+            if (!muted && commands != null && conversation instanceof Conversation) {
                 CommandButtonAdapter adapter = new CommandButtonAdapter(activity);
                 adapter.addAll(commands);
                 viewHolder.commands_list.setAdapter(adapter);
@@ -1194,7 +1200,7 @@ public class MessageAdapter extends ArrayAdapter<Message> {
             if (subject == null && message.getThread() != null) {
                 subject = ((Conversation) message.getConversation()).getThread(message.getThread().getContent()).getSubject();
             }
-            if (subject == null) {
+            if (muted || subject == null) {
                 viewHolder.subject.setVisibility(View.GONE);
             } else {
                 viewHolder.subject.setVisibility(View.VISIBLE);

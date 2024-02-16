@@ -134,10 +134,10 @@ public abstract class AbstractParser {
 	}
 
 	public static MucOptions.User parseItem(Conversation conference, Element item) {
-		return parseItem(conference,item,null,null,new Element("hats", "urn:xmpp:hats:0"));
+		return parseItem(conference,item,null,null,null,new Element("hats", "urn:xmpp:hats:0"));
 	}
 
-	public static MucOptions.User parseItem(Conversation conference, Element item, Jid fullJid, final String nicknameIn, final Element hatsEl) {
+	public static MucOptions.User parseItem(Conversation conference, Element item, Jid fullJid, final Element occupantId, final String nicknameIn, final Element hatsEl) {
 		final String local = conference.getJid().getLocal();
 		final String domain = conference.getJid().getDomain().toEscapedString();
 		String affiliation = item.getAttribute("affiliation");
@@ -165,7 +165,7 @@ public abstract class AbstractParser {
 				hats.add(new MucOptions.Hat(hat));
 			}
 		}
-		MucOptions.User user = new MucOptions.User(conference.getMucOptions(), fullJid, nickname, hatsEl == null ? null : hats);
+		MucOptions.User user = new MucOptions.User(conference.getMucOptions(), fullJid, occupantId == null ? null : occupantId.getAttribute("id"), nickname, hatsEl == null ? null : hats);
 		if (InvalidJid.isValid(realJid)) {
 			user.setRealJid(realJid);
 		}

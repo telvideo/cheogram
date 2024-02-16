@@ -653,7 +653,7 @@ public class Conversation extends AbstractEntity implements Blockable, Comparabl
         }
     }
 
-    public void populateWithMessages(final List<Message> messages) {
+    public void populateWithMessages(final List<Message> messages, XmppConnectionService xmppConnectionService) {
         synchronized (this.messages) {
             messages.clear();
             messages.addAll(this.messages);
@@ -676,7 +676,7 @@ public class Conversation extends AbstractEntity implements Blockable, Comparabl
                     thread.first = m;
                 }
             }
-            if (m.wasMergedIntoPrevious() || (m.getSubject() != null && !m.isOOb() && (m.getRawBody() == null || m.getRawBody().length() == 0)) || (getLockThread() && !extraIds.contains(m.replyId()) && (mthread == null || !mthread.getContent().equals(getThread() == null ? "" : getThread().getContent())))) {
+            if (m.wasMergedIntoPrevious(xmppConnectionService) || (m.getSubject() != null && !m.isOOb() && (m.getRawBody() == null || m.getRawBody().length() == 0)) || (getLockThread() && !extraIds.contains(m.replyId()) && (mthread == null || !mthread.getContent().equals(getThread() == null ? "" : getThread().getContent())))) {
                 iterator.remove();
             } else if (getLockThread() && mthread != null) {
                 Element reply = m.getReply();
