@@ -2619,7 +2619,7 @@ public class Conversation extends AbstractEntity implements Blockable, Comparabl
                         final String datatype = validate == null ? null : validate.getAttribute("datatype");
                         final Element range = validate == null ? null : validate.findChild("range", "http://jabber.org/protocol/xdata-validate");
                         if (fieldType.equals("boolean")) {
-                            if (fillableFieldCount == 1 && actionsAdapter.countExceptCancel() < 1) {
+                            if (fillableFieldCount == 1 && actionsAdapter.countProceed() < 1) {
                                 viewType = TYPE_BUTTON_GRID_FIELD;
                             } else {
                                 viewType = TYPE_CHECKBOX_FIELD;
@@ -2633,7 +2633,7 @@ public class Conversation extends AbstractEntity implements Blockable, Comparabl
                             // has a range and is numeric, use a slider
                             viewType = TYPE_SLIDER_FIELD;
                         } else if (fieldType.equals("list-single")) {
-                            if (fillableFieldCount == 1 && actionsAdapter.countExceptCancel() < 1) {
+                            if (fillableFieldCount == 1 && actionsAdapter.countProceed() < 1 && Option.forField(el).size() < 50) {
                                 viewType = TYPE_BUTTON_GRID_FIELD;
                             } else if (Option.forField(el).size() > 9) {
                                 viewType = TYPE_SEARCH_LIST_FIELD;
@@ -2709,6 +2709,14 @@ public class Conversation extends AbstractEntity implements Blockable, Comparabl
                     return -1;
                 }
 
+                public int countProceed() {
+                    int count = 0;
+                    for(int i = 0; i < getCount(); i++) {
+                        if (!"cancel".equals(getItem(i).first) && !"prev".equals(getItem(i).first)) count++;
+                    }
+                    return count;
+                }
+
                 public int countExceptCancel() {
                     int count = 0;
                     for(int i = 0; i < getCount(); i++) {
@@ -2717,13 +2725,16 @@ public class Conversation extends AbstractEntity implements Blockable, Comparabl
                     return count;
                 }
 
-                public void clearExceptCancel() {
+                public void clearProceed() {
                     Pair<String,String> cancelItem = null;
+                    Pair<String,String> prevItem = null;
                     for(int i = 0; i < getCount(); i++) {
                         if (getItem(i).first.equals("cancel")) cancelItem = getItem(i);
+                        if (getItem(i).first.equals("prev")) prevItem = getItem(i);
                     }
                     clear();
                     if (cancelItem != null) add(cancelItem);
+                    if (prevItem != null) add(prevItem);
                 }
             }
 
@@ -2858,19 +2869,17 @@ public class Conversation extends AbstractEntity implements Blockable, Comparabl
                                 }
                             }
 
-                            String fillableFieldType = null;
-                            String fillableFieldValue = null;
+                            eu.siacs.conversations.xmpp.forms.Field fillableField = null;
                             for (eu.siacs.conversations.xmpp.forms.Field field : form.getFields()) {
                                 if ((field.getType() == null || (!field.getType().equals("hidden") && !field.getType().equals("fixed"))) && field.getFieldName() != null && !field.getFieldName().equals("http://jabber.org/protocol/commands#actions")) {
-                                    fillableFieldType = field.getType();
-                                    fillableFieldValue = field.getValue();
+                                    fillableField = field;
                                     fillableFieldCount++;
                                 }
                             }
 
-                            if (fillableFieldCount == 1 && actionsAdapter.countExceptCancel() < 2 && fillableFieldType != null && (fillableFieldType.equals("list-single") || (fillableFieldType.equals("boolean") && fillableFieldValue == null))) {
+                            if (fillableFieldCount == 1 && actionsAdapter.countProceed() < 2 && (("list-single".equals(fillableField.getType()) && Option.forField(fillableField).size() < 50) || ("boolean".equals(fillableField.getType()) && fillableField.getValue() == null))) {
                                 actionsCleared = true;
-                                actionsAdapter.clearExceptCancel();
+                                actionsAdapter.clearProceed();
                             }
                             break;
                         }
