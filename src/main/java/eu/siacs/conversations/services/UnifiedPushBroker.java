@@ -96,13 +96,13 @@ public class UnifiedPushBroker {
             if (transport.account.isEnabled()) {
                 renewUnifiedEndpoint(transportOptional.get(), pushTargetMessenger);
             } else {
-                if (pushTargetMessenger.messenger != null) {
+                if (pushTargetMessenger != null && pushTargetMessenger.messenger != null) {
                     sendRegistrationDelayed(pushTargetMessenger.messenger,"account is disabled");
                 }
                 Log.d(Config.LOGTAG, "skipping UnifiedPush endpoint renewal. Account is disabled");
             }
         } else {
-            if (pushTargetMessenger.messenger != null) {
+            if (pushTargetMessenger != null && pushTargetMessenger.messenger != null) {
                 sendRegistrationDelayed(pushTargetMessenger.messenger,"no transport selected");
             }
             Log.d(Config.LOGTAG, "skipping UnifiedPush endpoint renewal. No transport selected");
