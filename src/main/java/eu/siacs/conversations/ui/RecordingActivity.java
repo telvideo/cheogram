@@ -2,6 +2,7 @@ package eu.siacs.conversations.ui;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.media.MediaRecorder;
 import android.net.Uri;
 import android.os.Build;
@@ -10,6 +11,7 @@ import android.os.Environment;
 import android.os.FileObserver;
 import android.os.Handler;
 import android.os.SystemClock;
+import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.View;
 import android.view.WindowManager;
@@ -95,21 +97,32 @@ public class RecordingActivity extends Activity implements View.OnClickListener 
         }
     }
 
+    protected SharedPreferences getPreferences() {
+        return PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+    }
+
     private boolean startRecording() {
         mRecorder = new MediaRecorder();
         mRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
+        final String userChosenCodec = getPreferences().getString("voice_message_codec", "");
         final int outputFormat;
-        if (Config.USE_OPUS_VOICE_MESSAGES && Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+        if (("opus".equals(userChosenCodec) || ("".equals(userChosenCodec) && Config.USE_OPUS_VOICE_MESSAGES)) && Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             outputFormat = MediaRecorder.OutputFormat.OGG;
             mRecorder.setOutputFormat(outputFormat);
             mRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.OPUS);
             mRecorder.setAudioEncodingBitRate(32000);
-        } else {
+        } else if ("mpeg4".equals(userChosenCodec) || !Config.USE_OPUS_VOICE_MESSAGES) {
             outputFormat = MediaRecorder.OutputFormat.MPEG_4;
             mRecorder.setOutputFormat(outputFormat);
             mRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC);
             mRecorder.setAudioEncodingBitRate(96000);
             mRecorder.setAudioSamplingRate(22050);
+        } else {
+            outputFormat = MediaRecorder.OutputFormat.THREE_GPP;
+            mRecorder.setOutputFormat(outputFormat);
+            mRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_WB);
+            mRecorder.setAudioEncodingBitRate(23850);
+            mRecorder.setAudioSamplingRate(16000);
         }
         setupOutputFile(outputFormat);
         mRecorder.setOutputFile(mOutputFile.getAbsolutePath());
@@ -191,6 +204,8 @@ public class RecordingActivity extends Activity implements View.OnClickListener 
             extension = "m4a";
         } else if (outputFormat == MediaRecorder.OutputFormat.OGG) {
             extension = "oga";
+        } else if (outputFormat == MediaRecorder.OutputFormat.THREE_GPP) {
+            extension = "awb";
         } else {
             throw new IllegalStateException("Unrecognized output format");
         }
