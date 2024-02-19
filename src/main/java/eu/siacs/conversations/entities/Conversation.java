@@ -1406,6 +1406,10 @@ public class Conversation extends AbstractEntity implements Blockable, Comparabl
         pagerAdapter.startCommand(command, xmppConnectionService);
     }
 
+    public void startMucConfig(XmppConnectionService xmppConnectionService) {
+        pagerAdapter.startMucConfig(xmppConnectionService);
+    }
+
     public boolean switchToSession(final String node) {
         return pagerAdapter.switchToSession(node);
     }
@@ -1568,6 +1572,37 @@ public class Conversation extends AbstractEntity implements Blockable, Comparabl
             } else {
                 task.run();
             }
+
+            sessions.add(session);
+            notifyDataSetChanged();
+            if (mPager != null) mPager.setCurrentItem(getCount() - 1);
+        }
+
+        public void startMucConfig(XmppConnectionService xmppConnectionService) {
+            MucConfigSession session = new MucConfigSession(xmppConnectionService);
+            final IqPacket packet = new IqPacket(IqPacket.TYPE.GET);
+            packet.setTo(Conversation.this.getJid().asBareJid());
+            packet.addChild("query", "http://jabber.org/protocol/muc#owner");
+
+            final TimerTask task = new TimerTask() {
+                @Override
+                public void run() {
+                    if (getAccount().getStatus() != Account.State.ONLINE) {
+                        final TimerTask self = this;
+                        new Timer().schedule(new TimerTask() {
+                            @Override
+                            public void run() {
+                                self.run();
+                            }
+                        }, 1000);
+                    } else {
+                        xmppConnectionService.sendIqPacket(getAccount(), packet, (a, iq) -> {
+                            session.updateWithResponse(iq);
+                        }, 120L);
+                    }
+                }
+            };
+            task.run();
 
             sessions.add(session);
             notifyDataSetChanged();
@@ -3432,6 +3467,99 @@ public class Conversation extends AbstractEntity implements Blockable, Comparabl
                 }
 
                 return null;
+            }
+        }
+
+        class MucConfigSession extends CommandSession {
+            MucConfigSession(XmppConnectionService xmppConnectionService) {
+                super("Configure Channel", null, xmppConnectionService);
+            }
+
+            @Override
+            protected void updateWithResponseUiThread(final IqPacket iq) {
+                Timer oldTimer = this.loadingTimer;
+                this.loadingTimer = new Timer();
+                oldTimer.cancel();
+                this.executing = false;
+                this.loading = false;
+                this.loadingHasBeenLong = false;
+                this.responseElement = null;
+                this.fillableFieldCount = 0;
+                this.reported = null;
+                this.response = iq;
+                this.items.clear();
+                this.actionsAdapter.clear();
+                layoutManager.setSpanCount(1);
+
+                final Element query = iq.findChild("query", "http://jabber.org/protocol/muc#owner");
+                if (iq.getType() == IqPacket.TYPE.RESULT && query != null) {
+                    final Data form = Data.parse(query.findChild("x", "jabber:x:data"));
+                    final String title = form.getTitle();
+                    if (title != null) {
+                        mTitle = title;
+                        ConversationPagerAdapter.this.notifyDataSetChanged();
+                    }
+
+                    this.responseElement = form;
+                    setupReported(form.findChild("reported", "jabber:x:data"));
+                    if (mBinding != null) mBinding.form.setLayoutManager(setupLayoutManager());
+
+                    if (actionsAdapter.countExceptCancel() < 1) {
+                        actionsAdapter.add(Pair.create("save", "Save"));
+                    }
+
+                    if (actionsAdapter.getPosition("cancel") < 0) {
+                        actionsAdapter.insert(Pair.create("cancel", "cancel"), 0);
+                    }
+                } else if (iq.getType() == IqPacket.TYPE.RESULT) {
+                    expectingRemoval = true;
+                    removeSession(this);
+                    return;
+                } else {
+                    actionsAdapter.add(Pair.create("close", "close"));
+                }
+
+                notifyDataSetChanged();
+            }
+
+            @Override
+            public synchronized boolean execute(String action) {
+                if ("cancel".equals(action)) {
+                    final IqPacket packet = new IqPacket(IqPacket.TYPE.SET);
+                    packet.setTo(response.getFrom());
+                    final Element form = packet
+                        .addChild("query", "http://jabber.org/protocol/muc#owner")
+                        .addChild("x", "jabber:x:data");
+                    form.setAttribute("type", "cancel");
+                    xmppConnectionService.sendIqPacket(getAccount(), packet, null);
+                    return true;
+                }
+
+                if (!"save".equals(action)) return true;
+
+                final IqPacket packet = new IqPacket(IqPacket.TYPE.SET);
+                packet.setTo(response.getFrom());
+
+                String formType = responseElement == null ? null : responseElement.getAttribute("type");
+                if (responseElement != null &&
+                    responseElement.getName().equals("x") &&
+                    responseElement.getNamespace().equals("jabber:x:data") &&
+                    formType != null && formType.equals("form")) {
+
+                    responseElement.setAttribute("type", "submit");
+                    packet
+                        .addChild("query", "http://jabber.org/protocol/muc#owner")
+                        .addChild(responseElement);
+                }
+
+                executing = true;
+                xmppConnectionService.sendIqPacket(getAccount(), packet, (a, iq) -> {
+                    updateWithResponse(iq);
+                }, 120L);
+
+                loading();
+
+                return false;
             }
         }
     }

@@ -81,6 +81,8 @@ public class Data extends Element {
 	}
 
 	public static Data parse(Element element) {
+		if (element == null) return null;
+
 		Data data = new Data();
 		data.bindTo(element);
 		return data;
