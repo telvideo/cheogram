@@ -1824,6 +1824,8 @@ public class NotificationService {
         if (message.getConversation() instanceof Conversation) {
             Conversation conversation = (Conversation) message.getConversation();
             final MucOptions.User sender = conversation.getMucOptions().findUserByFullJid(message.getCounterpart());
+            final boolean muted = message.getStatus() == Message.STATUS_RECEIVED && mXmppConnectionService.isMucUserMuted(new MucOptions.User(null, conversation.getJid(), message.getOccupantId(), null, null));
+            if (muted) return false;
             if (sender != null && sender.getAffiliation().ranks(MucOptions.Affiliation.MEMBER) && message.isAttention()) {
                 return true;
             }

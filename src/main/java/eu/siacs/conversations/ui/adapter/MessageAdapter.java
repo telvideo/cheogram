@@ -1093,7 +1093,7 @@ public class MessageAdapter extends ArrayAdapter<Message> {
             } else if (transferable != null && transferable.getStatus() == Transferable.STATUS_OFFER_CHECK_FILESIZE) {
                 displayDownloadableMessage(viewHolder, message, activity.getString(R.string.check_x_filesize, UIHelper.getFileDescriptionString(activity, message)), darkBackground, type);
             } else {
-                displayInfoMessage(viewHolder, UIHelper.getMessagePreview(activity, message).first, darkBackground, message, type);
+                displayInfoMessage(viewHolder, UIHelper.getMessagePreview(activity.xmppConnectionService, message).first, darkBackground, message, type);
             }
         } else if (message.isFileOrImage() && message.getEncryption() != Message.ENCRYPTION_PGP && message.getEncryption() != Message.ENCRYPTION_DECRYPTION_FAILED) {
             if (message.getFileParams().width > 0 && message.getFileParams().height > 0) {

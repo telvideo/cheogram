@@ -36,6 +36,7 @@ import eu.siacs.conversations.entities.Presence;
 import eu.siacs.conversations.entities.RtpSessionStatus;
 import eu.siacs.conversations.entities.Transferable;
 import eu.siacs.conversations.services.ExportBackupService;
+import eu.siacs.conversations.services.XmppConnectionService;
 import eu.siacs.conversations.ui.util.MyLinkify;
 import eu.siacs.conversations.ui.util.QuoteHelper;
 import eu.siacs.conversations.xmpp.Jid;
@@ -268,14 +269,17 @@ public class UIHelper {
         }
     }
 
-    public static Pair<CharSequence, Boolean> getMessagePreview(final Context context, final Message message) {
+    public static Pair<CharSequence, Boolean> getMessagePreview(final XmppConnectionService context, final Message message) {
         return getMessagePreview(context, message, 0);
     }
 
-    public static Pair<CharSequence, Boolean> getMessagePreview(final Context context, final Message message, @ColorInt int textColor) {
+    public static Pair<CharSequence, Boolean> getMessagePreview(final XmppConnectionService context, final Message message, @ColorInt int textColor) {
         final Transferable d = message.getTransferable();
         final boolean moderated = message.getModerated() != null;
-        if (d != null && !moderated) {
+        final boolean muted = message.getStatus() == Message.STATUS_RECEIVED && message.getConversation().getMode() == Conversation.MODE_MULTI && context.isMucUserMuted(new MucOptions.User(null, message.getConversation().getJid(), message.getOccupantId(), null, null));
+        if (muted) {
+            return new Pair<>("Muted", false);
+        } else if (d != null && !moderated) {
             switch (d.getStatus()) {
                 case Transferable.STATUS_CHECKING:
                     return new Pair<>(context.getString(R.string.checking_x,
