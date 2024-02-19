@@ -787,8 +787,10 @@ public class MessageParser extends AbstractParser implements OnMessagePacketRece
                                             Cid cid = BobTransfer.cid(uri);
                                             if (cid == null) continue;
                                             DownloadableFile f = mXmppConnectionService.getFileForCid(cid);
-                                            mXmppConnectionService.evictPreview(f);
-                                            f.delete();
+                                            if (f != null) {
+                                                mXmppConnectionService.evictPreview(f);
+                                                f.delete();
+                                            }
                                         }
                                     }
                                 }
