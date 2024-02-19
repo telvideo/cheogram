@@ -2042,7 +2042,7 @@ public class Conversation extends AbstractEntity implements Blockable, Comparabl
 
                         SparseBooleanArray positions = binding.list.getCheckedItemPositions();
                         for (int i = 0; i < positions.size(); i++) {
-                            values.add(adapter.getItem(positions.keyAt(i)).getValue());
+                            if (positions.valueAt(i)) values.add(adapter.getItem(positions.keyAt(i)).getValue());
                         }
                         field.setValues(values);
 
