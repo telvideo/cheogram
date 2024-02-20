@@ -1629,6 +1629,7 @@ public class ConversationFragment extends XmppFragment
                 MenuItem newItem = menu.add(item.getGroupId(), item.getItemId(), item.getOrder(), item.getTitle());
                 newItem.setIcon(item.getIcon());
             }
+            ConversationMenuConfigurator.configureAttachmentMenu(conversation, menu);
             return;
         }
 

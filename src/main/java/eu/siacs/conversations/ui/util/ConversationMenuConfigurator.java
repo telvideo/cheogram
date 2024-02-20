@@ -60,11 +60,9 @@ public class ConversationMenuConfigurator {
 		} else {
 			visible = true;
 		}
-		menuAttach.setVisible(visible);
-		if (!visible) {
-			return;
-		}
-		menu.findItem(R.id.attach_record_voice).setVisible(microphoneAvailable);
+		if (menuAttach != null) menuAttach.setVisible(visible);
+		if (visible) menu.findItem(R.id.attach_record_voice).setVisible(microphoneAvailable);
+		menu.findItem(R.id.attach_subject).setVisible(conversation.getNextEncryption() == Message.ENCRYPTION_NONE);
 	}
 
 	public static void configureEncryptionMenu(@NonNull Conversation conversation, Menu menu) {
