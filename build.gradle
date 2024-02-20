@@ -130,7 +130,7 @@ android {
     defaultConfig {
         minSdkVersion 21
         targetSdkVersion 34
-        versionCode 42025 + tags.size()
+        versionCode 4204895
         versionName grgit.describe(always: true)
         applicationId "eu.siacs.conversations"
         def appName = "Conversations"
@@ -304,7 +304,7 @@ android {
         buildConfig true
     }
 
-    android.applicationVariants.configureEach { variant ->
+    /*android.applicationVariants.configureEach { variant ->
         variant.outputs.each { output ->
             def baseAbiVersionCode = project.ext.abiCodes.get(output.getFilter(com.android.build.OutputFile.ABI))
             if (baseAbiVersionCode != null) {
@@ -314,5 +314,5 @@ android {
             }
         }
 
-    }
+    }*/
 }
