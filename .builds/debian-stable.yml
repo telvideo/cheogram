@@ -32,7 +32,7 @@ tasks:
     yes | android/cmdline-tools/tools/bin/sdkmanager --licenses
 - sentry: |
     cd cheogram-android
-    sed -ie 's/<!-- INSERT -->/<meta-data android:name="io.sentry.dsn" android:value="https:\/\/680d470d348a4cc494bf2198eed30c49@o559641.ingest.sentry.io\/6221823" \/>/' src/cheogram/AndroidManifest.xml
+    sed -ie 's/<!-- INSERT -->/<meta-data android:name="io.sentry.dsn" android:value="https:\/\/ef8be0f096894172885533d912826e3e@app.glitchtip.com\/5857" \/>/' src/cheogram/AndroidManifest.xml
     sed -ie 's/\/\/ PLUGIN INSERT/id "io.sentry.android.gradle" version "4.2.0"/' build.gradle
     sed -ie 's/\/\/ ROOT INSERT/sentry { includeSourceContext = true }/' build.gradle
 - build_free: |
