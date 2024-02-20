@@ -6,6 +6,7 @@ import android.app.Dialog;
 import android.app.PendingIntent;
 import android.content.ActivityNotFoundException;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
@@ -75,6 +76,7 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
+import eu.siacs.conversations.BuildConfig;
 import eu.siacs.conversations.Config;
 import eu.siacs.conversations.R;
 import eu.siacs.conversations.databinding.ActivityStartConversationBinding;
@@ -107,6 +109,8 @@ import eu.siacs.conversations.xmpp.forms.Data;
 import eu.siacs.conversations.xmpp.stanzas.IqPacket;
 
 public class StartConversationActivity extends XmppActivity implements XmppConnectionService.OnConversationUpdate, OnRosterUpdate, OnUpdateBlocklist, CreatePrivateGroupChatDialog.CreateConferenceDialogListener, JoinConferenceDialog.JoinConferenceDialogListener, SwipeRefreshLayout.OnRefreshListener, CreatePublicChannelDialog.CreatePublicChannelDialogListener {
+
+    private static final String PREF_KEY_CONTACT_INTEGRATION_CONSENT = "contact_list_integration_consent";
 
     public static final String EXTRA_INVITE_URI = "eu.siacs.conversations.invite_uri";
 
@@ -718,11 +722,15 @@ public class StartConversationActivity extends XmppActivity implements XmppConne
     }
 
     @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
+    public boolean onCreateOptionsMenu(final Menu menu) {
         getMenuInflater().inflate(R.menu.start_conversation, menu);
         AccountUtils.showHideMenuItems(menu);
-        MenuItem menuHideOffline = menu.findItem(R.id.action_hide_offline);
-        MenuItem qrCodeScanMenuItem = menu.findItem(R.id.action_scan_qr_code);
+        final MenuItem menuHideOffline = menu.findItem(R.id.action_hide_offline);
+        final MenuItem qrCodeScanMenuItem = menu.findItem(R.id.action_scan_qr_code);
+        final MenuItem privacyPolicyMenuItem = menu.findItem(R.id.action_privacy_policy);
+        privacyPolicyMenuItem.setVisible(
+                BuildConfig.PRIVACY_POLICY != null
+                        && QuickConversationsService.isPlayStoreFlavor());
         qrCodeScanMenuItem.setVisible(isCameraFeatureAvailable());
         if (QuickConversationsService.isQuicksy()) {
             menuHideOffline.setVisible(false);
@@ -851,39 +859,96 @@ public class StartConversationActivity extends XmppActivity implements XmppConne
     }
 
     private void askForContactsPermissions() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            if (checkSelfPermission(Manifest.permission.READ_CONTACTS) != PackageManager.PERMISSION_GRANTED) {
+        if (QuickConversationsService.isContactListIntegration(this)
+                && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            if (checkSelfPermission(Manifest.permission.READ_CONTACTS)
+                    != PackageManager.PERMISSION_GRANTED) {
                 if (mRequestedContactsPermission.compareAndSet(false, true)) {
-                    if (QuickConversationsService.isQuicksy() || shouldShowRequestPermissionRationale(Manifest.permission.READ_CONTACTS)) {
+                    final String consent =
+                            PreferenceManager.getDefaultSharedPreferences(getApplicationContext())
+                                    .getString(PREF_KEY_CONTACT_INTEGRATION_CONSENT, null);
+                    final boolean requiresConsent =
+                            (QuickConversationsService.isQuicksy()
+                                            || QuickConversationsService.isPlayStoreFlavor())
+                                    && !"agreed".equals(consent);
+                    if (requiresConsent && "declined".equals(consent)) {
+                        Log.d(Config.LOGTAG,"not asking for contacts permission because consent has been declined");
+                        return;
+                    }
+                    if (requiresConsent
+                            || shouldShowRequestPermissionRationale(
+                                    Manifest.permission.READ_CONTACTS)) {
                         final AlertDialog.Builder builder = new AlertDialog.Builder(this);
                         final AtomicBoolean requestPermission = new AtomicBoolean(false);
-                        builder.setTitle(R.string.sync_with_contacts);
-                        builder.setMessage(getString(R.string.sync_with_contacts_long, getString(R.string.app_name)));
-                        builder.setPositiveButton(R.string.next, (dialog, which) -> {
-                            if (requestPermission.compareAndSet(false, true)) {
-                                requestPermissions(new String[]{Manifest.permission.READ_CONTACTS}, REQUEST_SYNC_CONTACTS);
-                            }
-                        });
-                        builder.setOnDismissListener(dialog -> {
-                            if (QuickConversationsService.isConversations() && requestPermission.compareAndSet(false, true)) {
-                                requestPermissions(new String[]{Manifest.permission.READ_CONTACTS}, REQUEST_SYNC_CONTACTS);
-                            }
-                        });
                         if (QuickConversationsService.isQuicksy()) {
-                            builder.setNegativeButton(R.string.decline, null);
+                            builder.setTitle(R.string.quicksy_wants_your_consent);
+                            builder.setMessage(
+                                    Html.fromHtml(
+                                            getString(R.string.sync_with_contacts_quicksy_static)));
+                        } else {
+                            builder.setTitle(R.string.sync_with_contacts);
+                            builder.setMessage(
+                                    getString(
+                                            R.string.sync_with_contacts_long,
+                                            getString(R.string.app_name)));
                         }
-                        builder.setCancelable(QuickConversationsService.isQuicksy());
+                        @StringRes int confirmButtonText;
+                        if (requiresConsent) {
+                            confirmButtonText = R.string.agree_and_continue;
+                        } else {
+                            confirmButtonText = R.string.next;
+                        }
+                        builder.setPositiveButton(
+                                confirmButtonText,
+                                (dialog, which) -> {
+                                    if (requiresConsent) {
+                                        PreferenceManager.getDefaultSharedPreferences(
+                                                        getApplicationContext())
+                                                .edit()
+                                                .putString(
+                                                        PREF_KEY_CONTACT_INTEGRATION_CONSENT, "agreed")
+                                                .apply();
+                                    }
+                                    if (requestPermission.compareAndSet(false, true)) {
+                                        requestPermissions(
+                                                new String[] {Manifest.permission.READ_CONTACTS},
+                                                REQUEST_SYNC_CONTACTS);
+                                    }
+                                });
+                        if (requiresConsent) {
+                            builder.setNegativeButton(R.string.decline, (dialog, which) -> PreferenceManager.getDefaultSharedPreferences(
+                                            getApplicationContext())
+                                    .edit()
+                                    .putString(
+                                            PREF_KEY_CONTACT_INTEGRATION_CONSENT, "declined")
+                                    .apply());
+                        } else {
+                            builder.setOnDismissListener(
+                                    dialog -> {
+                                        if (requestPermission.compareAndSet(false, true)) {
+                                            requestPermissions(
+                                                    new String[] {
+                                                        Manifest.permission.READ_CONTACTS
+                                                    },
+                                                    REQUEST_SYNC_CONTACTS);
+                                        }
+                                    });
+                        }
+                        builder.setCancelable(requiresConsent);
                         final AlertDialog dialog = builder.create();
-                        dialog.setCanceledOnTouchOutside(QuickConversationsService.isQuicksy());
-                        dialog.setOnShowListener(dialogInterface -> {
-                            final TextView tv = dialog.findViewById(android.R.id.message);
-                            if (tv != null) {
-                                tv.setMovementMethod(LinkMovementMethod.getInstance());
-                            }
-                        });
+                        dialog.setCanceledOnTouchOutside(requiresConsent);
+                        dialog.setOnShowListener(
+                                dialogInterface -> {
+                                    final TextView tv = dialog.findViewById(android.R.id.message);
+                                    if (tv != null) {
+                                        tv.setMovementMethod(LinkMovementMethod.getInstance());
+                                    }
+                                });
                         dialog.show();
                     } else {
-                        requestPermissions(new String[]{Manifest.permission.READ_CONTACTS}, REQUEST_SYNC_CONTACTS);
+                        requestPermissions(
+                                new String[] {Manifest.permission.READ_CONTACTS},
+                                REQUEST_SYNC_CONTACTS);
                     }
                 }
             }
@@ -919,8 +984,10 @@ public class StartConversationActivity extends XmppActivity implements XmppConne
 
     @Override
     protected void onBackendConnected() {
-
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M || checkSelfPermission(Manifest.permission.READ_CONTACTS) == PackageManager.PERMISSION_GRANTED) {
+        if (QuickConversationsService.isContactListIntegration(this)
+                && (Build.VERSION.SDK_INT < Build.VERSION_CODES.M
+                        || checkSelfPermission(Manifest.permission.READ_CONTACTS)
+                                == PackageManager.PERMISSION_GRANTED)) {
             xmppConnectionService.getQuickConversationsService().considerSyncBackground(false);
         }
         if (mPostponedActivityResult != null) {

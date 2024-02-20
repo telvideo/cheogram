@@ -518,9 +518,10 @@
     <string name="shared_text_with_x">Text shared with %s</string>
     <string name="no_storage_permission">Grant %1$s access to external storage</string>
     <string name="no_camera_permission">Grant %1$s access to the camera</string>
-    <string name="sync_with_contacts">Synchronize with contacts</string>
-    <string name="sync_with_contacts_long">%1$s wants permission to access your address book to match it with your Jabber contact list.\nThis will display your contacts’ full names and avatars.\n\n%1$s will only read your address book and match it locally without uploading anything to your server.</string>
-    <string name="sync_with_contacts_quicksy"><![CDATA[Quicksy needs access to your contacts’ phone numbers to make suggestions about possible contacts who are already on Quicksy.<br><br>We will not store a copy of those phone numbers.\n\nFor more information read our <a href="https://quicksy.im/#privacy">privacy policy</a>.<br><br>You will now be asked to grant permission to access your contacts.]]></string>
+    <string name="quicksy_wants_your_consent">Quicksy asks for your consent to use your data</string>
+    <string name="sync_with_contacts">Contact list integration</string>
+    <string name="sync_with_contacts_long">%1$s processes your contact list locally, on your device, to show you the names and profile pictures for matching contacts on the Jabber network.\n\nNo contact list data ever leaves your device!</string>
+    <string name="sync_with_contacts_quicksy_static" translatable="false"><![CDATA[Quicksy syncs your contact list in regular intervals to make suggestions about possible contacts, who are already using the app, even when the app is closed or not in use.<br><br>Find more information in our <a href="https://quicksy.im/privacy.htm">Privacy Policy</a>.]]></string>
     <string name="notify_on_all_messages">Notify on all messages</string>
     <string name="notify_only_when_highlighted">Notify only when mentioned</string>
     <string name="notify_never">Notifications disabled</string>
@@ -546,8 +547,8 @@
     <string name="no_application_to_share_uri">No app found to share URI</string>
     <string name="share_uri_with">Share URI with…</string>
     <string name="welcome_header" translatable="false">Join the Conversation</string>
-    <string name="welcome_header_quicksy" translatable="false">Have some Quick Conversations</string>
-    <string name="welcome_text_quicksy_static" translatable="false"><![CDATA[Quicksy is a spin off of the popular XMPP client Conversations with automatic contact discovery.<br><br>You sign up with your phone number and Quicksy will automatically—based on the phone numbers in your address book—suggest possible contacts to you.<br>Quicksy stores your contacts’ phone numbers to make suggestions about possible contacts who are already on Quicksy.<br>By signing up you agree to our <a href="https://quicksy.im/privacy.htm">Privacy Policy</a> and our <a href="https://quicksy.im/tos.htm">Terms &amp; Conditions</a>.]]></string>
+    <string name="welcome_header_quicksy">Welcome to Quicksy!</string>
+    <string name="welcome_text_quicksy_static" translatable="false"><![CDATA[· Quicksy syncs your contact list in regular intervals to make suggestions about possible contacts who are already on Quicksy even when the app is closed or not in use.<br>· Quicksy shares and stores images, audio recordings, videos and other media to deliver them to the intended recipients. Files will be stored for up to 30 days.<br><br>Find more information in our <a href="https://quicksy.im/privacy.htm">Privacy Policy</a>.]]></string>
     <string name="agree_and_continue">Agree and continue</string>
     <string name="magic_create_text">A guide is set up for account creation on ChatterboxTown.\nYou will be able to communicate with users of other providers by giving them your full Jabber ID.</string>
     <string name="your_full_jid_will_be">Your full Jabber ID will be: %s</string>
@@ -1030,4 +1031,6 @@
     <string name="unverified_devices">You are using unverified devices. Scan the QR Code on your other devices to perform verification and impede active MITM attacks.</string>
     <string name="report_spam">Report spam</string>
     <string name="report_spam_and_block">Report spam and block spammer</string>
+    <string name="privacy_policy">Privacy policy</string>
+    <string name="contact_list_integration_not_available">Contact list integration is not available</string>
 </resources>

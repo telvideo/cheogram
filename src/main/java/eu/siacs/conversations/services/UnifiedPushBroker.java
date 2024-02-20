@@ -12,6 +12,7 @@ import android.preference.PreferenceManager;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import com.google.common.base.Optional;
 import com.google.common.base.Strings;
@@ -85,11 +86,11 @@ public class UnifiedPushBroker {
         service.sendPresencePacket(account, presence);
     }
 
-    public Optional<Transport> renewUnifiedPushEndpoints() {
-        return renewUnifiedPushEndpoints(null);
+    public void renewUnifiedPushEndpoints() {
+        renewUnifiedPushEndpoints(null);
     }
 
-    public Optional<Transport> renewUnifiedPushEndpoints(final PushTargetMessenger pushTargetMessenger) {
+    public Optional<Transport> renewUnifiedPushEndpoints(@Nullable final PushTargetMessenger pushTargetMessenger) {
         final Optional<Transport> transportOptional = getTransport();
         if (transportOptional.isPresent()) {
             final Transport transport = transportOptional.get();

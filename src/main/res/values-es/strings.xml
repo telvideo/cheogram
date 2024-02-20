@@ -321,7 +321,7 @@
     <string name="jabber_id_copied_to_clipboard">Dirección XMPP copiada al portapapeles</string>
     <string name="error_message_copied_to_clipboard">Mensaje de error copiado al portapapeles </string>
     <string name="web_address">dirección web</string>
-    <string name="scan_qr_code">Escanear código QR</string>
+    <string name="scan_qr_code">Escanear el código QR</string>
     <string name="show_qr_code">Mostrar código QR</string>
     <string name="show_block_list">Mostrar contactos bloqueados</string>
     <string name="account_details">Detalles de la cuenta</string>
@@ -518,8 +518,10 @@
     <string name="shared_text_with_x">Texto compartido con %s</string>
     <string name="no_storage_permission">Permitir a %1$s acceder al almacenamiento externo</string>
     <string name="no_camera_permission">Permitir a %1$s acceder a la cámara</string>
-    <string name="sync_with_contacts">Sincronizar contactos</string>
-    <string name="sync_with_contacts_long">%1$s quiere permiso para acceder a tu agenda de contactos y cruzarla con tu lista de contactos de XMPP.\nEsto permitirá mostrar el nombre completo y los avatares de tus contactos.\n\n%1$s solo leerá tu agenda de contactos y la cruzará localmente sin subir nada a tu servidor.</string>
+    <string name="sync_with_contacts">Integración de la lista de contactos</string>
+    <string name="sync_with_contacts_long">%1$s procesa tu lista de contactos localmente, en tu dispositivo, para mostrarte los nombres y fotos de perfil de los contactos coincidentes en XMPP.
+\n
+\n¡Ningún dato de la lista de contactos sale de tu dispositivo!</string>
     <string name="notify_on_all_messages">Notificar para todos los mensajes</string>
     <string name="notify_only_when_highlighted">Notificar solo cuando eres mencionado</string>
     <string name="notify_never">Notificaciones deshabilitadas</string>
@@ -1028,10 +1030,14 @@
     <string name="this_account_is_logged_out">Has salido de esta cuenta</string>
     <string name="log_in">Iniciar sesión</string>
     <string name="hide_notification">Ocultar la notificación</string>
-    <string name="contact_uses_unverified_keys">Su contacto utiliza dispositivos no verificados. Escanea su código de barras en 2D para realizar la verificación e impedir ataques MITM activos.</string>
+    <string name="contact_uses_unverified_keys">Tu contacto utiliza dispositivos no verificados. Escanea su código QR para realizar la verificación e impedir ataques MITM activos.</string>
     <string name="log_out">Desconectarse</string>
     <string name="account_state_logged_out">Desconectado</string>
-    <string name="unverified_devices">Está utilizando dispositivos no verificados. Escanea el código de barras 2D en tus otros dispositivos para realizar la verificación e impedir los ataques MITM activos.</string>
+    <string name="unverified_devices">Está utilizando dispositivos no verificados. Escanea el código QR en tus otros dispositivos para realizar la verificación e impedir ataques MITM activos.</string>
     <string name="report_spam_and_block">Informar de spam y bloquear al spammer</string>
     <string name="report_spam">Informar sobre spam</string>
+    <string name="welcome_header_quicksy">¡Bienvenido a Quicksy!</string>
+    <string name="quicksy_wants_your_consent">Quicksy pide tu consentimiento para utilizar tus datos</string>
+    <string name="privacy_policy">Política de privacidad</string>
+    <string name="contact_list_integration_not_available">La lista de contactos no está disponible</string>
 </resources>

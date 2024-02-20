@@ -1090,28 +1090,45 @@ public class XmppConnectionService extends Service {
         manageAccountConnectionStates(ACTION_INTERNAL_PING, null);
     }
 
-    private synchronized void manageAccountConnectionStates(final String action, final Bundle extras) {
-        Log.d(Config.LOGTAG, "manageAccountConnectionStates: " + action);
+    private synchronized void manageAccountConnectionStates(
+            final String action, final Bundle extras) {
         final String pushedAccountHash = extras == null ? null : extras.getString("account");
-        final boolean interactive = Arrays.asList(ACTION_TRY_AGAIN).contains(action);
+        final boolean interactive = java.util.Objects.equals(ACTION_TRY_AGAIN, action);
         WakeLockHelper.acquire(wakeLock);
-        boolean pingNow = ConnectivityManager.CONNECTIVITY_ACTION.equals(action) || (Config.POST_CONNECTIVITY_CHANGE_PING_INTERVAL > 0 && ACTION_POST_CONNECTIVITY_CHANGE.equals(action));
+        boolean pingNow =
+                ConnectivityManager.CONNECTIVITY_ACTION.equals(action)
+                        || (Config.POST_CONNECTIVITY_CHANGE_PING_INTERVAL > 0
+                                && ACTION_POST_CONNECTIVITY_CHANGE.equals(action));
         final HashSet<Account> pingCandidates = new HashSet<>();
-        final String androidId = PhoneHelper.getAndroidId(this);
+        final String androidId = pushedAccountHash == null ? null : PhoneHelper.getAndroidId(this);
         for (final Account account : accounts) {
-            final boolean pushWasMeantForThisAccount = CryptoHelper.getAccountFingerprint(account, androidId).equals(pushedAccountHash);
-            pingNow |= processAccountState(account,
-                    interactive,
-                    "ui".equals(action),
-                    pushWasMeantForThisAccount,
-                    pingCandidates);
+            final boolean pushWasMeantForThisAccount =
+                    androidId != null
+                            && CryptoHelper.getAccountFingerprint(account, androidId)
+                                    .equals(pushedAccountHash);
+            pingNow |=
+                    processAccountState(
+                            account,
+                            interactive,
+                            "ui".equals(action),
+                            pushWasMeantForThisAccount,
+                            pingCandidates);
         }
         if (pingNow) {
-            for (Account account : pingCandidates) {
+            for (final Account account : pingCandidates) {
                 final boolean lowTimeout = isInLowPingTimeoutMode(account);
                 account.getXmppConnection().sendPing();
-                Log.d(Config.LOGTAG, account.getJid().asBareJid() + " send ping (action=" + action + ",lowTimeout=" + lowTimeout + ")");
-                scheduleWakeUpCall(lowTimeout ? Config.LOW_PING_TIMEOUT : Config.PING_TIMEOUT, account.getUuid().hashCode());
+                Log.d(
+                        Config.LOGTAG,
+                        account.getJid().asBareJid()
+                                + " send ping (action="
+                                + action
+                                + ",lowTimeout="
+                                + lowTimeout
+                                + ")");
+                scheduleWakeUpCall(
+                        lowTimeout ? Config.LOW_PING_TIMEOUT : Config.PING_TIMEOUT,
+                        account.getUuid().hashCode());
             }
             long msToMucPing = (mLastMucPing + (Config.PING_MAX_INTERVAL * 2000L)) - SystemClock.elapsedRealtime();
             if (msToMucPing <= 0) {
@@ -1484,7 +1501,11 @@ public class XmppConnectionService extends Service {
 
         restoreFromDatabase();
 
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M || ContextCompat.checkSelfPermission(this, Manifest.permission.READ_CONTACTS) == PackageManager.PERMISSION_GRANTED) {
+        if (QuickConversationsService.isContactListIntegration(this)
+                && (Build.VERSION.SDK_INT < Build.VERSION_CODES.M
+                        || ContextCompat.checkSelfPermission(
+                                        this, Manifest.permission.READ_CONTACTS)
+                                == PackageManager.PERMISSION_GRANTED)) {
             startContactObserver();
         }
         FILE_OBSERVER_EXECUTOR.execute(fileBackend::deleteHistoricAvatarPath);
@@ -1692,11 +1713,17 @@ public class XmppConnectionService extends Service {
         Log.d(Config.LOGTAG, "ForegroundService: " + (status ? "on" : "off"));
     }
 
-    private void startForegroundOrCatch(final int id, final Notification notification, boolean needMic) {
+    private void startForegroundOrCatch(
+            final int id, final Notification notification, final boolean requireMicrophone) {
         try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-                int foregroundServiceType;
-                if (getSystemService(PowerManager.class)
+                final int foregroundServiceType;
+                if (requireMicrophone
+                        && ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO)
+                                == PackageManager.PERMISSION_GRANTED) {
+                    foregroundServiceType = ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE;
+                    Log.d(Config.LOGTAG, "defaulting to microphone foreground service type");
+                } else if (getSystemService(PowerManager.class)
                         .isIgnoringBatteryOptimizations(getPackageName())) {
                     foregroundServiceType = ServiceInfo.FOREGROUND_SERVICE_TYPE_SYSTEM_EXEMPTED;
                 } else if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO)
@@ -1707,13 +1734,8 @@ public class XmppConnectionService extends Service {
                     foregroundServiceType = ServiceInfo.FOREGROUND_SERVICE_TYPE_CAMERA;
                 } else {
                     foregroundServiceType = ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE;
-                    Log.w(Config.LOGTAG,"falling back to special use foreground service type");
+                    Log.w(Config.LOGTAG, "falling back to special use foreground service type");
                 }
-
-                if (needMic && ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO)
-                        == PackageManager.PERMISSION_GRANTED) {
-                    foregroundServiceType = ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE;
-                 }
 
                 startForeground(id, notification, foregroundServiceType);
             } else {

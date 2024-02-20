@@ -69,6 +69,7 @@ import java.util.List;
 import java.util.PriorityQueue;
 import java.util.concurrent.RejectedExecutionException;
 
+import eu.siacs.conversations.BuildConfig;
 import eu.siacs.conversations.Config;
 import eu.siacs.conversations.R;
 import eu.siacs.conversations.crypto.PgpEngine;
@@ -438,6 +439,9 @@ public abstract class XmppActivity extends ActionBarActivity {
             case R.id.action_settings:
                 startActivity(new Intent(this, SettingsActivity.class));
                 break;
+            case R.id.action_privacy_policy:
+                openPrivacyPolicy();
+                break;
             case R.id.action_accounts:
                 AccountUtils.launchManageAccounts(this);
                 break;
@@ -452,6 +456,20 @@ public abstract class XmppActivity extends ActionBarActivity {
                 break;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    private void openPrivacyPolicy() {
+        if (BuildConfig.PRIVACY_POLICY == null) {
+            return;
+        }
+        final var viewPolicyIntent = new Intent(Intent.ACTION_VIEW);
+        viewPolicyIntent.setData(Uri.parse(BuildConfig.PRIVACY_POLICY));
+        try {
+            startActivity(viewPolicyIntent);
+        } catch (final ActivityNotFoundException e) {
+            Toast.makeText(this, R.string.no_application_found_to_open_link, Toast.LENGTH_SHORT)
+                    .show();
+        }
     }
 
     public void selectPresence(final Conversation conversation, final PresenceSelector.OnPresenceSelected listener) {

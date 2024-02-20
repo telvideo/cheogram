@@ -175,10 +175,12 @@ android {
             def appName = "Quicksy"
             resValue "string", "app_name", appName
             buildConfigField "String", "APP_NAME", "\"$appName\""
+            buildConfigField "String", "PRIVACY_POLICY", "\"https://quicksy.im/privacy.htm\""
         }
 
         conversations {
             dimension "mode"
+            buildConfigField "String", "PRIVACY_POLICY", "\"https://conversations.im/privacy.html\""
         }
 
         cheogram {
@@ -189,6 +191,7 @@ android {
             def appName = "Cheogram"
             resValue "string", "app_name", appName
             buildConfigField "String", "APP_NAME", "\"$appName\"";
+            buildConfigField "String", "PRIVACY_POLICY", "\"https://cheogram.com/android-privacy.html\""
         }
 
         playstore {
