@@ -828,6 +828,7 @@ public class MessageParser extends AbstractParser implements OnMessagePacketRece
                 } else if (message.getBody() == null || message.getBody().equals("") || message.getBody().equals(" ")) {
                     return;
                 }
+                if (replaceElement != null && !replaceElement.getName().equals("replace")) return;
             }
 
             boolean checkForDuplicates = (isTypeGroupChat && packet.hasChild("delay", "urn:xmpp:delay"))
