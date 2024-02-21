@@ -3584,7 +3584,7 @@ public class ConversationFragment extends XmppFragment
                 if (messageListAdapter.hasSelection()) {
                     if (notifyConversationRead) binding.messagesView.postDelayed(this::refresh, 1000L);
                 } else {
-                    conversation.populateWithMessages(this.messageList, activity.xmppConnectionService);
+                    conversation.populateWithMessages(this.messageList, activity == null ? null : activity.xmppConnectionService);
                     updateStatusMessages();
                     this.messageListAdapter.notifyDataSetChanged();
                 }
