@@ -2717,6 +2717,71 @@ public class XmppConnectionService extends Service {
         return false;
     }
 
+    public void maybeRegisterWithMuc(Conversation c, String nickArg) {
+        final var nick = nickArg == null ? c.getMucOptions().getSelf().getFullJid().getResource() : nickArg;
+        final IqPacket register = new IqPacket(IqPacket.TYPE.GET);
+        register.query(Namespace.REGISTER);
+        register.setTo(c.getJid().asBareJid());
+        sendIqPacket(c.getAccount(), register, (a, response) -> {
+            if (response.getType() == IqPacket.TYPE.RESULT) {
+                final Element query = response.query(Namespace.REGISTER);
+                String username = query.findChildContent("username", Namespace.REGISTER);
+                if (username == null) username = query.findChildContent("nick", Namespace.REGISTER);
+                if (username != null && username.equals(nick)) {
+                    // Already registered with this nick, done
+                    Log.d(Config.LOGTAG, "Already registered with " + c.getJid().asBareJid() + " as " + username);
+                    return;
+                }
+                Data form = Data.parse(query.findChild("x", Namespace.DATA));
+                if (form != null) {
+                    final var field = form.getFieldByName("muc#register_roomnick");
+                    if (field != null && nick.equals(field.getValue())) {
+                        Log.d(Config.LOGTAG, "Already registered with " + c.getJid().asBareJid() + " as " + field.getValue());
+                        return;
+                    }
+                }
+                if (form == null || !"form".equals(form.getFormType()) || !form.getFields().stream().anyMatch(f -> f.isRequired() && !"muc#register_roomnick".equals(f.getFieldName()))) {
+                    // No form, result form, or no required fields other than nickname, let's just send nickname
+                    if (form == null || !"form".equals(form.getFormType())) {
+                        form = new Data();
+                        form.put("FORM_TYPE", "http://jabber.org/protocol/muc#register");
+                    }
+                    form.put("muc#register_roomnick", nick);
+                    form.submit();
+                    final IqPacket finish = new IqPacket(IqPacket.TYPE.SET);
+                    finish.query(Namespace.REGISTER).addChild(form);
+                    finish.setTo(c.getJid().asBareJid());
+                    sendIqPacket(c.getAccount(), finish, (a2, response2) -> {
+                        if (response.getType() == IqPacket.TYPE.RESULT) {
+                            Log.w(Config.LOGTAG, "Success registering with channel " + c.getJid().asBareJid() + "/" + nick);
+                        } else {
+                            Log.w(Config.LOGTAG, "Error registering with channel: " + response2);
+                        }
+                    });
+                } else {
+                    // TODO: offer registration form to user
+                    Log.d(Config.LOGTAG, "Complex registration form for " + c.getJid().asBareJid() + ": " + response);
+                }
+            } else {
+                // We said maybe. Guess not
+                Log.d(Config.LOGTAG, "Could not register with " + c.getJid().asBareJid() + ": " + response);
+            }
+        });
+    }
+
+    public void deregisterWithMuc(Conversation c) {
+        final IqPacket register = new IqPacket(IqPacket.TYPE.GET);
+        register.query(Namespace.REGISTER).addChild("remove");
+        register.setTo(c.getJid().asBareJid());
+        sendIqPacket(c.getAccount(), register, (a, response) -> {
+            if (response.getType() == IqPacket.TYPE.RESULT) {
+                Log.d(Config.LOGTAG, "deregistered with " + c.getJid().asBareJid());
+            } else {
+                Log.w(Config.LOGTAG, "Could not deregister with " + c.getJid().asBareJid() + ": " + response);
+            }
+        });
+    }
+
     public Conversation findOrCreateConversation(Account account, Jid jid, boolean muc, final boolean async) {
         return this.findOrCreateConversation(account, jid, muc, false, async);
     }
@@ -2829,6 +2894,7 @@ public class XmppConnectionService extends Service {
                         }
                     }
                 }
+                deregisterWithMuc(conversation);
                 leaveMuc(conversation);
             } else {
                 if (conversation.getContact().getOption(Contact.Options.PENDING_SUBSCRIPTION_REQUEST)) {
@@ -3455,6 +3521,8 @@ public class XmppConnectionService extends Service {
                         databaseBackend.updateConversation(conversation);
                     }
 
+                    maybeRegisterWithMuc(conversation, null);
+
                     if (mucOptions.mamSupport()) {
                         getMessageArchiveService().catchupMUC(conversation);
                     }
@@ -3732,6 +3800,8 @@ public class XmppConnectionService extends Service {
             return false;
         }
         if (options.online()) {
+            maybeRegisterWithMuc(conversation, nick);
+
             Account account = conversation.getAccount();
             options.setOnRenameListener(new OnRenameListener() {
 
