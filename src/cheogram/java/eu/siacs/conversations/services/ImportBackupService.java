@@ -262,6 +262,10 @@ public class ImportBackupService extends Service {
                     }
                 } else {
                     if (count % 2 == 0) {
+                        if (line.startsWith("INSERT INTO cheogram.webxdc_updates(serial,")) {
+                            // re-number webxdc using autoincrement in the local database
+                            line = line.replaceAll("\\([^,]+,", "(");
+                        }
                         db.execSQL(line);
                         updateImportBackupNotification(fileSize, countingInputStream.getCount());
                     } else {
