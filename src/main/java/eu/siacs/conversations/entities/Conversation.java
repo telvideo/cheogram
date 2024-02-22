@@ -1833,8 +1833,12 @@ public class Conversation extends AbstractEntity implements Blockable, Comparabl
                 public void bind(Item iq) {
                     binding.errorIcon.setVisibility(View.VISIBLE);
 
+                    if (iq == null || iq.el == null) return;
                     Element error = iq.el.findChild("error");
-                    if (error == null) return;
+                    if (error == null) {
+                        binding.message.setText("Unexpected response: " + iq);
+                        return;
+                    }
                     String text = error.findChildContent("text", "urn:ietf:params:xml:ns:xmpp-stanzas");
                     if (text == null || text.equals("")) {
                         text = error.getChildren().get(0).getName();
@@ -2691,7 +2695,7 @@ public class Conversation extends AbstractEntity implements Blockable, Comparabl
             }
 
             protected Item mkItem(Element el, int pos) {
-                int viewType = -1;
+                int viewType = TYPE_ERROR;
 
                 if (response != null && response.getType() == IqPacket.TYPE.RESULT) {
                     if (el.getName().equals("note")) {
@@ -2707,8 +2711,6 @@ public class Conversation extends AbstractEntity implements Blockable, Comparabl
                             return field;
                         }
                     }
-                } else if (response != null) {
-                    viewType = TYPE_ERROR;
                 }
 
                 Item item = new Item(el, viewType);
