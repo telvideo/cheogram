@@ -374,7 +374,15 @@ public class WebxdcPage implements ConversationPage {
 				Log.w(Config.LOGTAG, "WebxdcPage sendStatusUpdate invalid JSON: " + e);
 			}
 			String payload = null;
-			Message message = new Message(source.getConversation(), descr, source.getEncryption());
+			int encryption = Message.ENCRYPTION_NONE;
+			if (!params.has("payload") && !params.has("document") && !params.has("summary")) {
+				if (source.getConversation() instanceof Conversation) {
+					encryption = ((Conversation) source.getConversation()).getNextEncryption();
+				} else {
+					encryption = source.getEncryption();
+				}
+			}
+			Message message = new Message(source.getConversation(), descr, encryption);
 			message.addPayload(new Element("store", "urn:xmpp:hints"));
 			Element webxdc = new Element("x", "urn:xmpp:webxdc:0");
 			message.addPayload(webxdc);
