@@ -2044,6 +2044,15 @@ public class Conversation extends AbstractEntity implements Blockable, Comparabl
 
                 @Override
                 public void bind(Item item) {
+                    ViewGroup.LayoutParams layout = binding.list.getLayoutParams();
+                    final float density = xmppConnectionService.getResources().getDisplayMetrics().density;
+                    if (fillableFieldCount > 1) {
+                        layout.height = (int) (density * 200);
+                    } else {
+                        layout.height = (int) Math.max(density * 200, xmppConnectionService.getResources().getDisplayMetrics().heightPixels / 2);
+                    }
+                    binding.list.setLayoutParams(layout);
+
                     field = (Field) item;
                     setTextOrHide(binding.label, field.getLabel());
                     setTextOrHide(binding.desc, field.getDesc());
