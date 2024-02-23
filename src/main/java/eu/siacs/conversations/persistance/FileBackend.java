@@ -743,7 +743,10 @@ public class FileBackend {
                 "copy file (" + uri.toString() + ") to private storage " + file.getAbsolutePath());
         file.getParentFile().mkdirs();
         try {
-            file.createNewFile();
+            if (!file.createNewFile() && file.length() > 0) {
+                if (file.canRead() && file.getName().startsWith("zb2")) return; // We have this content already
+                throw new FileCopyException(R.string.error_unable_to_create_temporary_file);
+            }
         } catch (IOException e) {
             throw new FileCopyException(R.string.error_unable_to_create_temporary_file);
         }
