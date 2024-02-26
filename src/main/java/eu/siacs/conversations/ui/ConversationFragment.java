@@ -2658,7 +2658,7 @@ public class ConversationFragment extends XmppFragment
                     }
                 }
                 if (message != null) {
-                    while (message.next() != null && message.next().wasMergedIntoPrevious(activity.xmppConnectionService)) {
+                    while (message.next() != null && message.next().wasMergedIntoPrevious(activity == null ? null : activity.xmppConnectionService)) {
                         message = message.next();
                     }
                     return message;
