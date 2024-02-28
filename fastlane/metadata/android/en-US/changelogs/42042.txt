@@ -1,2 +1,7 @@
-* Fix resend loop on servers that support only sm:2
-* Show 'Switch to video' only if other party supports video
+* Support animated avatars
+* Allow any character (especially any emoji) in nicknames used in a channel
+* Show "hats" in list of channel participants
+* Option to explore related channels from channel details
+* Make contact sync more reliable with multiple accounts
+* Fix per-account colours in New Conversation activity
+* Reply to null thread won't trigger a new thread in 1:1
