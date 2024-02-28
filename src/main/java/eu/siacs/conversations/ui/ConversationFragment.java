@@ -387,7 +387,7 @@ public class ConversationFragment extends XmppFragment
                                                                     .populateWithMessages(
                                                                             ConversationFragment
                                                                                     .this
-                                                                                    .messageList, activity.xmppConnectionService);
+                                                                                    .messageList, activity == null ? null : activity.xmppConnectionService);
                                                             try {
                                                                 updateStatusMessages();
                                                             } catch (IllegalStateException e) {
