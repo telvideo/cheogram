@@ -38,6 +38,7 @@ import eu.siacs.conversations.entities.Conversation;
 import eu.siacs.conversations.entities.DownloadableFile;
 import eu.siacs.conversations.entities.Message;
 import eu.siacs.conversations.services.MessageArchiveService;
+import eu.siacs.conversations.services.QuickConversationsService;
 import eu.siacs.conversations.services.XmppConnectionService;
 import eu.siacs.conversations.xml.Element;
 import eu.siacs.conversations.xml.Namespace;
@@ -73,10 +74,21 @@ public class IqGenerator extends AbstractGenerator {
         Element query = packet.query("jabber:iq:version");
         query.addChild("name").setContent(mXmppConnectionService.getString(R.string.app_name));
         query.addChild("version").setContent(getIdentityVersion());
+        final StringBuilder os = new StringBuilder();
         if ("chromium".equals(android.os.Build.BRAND)) {
-            query.addChild("os").setContent("Chrome OS");
+            os.append("Chrome OS");
         } else {
-            query.addChild("os").setContent("Android");
+            os.append("Android");
+        }
+        os.append(" ");
+        os.append(android.os.Build.VERSION.RELEASE);
+        if (QuickConversationsService.isPlayStoreFlavor()) {
+            os.append(" (");
+            os.append(android.os.Build.BOARD);
+            os.append(", ");
+            os.append(android.os.Build.FINGERPRINT);
+            os.append(")");
+            query.addChild("os").setContent(os.toString());
         }
         return packet;
     }
