@@ -581,7 +581,14 @@ public class SettingsActivity extends XmppActivity implements OnSharedPreference
             xmppConnectionService.reinitializeMuclumbusService();
         } else if (name.equals(AUTOMATIC_MESSAGE_DELETION)) {
             xmppConnectionService.expireOldMessages(true);
-        } else if (name.equals(THEME) || name.equals("custom_theme_primary") || name.equals("custom_theme_primary_dark") || name.equals("custom_theme_accent") || name.equals("custom_theme_dark")) {
+        } else if ( name.equals(THEME) ||
+                    name.equals("custom_theme_primary") ||
+                    name.equals("custom_theme_primary_dark") ||
+                    name.equals("custom_theme_accent") ||
+                    name.equals("custom_theme_dark") ||
+                    name.equals("custom_theme_background_primary") ||
+                    name.equals("custom_theme_background_primary_dark"))
+        {
             final int theme = findTheme();
             xmppConnectionService.setTheme(theme);
             ThemeHelper.applyCustomColors(xmppConnectionService);

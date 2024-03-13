@@ -361,6 +361,9 @@
 
     <style name="ConversationsTheme.Custom" parent="ConversationsTheme">
         <item name="colorPrimary">@color/custom_theme_primary</item>
+        <item name="color_background_primary">@color/custom_theme_background_primary</item>
+        <item name="color_background_secondary">@color/custom_theme_background_secondary</item>
+        <item name="color_background_tertiary">@color/custom_theme_background_tertiary</item>
         <item name="colorPrimaryDark">@color/custom_theme_primary_dark</item>
         <item name="colorAccent">@color/custom_theme_accent</item>
         <item name="message_bubble_received_bg">?colorPrimary</item>
@@ -369,6 +372,9 @@
     <style name="ConversationsTheme.CustomDark" parent="ConversationsTheme.Dark">
         <item name="colorPrimary">@color/custom_theme_primary</item>
         <item name="colorPrimaryDark">@color/custom_theme_primary_dark</item>
+        <item name="color_background_primary">@color/custom_theme_background_primary_dark</item>
+        <item name="color_background_secondary">@color/custom_theme_background_secondary_dark</item>
+        <item name="color_background_tertiary">@color/custom_theme_background_tertiary_dark</item>
         <item name="colorAccent">@color/custom_theme_accent</item>
         <item name="message_bubble_received_bg">?colorPrimary</item>
     </style>

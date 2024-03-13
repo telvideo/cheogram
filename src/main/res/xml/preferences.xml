@@ -212,6 +212,16 @@
                     android:key="custom_theme_dark"
                     android:title="Custom Theme is Dark?" />
                 <com.rarepebble.colorpicker.ColorPreference
+                    android:key="custom_theme_background_primary"
+                    android:title="Custom Background Color"
+                    android:defaultValue="@color/grey50"
+                    app:colorpicker_showAlpha="false" />
+                <com.rarepebble.colorpicker.ColorPreference
+                    android:key="custom_theme_background_primary_dark"
+                    android:title="Custom Dark Background Color"
+                    android:defaultValue="@color/grey800"
+                    app:colorpicker_showAlpha="false" />
+                <com.rarepebble.colorpicker.ColorPreference
                     android:key="custom_theme_primary"
                     android:title="Custom Primary Color"
                     android:defaultValue="@color/perpy"

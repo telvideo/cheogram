@@ -9,6 +9,14 @@
 	<color name="yeller">#FFC700</color>
 
 	<color name="custom_theme_primary">@color/perpy</color>
+	<color name="custom_theme_background_primary">@color/grey50</color>
+	<color name="custom_theme_background_secondary">@color/grey200</color>
+	<color name="custom_theme_background_tertiary">@color/grey300</color>
+
+	<color name="custom_theme_background_primary_dark">@color/grey800</color>
+	<color name="custom_theme_background_secondary_dark">@color/grey700</color>
+	<color name="custom_theme_background_tertiary_dark">@color/grey900</color>
 	<color name="custom_theme_primary_dark">@color/black_perpy</color>
+
 	<color name="custom_theme_accent">@color/black_perpy</color>
 </resources>
