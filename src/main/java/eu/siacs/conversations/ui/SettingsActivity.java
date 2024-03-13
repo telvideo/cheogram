@@ -582,6 +582,7 @@ public class SettingsActivity extends XmppActivity implements OnSharedPreference
         } else if (name.equals(AUTOMATIC_MESSAGE_DELETION)) {
             xmppConnectionService.expireOldMessages(true);
         } else if ( name.equals(THEME) ||
+                    name.equals("custom_theme_automatic") ||
                     name.equals("custom_theme_primary") ||
                     name.equals("custom_theme_primary_dark") ||
                     name.equals("custom_theme_accent") ||

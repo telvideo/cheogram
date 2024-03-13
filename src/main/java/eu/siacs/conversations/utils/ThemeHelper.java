@@ -137,7 +137,9 @@ public class ThemeHelper {
 
 	private static boolean isDark(final SharedPreferences sharedPreferences, final Resources resources) {
 		final String setting = sharedPreferences.getString(SettingsActivity.THEME, resources.getString(R.string.theme));
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && "automatic".equals(setting)) {
+		if ((Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && "automatic".equals(setting)) ||
+			("custom".equals(setting) && sharedPreferences.getBoolean("custom_theme_automatic", false))
+		) {
 			return (resources.getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES;
 		} else {
 			if ("custom".equals(setting)) return sharedPreferences.getBoolean("custom_theme_dark", false);
