@@ -372,7 +372,10 @@ public class ConversationsOverviewFragment extends XmppFragment {
 
 	@Override
 	public boolean onContextItemSelected(MenuItem item) {
-		int pos = ((AdapterContextMenuInfo) item.getMenuInfo()).position;
+		final var info = ((AdapterContextMenuInfo) item.getMenuInfo());
+		if (info == null) return false;
+
+		int pos = info.position;
 		if (conversations == null || conversations.size() <= pos || pos < 0) return false;
 
 		Conversation conversation = conversations.get(pos);
