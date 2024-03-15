@@ -64,6 +64,26 @@ public class ThemeHelper {
 		if (sharedPreferences.contains("custom_theme_primary")) colors.put(R.color.custom_theme_primary, sharedPreferences.getInt("custom_theme_primary", 0));
 		if (sharedPreferences.contains("custom_theme_primary_dark")) colors.put(R.color.custom_theme_primary_dark, sharedPreferences.getInt("custom_theme_primary_dark", 0));
 		if (sharedPreferences.contains("custom_theme_accent")) colors.put(R.color.custom_theme_accent, sharedPreferences.getInt("custom_theme_accent", 0));
+		if (sharedPreferences.contains("custom_theme_background_primary")) {
+			int background_primary = sharedPreferences.getInt("custom_theme_background_primary", 0);
+			int alpha = (background_primary >> 24) & 0xFF;
+			int red = (background_primary >> 16) & 0xFF;
+			int green = (background_primary >> 8) & 0xFF;
+			int blue = background_primary & 0xFF;
+			colors.put(R.color.custom_theme_background_primary, background_primary);
+			colors.put(R.color.custom_theme_background_secondary, (int)((alpha << 24) | ((int)(red*.9) << 16) | ((int)(green*.9) << 8) | (int)(blue*.9)));
+			colors.put(R.color.custom_theme_background_tertiary, (int)((alpha << 24) | ((int)(red*.85) << 16) | ((int)(green*.85) << 8) | (int)(blue*.85)));
+		}
+		if (sharedPreferences.contains("custom_theme_background_primary_dark")) {
+			int background_primary = sharedPreferences.getInt("custom_theme_background_primary_dark", 0);
+			int alpha = (background_primary >> 24) & 0xFF;
+			int red = (background_primary >> 16) & 0xFF;
+			int green = (background_primary >> 8) & 0xFF;
+			int blue = background_primary & 0xFF;
+			colors.put(R.color.custom_theme_background_primary_dark, background_primary);
+			colors.put(R.color.custom_theme_background_secondary_dark, (int)((alpha << 24) | ((int)(40 + red*.84) << 16) | ((int)(40 + green*.84) << 8) | (int)(40 + blue*.84)));
+			colors.put(R.color.custom_theme_background_tertiary_dark, (int)((alpha << 24) | ((int)(red*.5) << 16) | ((int)(green*.5) << 8) | (int)(blue*.5)));
+		}
 		if (colors.isEmpty()) return colors;
 
 		ResourcesLoader loader = ColorResourcesLoaderCreator.create(context, colors);
@@ -117,7 +137,9 @@ public class ThemeHelper {
 
 	private static boolean isDark(final SharedPreferences sharedPreferences, final Resources resources) {
 		final String setting = sharedPreferences.getString(SettingsActivity.THEME, resources.getString(R.string.theme));
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && "automatic".equals(setting)) {
+		if ((Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && "automatic".equals(setting)) ||
+			("custom".equals(setting) && sharedPreferences.getBoolean("custom_theme_automatic", false))
+		) {
 			return (resources.getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES;
 		} else {
 			if ("custom".equals(setting)) return sharedPreferences.getBoolean("custom_theme_dark", false);
