@@ -81,8 +81,8 @@ public class ThemeHelper {
 			int green = (background_primary >> 8) & 0xFF;
 			int blue = background_primary & 0xFF;
 			colors.put(R.color.custom_theme_background_primary_dark, background_primary);
-			colors.put(R.color.custom_theme_background_secondary_dark, (int)((alpha << 24) | ((int)(40 + red*.84) << 16) | ((int)(40 + green*.84) << 8) | (int)(40 + blue*.84)));
-			colors.put(R.color.custom_theme_background_tertiary_dark, (int)((alpha << 24) | ((int)(red*.5) << 16) | ((int)(green*.5) << 8) | (int)(blue*.5)));
+			colors.put(R.color.custom_theme_background_secondary_dark, (int)((alpha << 24) | ((int)(red*.5) << 16) | ((int)(green*.5) << 8) | (int)(blue*.5)));
+			colors.put(R.color.custom_theme_background_tertiary_dark, (int)((alpha << 24) | ((int)(40 + red*.84) << 16) | ((int)(40 + green*.84) << 8) | (int)(40 + blue*.84)));
 		}
 		if (colors.isEmpty()) return colors;
 
