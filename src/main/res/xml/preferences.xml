@@ -204,12 +204,10 @@
                 android:summary="You may sometimes have to force quit the app to get changes applied."/>
             <CheckBoxPreference
                 android:defaultValue="false"
-                android:disableDependentsState="true"
                 android:key="custom_theme_automatic"
                 android:title="Follow System Dark Mode?" />
             <CheckBoxPreference
                 android:defaultValue="false"
-                android:dependency="custom_theme_automatic"
                 android:key="custom_theme_dark"
                 android:title="Custom Theme is Dark?" />
 

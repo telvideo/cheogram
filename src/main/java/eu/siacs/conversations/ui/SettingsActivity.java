@@ -429,16 +429,22 @@ public class SettingsActivity extends XmppActivity implements OnSharedPreference
             if (customTheme != null) uiCategory.removePreference(customTheme);
         }
 
-        final boolean customAutomatic = PreferenceManager.getDefaultSharedPreferences(this).getBoolean("custom_theme_automatic", false);
-        if (Build.VERSION.SDK_INT > 30 && theTheme.equals("custom") && !customAutomatic) {
+        if (Build.VERSION.SDK_INT > 30 && theTheme.equals("custom")) {
+            final boolean customAutomatic = PreferenceManager.getDefaultSharedPreferences(this).getBoolean("custom_theme_automatic", false);
             final PreferenceScreen customTheme = (PreferenceScreen) mSettingsFragment.findPreference("custom_theme");
-            final boolean isDark = PreferenceManager.getDefaultSharedPreferences(this).getBoolean("custom_theme_dark", false);
-            if (isDark) {
-                final PreferenceCategory customThemeColors = (PreferenceCategory) mSettingsFragment.findPreference("custom_theme_colors");
-                customTheme.removePreference(customThemeColors);
+            final Preference customThemeIsDark = mSettingsFragment.findPreference("custom_theme_dark");
+
+            if (customAutomatic) {
+                customTheme.removePreference(customThemeIsDark);
             } else {
-                final PreferenceCategory customThemeColorsDark = (PreferenceCategory) mSettingsFragment.findPreference("custom_theme_colors_dark");
-                customTheme.removePreference(customThemeColorsDark);
+                final boolean isDark = PreferenceManager.getDefaultSharedPreferences(this).getBoolean("custom_theme_dark", false);
+                if (isDark) {
+                    final PreferenceCategory customThemeColors = (PreferenceCategory) mSettingsFragment.findPreference("custom_theme_colors");
+                    customTheme.removePreference(customThemeColors);
+                } else {
+                    final PreferenceCategory customThemeColorsDark = (PreferenceCategory) mSettingsFragment.findPreference("custom_theme_colors_dark");
+                    customTheme.removePreference(customThemeColorsDark);
+                }
             }
         }
     }
