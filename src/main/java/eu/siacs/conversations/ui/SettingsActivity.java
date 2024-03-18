@@ -435,15 +435,15 @@ public class SettingsActivity extends XmppActivity implements OnSharedPreference
             final Preference customThemeIsDark = mSettingsFragment.findPreference("custom_theme_dark");
 
             if (customAutomatic) {
-                customTheme.removePreference(customThemeIsDark);
+                if (customTheme != null && customThemeIsDark != null) customTheme.removePreference(customThemeIsDark);
             } else {
                 final boolean isDark = PreferenceManager.getDefaultSharedPreferences(this).getBoolean("custom_theme_dark", false);
                 if (isDark) {
                     final PreferenceCategory customThemeColors = (PreferenceCategory) mSettingsFragment.findPreference("custom_theme_colors");
-                    customTheme.removePreference(customThemeColors);
+                    if (customTheme != null && customThemeColors != null) customTheme.removePreference(customThemeColors);
                 } else {
                     final PreferenceCategory customThemeColorsDark = (PreferenceCategory) mSettingsFragment.findPreference("custom_theme_colors_dark");
-                    customTheme.removePreference(customThemeColorsDark);
+                    if (customTheme != null && customThemeColorsDark != null) customTheme.removePreference(customThemeColorsDark);
                 }
             }
         }
