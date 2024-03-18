@@ -428,6 +428,19 @@ public class SettingsActivity extends XmppActivity implements OnSharedPreference
             final Preference customTheme = mSettingsFragment.findPreference("custom_theme");
             if (customTheme != null) uiCategory.removePreference(customTheme);
         }
+
+        final boolean customAutomatic = PreferenceManager.getDefaultSharedPreferences(this).getBoolean("custom_theme_automatic", false);
+        if (Build.VERSION.SDK_INT > 30 && theTheme.equals("custom") && !customAutomatic) {
+            final PreferenceScreen customTheme = (PreferenceScreen) mSettingsFragment.findPreference("custom_theme");
+            final boolean isDark = PreferenceManager.getDefaultSharedPreferences(this).getBoolean("custom_theme_dark", false);
+            if (isDark) {
+                final PreferenceCategory customThemeColors = (PreferenceCategory) mSettingsFragment.findPreference("custom_theme_colors");
+                customTheme.removePreference(customThemeColors);
+            } else {
+                final PreferenceCategory customThemeColorsDark = (PreferenceCategory) mSettingsFragment.findPreference("custom_theme_colors_dark");
+                customTheme.removePreference(customThemeColorsDark);
+            }
+        }
     }
 
     private void changeOmemoSettingSummary() {
@@ -583,12 +596,15 @@ public class SettingsActivity extends XmppActivity implements OnSharedPreference
             xmppConnectionService.expireOldMessages(true);
         } else if ( name.equals(THEME) ||
                     name.equals("custom_theme_automatic") ||
+                    name.equals("custom_theme_dark") ||
                     name.equals("custom_theme_primary") ||
                     name.equals("custom_theme_primary_dark") ||
                     name.equals("custom_theme_accent") ||
-                    name.equals("custom_theme_dark") ||
                     name.equals("custom_theme_background_primary") ||
-                    name.equals("custom_theme_background_primary_dark"))
+                    name.equals("custom_dark_theme_primary") ||
+                    name.equals("custom_dark_theme_primary_dark") ||
+                    name.equals("custom_dark_theme_accent") ||
+                    name.equals("custom_dark_theme_background_primary"))
         {
             final int theme = findTheme();
             xmppConnectionService.setTheme(theme);

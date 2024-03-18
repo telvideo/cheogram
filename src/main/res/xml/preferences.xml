@@ -202,21 +202,21 @@
                 android:selectable="false"
                 android:persistent="false"
                 android:summary="You may sometimes have to force quit the app to get changes applied."/>
+            <CheckBoxPreference
+                android:defaultValue="false"
+                android:disableDependentsState="true"
+                android:key="custom_theme_automatic"
+                android:title="Follow System Dark Mode?" />
+            <CheckBoxPreference
+                android:defaultValue="false"
+                android:dependency="custom_theme_automatic"
+                android:key="custom_theme_dark"
+                android:title="Custom Theme is Dark?" />
 
             <PreferenceCategory
                 android:key="custom_theme_colors"
-                android:title="Colors">
+                android:title="Light">
 
-                <CheckBoxPreference
-                    android:defaultValue="false"
-                    android:disableDependentsState="true"
-                    android:key="custom_theme_automatic"
-                    android:title="Follow System Dark Mode?" />
-                <CheckBoxPreference
-                    android:defaultValue="false"
-                    android:dependency="custom_theme_automatic"
-                    android:key="custom_theme_dark"
-                    android:title="Custom Theme is Dark?" />
                 <com.rarepebble.colorpicker.ColorPreference
                     android:key="custom_theme_primary"
                     android:title="Custom Primary Color"
@@ -224,7 +224,7 @@
                     app:colorpicker_showAlpha="false" />
                 <com.rarepebble.colorpicker.ColorPreference
                     android:key="custom_theme_primary_dark"
-                    android:title="Custom Primary Dark Color"
+                    android:title="Custom Secondary Color"
                     android:defaultValue="@color/black_perpy"
                     app:colorpicker_showAlpha="false" />
                 <com.rarepebble.colorpicker.ColorPreference
@@ -237,13 +237,33 @@
                     android:title="Custom Background Color"
                     android:defaultValue="@color/grey50"
                     app:colorpicker_showAlpha="false" />
+            </PreferenceCategory>
+            <PreferenceCategory
+                android:key="custom_theme_colors_dark"
+                app:isPreferenceVisible="false"
+                android:title="Dark">
+
                 <com.rarepebble.colorpicker.ColorPreference
-                    android:key="custom_theme_background_primary_dark"
-                    android:title="Custom Background Color (Dark)"
+                    android:key="custom_dark_theme_primary"
+                    android:title="Custom Primary Color"
+                    android:defaultValue="@color/perpy"
+                    app:colorpicker_showAlpha="false" />
+                <com.rarepebble.colorpicker.ColorPreference
+                    android:key="custom_dark_theme_primary_dark"
+                    android:title="Custom Secondary Color"
+                    android:defaultValue="@color/black_perpy"
+                    app:colorpicker_showAlpha="false" />
+                <com.rarepebble.colorpicker.ColorPreference
+                    android:key="custom_dark_theme_accent"
+                    android:title="Custom Accent Color"
+                    android:defaultValue="@color/black_perpy"
+                    app:colorpicker_showAlpha="false" />
+                <com.rarepebble.colorpicker.ColorPreference
+                    android:key="custom_dark_theme_background_primary"
+                    android:title="Custom Background Color"
                     android:defaultValue="@color/grey800"
                     app:colorpicker_showAlpha="false" />
             </PreferenceCategory>
-
             <intent
                 android:action="android.intent.action.VIEW"
                 android:targetClass="eu.siacs.conversations.ui.SettingsActivity"
