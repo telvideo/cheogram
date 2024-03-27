@@ -3643,8 +3643,8 @@ public class ConversationFragment extends XmppFragment
                         || conversation.getMucOptions().participating();
         if (this.conversation.getStatus() != Conversation.STATUS_ARCHIVED
                 && participating
-                && this.conversation.setNextMessage(msg)) {
-            this.activity.xmppConnectionService.updateConversation(this.conversation);
+                && this.conversation.setNextMessage(msg) && activity != null) {
+            activity.xmppConnectionService.updateConversation(this.conversation);
             return true;
         }
         return false;
