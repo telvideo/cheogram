@@ -648,26 +648,50 @@ public class FileBackend {
         }
     }
 
+    public long getUriSize(final Uri uri) {
+        Cursor cursor = null;
+        try {
+            cursor = mXmppConnectionService.getContentResolver().query(uri, null, null, null, null);
+            if (cursor != null && cursor.moveToFirst()) {
+                int sizeIndex = cursor.getColumnIndex(OpenableColumns.SIZE);
+                return cursor.getLong(sizeIndex);
+            }
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+        return 0; // Return 0 if the size information is not available
+    }
+
     public boolean useImageAsIs(final Uri uri) {
-        final String path = getOriginalPath(uri);
-        if (path == null || isPathBlacklisted(path)) {
-            return false;
-        }
-        final File file = new File(path);
-        long size = file.length();
-        if (size == 0
-                || size
-                        >= mXmppConnectionService
-                                .getResources()
-                                .getInteger(R.integer.auto_accept_filesize)) {
-            return false;
-        }
-        BitmapFactory.Options options = new BitmapFactory.Options();
-        options.inJustDecodeBounds = true;
         try {
             for (Cid cid : calculateCids(uri)) {
                 if (mXmppConnectionService.getUrlForCid(cid) != null) return true;
             }
+
+            long fsize = getUriSize(uri);
+            if (fsize == 0 || fsize >= mXmppConnectionService.getResources().getInteger(R.integer.auto_accept_filesize)) {
+                return false;
+            }
+
+            if (android.os.Build.VERSION.SDK_INT >= 28) {
+                ImageDecoder.Source source = ImageDecoder.createSource(mXmppConnectionService.getContentResolver(), uri);
+                int[] size = new int[] { 0, 0 };
+                boolean[] animated = new boolean[] { false };
+                String[] mimeType = new String[] { null };
+                Drawable drawable = ImageDecoder.decodeDrawable(source, (decoder, info, src) -> {
+                    mimeType[0] = info.getMimeType();
+                    animated[0] = info.isAnimated();
+                    size[0] = info.getSize().getWidth();
+                    size[1] = info.getSize().getHeight();
+                });
+
+                return animated[0] || (size[0] <= Config.IMAGE_SIZE && size[1] <= Config.IMAGE_SIZE);
+            }
+
+            BitmapFactory.Options options = new BitmapFactory.Options();
+            options.inJustDecodeBounds = true;
             final InputStream inputStream =
                     mXmppConnectionService.getContentResolver().openInputStream(uri);
             BitmapFactory.decodeStream(inputStream, null, options);
@@ -675,9 +699,7 @@ public class FileBackend {
             if (options.outMimeType == null || options.outHeight <= 0 || options.outWidth <= 0) {
                 return false;
             }
-            return (options.outWidth <= Config.IMAGE_SIZE
-                    && options.outHeight <= Config.IMAGE_SIZE
-                    && options.outMimeType.contains(Config.IMAGE_FORMAT.name().toLowerCase()));
+            return (options.outWidth <= Config.IMAGE_SIZE && options.outHeight <= Config.IMAGE_SIZE);
         } catch (final IOException e) {
             Log.d(Config.LOGTAG, "unable to get image dimensions", e);
             return false;
