@@ -5670,6 +5670,8 @@ public class XmppConnectionService extends Service {
     }
 
     public void evictPreview(File f) {
+        if (f == null) return;
+
         if (mDrawableCache.remove(f.getAbsolutePath()) != null) {
             Log.d(Config.LOGTAG, "deleted cached preview");
         }
