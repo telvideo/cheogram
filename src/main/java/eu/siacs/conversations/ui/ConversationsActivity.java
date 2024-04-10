@@ -401,7 +401,11 @@ public class ConversationsActivity extends XmppActivity implements OnConversatio
                         Intent intent = new Intent();
                         intent.setComponent(new ComponentName("com.android.server.telecom",
                             "com.android.server.telecom.settings.EnableAccountPreferenceActivity"));
-                        startActivityForResult(intent, DIALLER_INTEGRATION);
+                        try {
+                            startActivityForResult(intent, DIALLER_INTEGRATION);
+                        } catch (ActivityNotFoundException e) {
+                            displayToast("Dialler integration not available on your OS");
+                        }
                         break;
                     case REQUEST_DOWNLOAD_STICKERS:
                         downloadStickers();
