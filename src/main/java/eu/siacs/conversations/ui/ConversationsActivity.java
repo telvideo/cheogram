@@ -433,7 +433,11 @@ public class ConversationsActivity extends XmppActivity implements OnConversatio
 
         if (requestCode == DIALLER_INTEGRATION) {
             mRequestCode = requestCode;
-            startActivity(new Intent(android.telecom.TelecomManager.ACTION_CHANGE_PHONE_ACCOUNTS));
+            try {
+                startActivity(new Intent(android.telecom.TelecomManager.ACTION_CHANGE_PHONE_ACCOUNTS));
+            } catch (ActivityNotFoundException e) {
+                displayToast("Dialler integration not available on your OS");
+            }
             return;
         }
 
