@@ -1002,9 +1002,9 @@ public class StartConversationActivity extends XmppActivity implements XmppConne
         final boolean onboardingCancel = xmppConnectionService.getPreferences().getString("onboarding_action", "").equals("cancel");
         if (onboardingCancel) xmppConnectionService.getPreferences().edit().remove("onboarding_action").commit();
 
-        if (intent != null && intent.getBooleanExtra("init", false) && !onboardingCancel && !xmppConnectionService.getAccounts().isEmpty()) {
+        if ((xmppConnectionService.isOnboarding() || (intent != null && intent.getBooleanExtra("init", false))) && !onboardingCancel && !xmppConnectionService.getAccounts().isEmpty()) {
             Account selectedAccount = xmppConnectionService.getAccounts().get(0);
-            final String accountJid = intent.getStringExtra(EXTRA_ACCOUNT);
+            final String accountJid = intent == null ? null : intent.getStringExtra(EXTRA_ACCOUNT);
             intent = null;
             boolean hasPstnOrSms = false;
             Account onboardingAccount = null;
