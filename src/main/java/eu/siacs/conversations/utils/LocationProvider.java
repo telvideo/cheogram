@@ -39,9 +39,8 @@ public class LocationProvider {
 
             if (simCountry != null && simCountry.length() == 2) { // SIM country code is available
                 return simCountry.toUpperCase(Locale.US);
-            } else if (networkCountry != null && networkCountry.length() == 2) { // network country code is available
-                return networkCountry.toUpperCase(Locale.US);
             }
+
             return getUserCountryFallback();
         } catch (final Exception e) {
             return getUserCountryFallback();
