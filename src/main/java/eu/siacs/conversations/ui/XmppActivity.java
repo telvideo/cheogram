@@ -1054,15 +1054,14 @@ public abstract class XmppActivity extends ActionBarActivity {
             return invite;
         }
 
-        public boolean execute(final XmppActivity activity) {
-            final XmppConnectionService service = activity.xmppConnectionService;
-            final Conversation conversation = service.findConversationByUuid(this.uuid);
+        public boolean execute(XmppActivity activity) {
+            XmppConnectionService service = activity.xmppConnectionService;
+            Conversation conversation = service.findConversationByUuid(this.uuid);
             if (conversation == null) {
                 return false;
             }
             if (conversation.getMode() == Conversation.MODE_MULTI) {
-                for (final Jid jid : jids) {
-                    // TODO use direct invites for public conferences
+                for (Jid jid : jids) {
                     service.invite(conversation, jid);
                 }
                 return false;

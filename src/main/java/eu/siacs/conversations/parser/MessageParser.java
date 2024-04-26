@@ -501,7 +501,7 @@ public class MessageParser extends AbstractParser implements OnMessagePacketRece
             if (selfAddressed) {
                 counterpart = from;
             } else {
-                counterpart = to;
+                counterpart = to != null ? to : account.getJid();
             }
         } else {
             status = Message.STATUS_RECEIVED;
@@ -1311,48 +1311,22 @@ public class MessageParser extends AbstractParser implements OnMessagePacketRece
             if (this.jid == null) {
                 return false;
             }
-            final Contact contact =
-                    this.inviter != null ? account.getRoster().getContact(this.inviter) : null;
+            final Contact contact = this.inviter != null ? account.getRoster().getContact(this.inviter) : null;
             if (contact != null && contact.isBlocked()) {
-                Log.d(
-                        Config.LOGTAG,
-                        account.getJid().asBareJid()
-                                + ": ignore invite from "
-                                + contact.getJid()
-                                + " because contact is blocked");
+                Log.d(Config.LOGTAG,account.getJid().asBareJid()+": ignore invite from "+contact.getJid()+" because contact is blocked");
                 return false;
             }
-            final AppSettings appSettings = new AppSettings(mXmppConnectionService);
-            if ((contact != null && contact.showInContactList())
-                    || appSettings.isAcceptInvitesFromStrangers()) {
-                final Conversation conversation =
-                        mXmppConnectionService.findOrCreateConversation(account, jid, true, false);
-                if (conversation.getMucOptions().online()) {
-                    Log.d(
-                            Config.LOGTAG,
-                            account.getJid().asBareJid()
-                                    + ": received invite to "
-                                    + jid
-                                    + " but muc is considered to be online");
-                    mXmppConnectionService.mucSelfPingAndRejoin(conversation);
-                } else {
-                    conversation.getMucOptions().setPassword(password);
-                    mXmppConnectionService.databaseBackend.updateConversation(conversation);
-                    mXmppConnectionService.joinMuc(
-                            conversation, contact != null && contact.showInContactList());
-                    mXmppConnectionService.updateConversationUi();
-                }
-                return true;
+            final Conversation conversation = mXmppConnectionService.findOrCreateConversation(account, jid, true, false);
+            if (conversation.getMucOptions().online()) {
+                Log.d(Config.LOGTAG, account.getJid().asBareJid() + ": received invite to " + jid + " but muc is considered to be online");
+                mXmppConnectionService.mucSelfPingAndRejoin(conversation);
             } else {
-                Log.d(
-                        Config.LOGTAG,
-                        account.getJid().asBareJid()
-                                + ": ignoring invite from "
-                                + this.inviter
-                                + " because we are not accepting invites from strangers. direct="
-                                + direct);
-                return false;
+                conversation.getMucOptions().setPassword(password);
+                mXmppConnectionService.databaseBackend.updateConversation(conversation);
+                mXmppConnectionService.joinMuc(conversation, contact != null && contact.showInContactList());
+                mXmppConnectionService.updateConversationUi();
             }
+            return true;
         }
     }
 }
