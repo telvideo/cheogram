@@ -180,6 +180,7 @@
                             android:layout_alignParentEnd="true"
                             android:layout_alignParentRight="true"
                             android:visibility="gone"
+                            android:src="@drawable/ic_lock_24dp"
                             android:contentDescription="Thread Locked" />
 
                     </RelativeLayout>
