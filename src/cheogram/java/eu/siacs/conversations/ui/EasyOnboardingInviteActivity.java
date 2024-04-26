@@ -36,6 +36,7 @@ public class EasyOnboardingInviteActivity extends XmppActivity implements EasyOn
     public void onCreate(final Bundle bundle) {
         super.onCreate(bundle);
         this.binding = DataBindingUtil.setContentView(this, R.layout.activity_easy_invite);
+        Activities.setStatusAndNavigationBarColors(this, binding.getRoot());
         setSupportActionBar(binding.toolbar);
         configureActionBar(getSupportActionBar(), true);
         this.binding.shareButton.setOnClickListener(v -> share());

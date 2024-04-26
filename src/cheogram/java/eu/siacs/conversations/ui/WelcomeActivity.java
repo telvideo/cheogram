@@ -138,6 +138,7 @@ public class WelcomeActivity extends XmppActivity implements XmppConnectionServi
         super.onCreate(savedInstanceState);
         getPreferences().edit().putStringSet("pstn_gateways", new HashSet<>()).apply();
         ActivityWelcomeBinding binding = DataBindingUtil.setContentView(this, R.layout.activity_welcome);
+        Activities.setStatusAndNavigationBarColors(this, binding.getRoot());
         binding.slideshowPager.setAdapter(new WelcomePagerAdapter(binding.slideshowPager));
         binding.dotsIndicator.setViewPager(binding.slideshowPager);
         binding.slideshowPager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
