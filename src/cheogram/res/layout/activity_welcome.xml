@@ -38,7 +38,7 @@
             android:layout_marginBottom="15dp"
             android:layout_gravity="center"
             android:fontFamily="@font/archivoblack"
-            android:textColor="?colorAccent"
+            android:textColor="?colorOnSecondaryContainer"
             android:textSize="18sp"
             android:text="Welcome to Cheogram Android" />
 
@@ -146,7 +146,7 @@
             android:layout_marginBottom="15dp"
             android:layout_gravity="center"
             android:fontFamily="@font/archivoblack"
-            android:textColor="?colorAccent"
+            android:textColor="?colorOnSecondaryContainer"
             android:textSize="18sp"
             android:text="How the Jabber network works" />
 
@@ -163,7 +163,7 @@
             android:layout_marginBottom="30dp"
             android:layout_gravity="center"
             android:fontFamily="@font/archivoblack"
-            android:textColor="?colorAccent"
+            android:textColor="?colorOnSecondaryContainer"
             android:textSize="18sp"
             android:text="username@service.com" />
 
