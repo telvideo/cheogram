@@ -14,7 +14,7 @@ import java.security.SecureRandom;
 
 import eu.siacs.conversations.Config;
 import eu.siacs.conversations.R;
-import eu.siacs.conversations.databinding.MagicCreateBinding;
+import eu.siacs.conversations.databinding.ActivityMagicCreateBinding;
 import eu.siacs.conversations.entities.Account;
 import eu.siacs.conversations.utils.CryptoHelper;
 import eu.siacs.conversations.utils.InstallReferrerUtils;
@@ -26,7 +26,7 @@ public class MagicCreateActivity extends XmppActivity implements TextWatcher {
     public static final String EXTRA_PRE_AUTH = "pre_auth";
     public static final String EXTRA_USERNAME = "username";
 
-    private MagicCreateBinding binding;
+    private ActivityMagicCreateBinding binding;
     private String domain;
     private String username;
     private String preAuth;
@@ -37,17 +37,8 @@ public class MagicCreateActivity extends XmppActivity implements TextWatcher {
     }
 
     @Override
-    void onBackendConnected() {
+    protected void onBackendConnected() {
 
-    }
-
-    @Override
-    public void onStart() {
-        super.onStart();
-        final int theme = findTheme();
-        if (this.mTheme != theme) {
-            recreate();
-        }
     }
 
     @Override
@@ -60,7 +51,7 @@ public class MagicCreateActivity extends XmppActivity implements TextWatcher {
             setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
         }
         super.onCreate(savedInstanceState);
-        this.binding = DataBindingUtil.setContentView(this, R.layout.magic_create);
+        this.binding = DataBindingUtil.setContentView(this, R.layout.activity_magic_create);
         setSupportActionBar(this.binding.toolbar);
         configureActionBar(getSupportActionBar(), this.domain == null);
         if (username != null && domain != null) {

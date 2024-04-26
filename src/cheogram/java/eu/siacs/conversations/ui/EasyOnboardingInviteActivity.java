@@ -126,7 +126,7 @@ public class EasyOnboardingInviteActivity extends XmppActivity implements EasyOn
     }
 
     @Override
-    void onBackendConnected() {
+    protected void onBackendConnected() {
         if (easyOnboardingInvite != null) {
             return;
         }

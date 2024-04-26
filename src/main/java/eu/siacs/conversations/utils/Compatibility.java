@@ -22,10 +22,9 @@ import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 import androidx.core.content.ContextCompat;
 
+import eu.siacs.conversations.AppSettings;
 import eu.siacs.conversations.Config;
 import eu.siacs.conversations.R;
-import eu.siacs.conversations.ui.SettingsActivity;
-import eu.siacs.conversations.ui.SettingsFragment;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -33,21 +32,9 @@ import java.util.List;
 
 public class Compatibility {
 
-    private static final List<String> UNUSED_SETTINGS_POST_TWENTYSIX =
-            Arrays.asList(
-                    "led",
-                    "notification_ringtone",
-                    "notification_headsup",
-                    "vibrate_on_notification");
-    private static final List<String> UNUSED_SETTINGS_PRE_TWENTYSIX =
-            Collections.singletonList("message_notification_settings");
-
     public static boolean hasStoragePermission(final Context context) {
-        return Build.VERSION.SDK_INT < Build.VERSION_CODES.M
-                || Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
-                || ContextCompat.checkSelfPermission(
-                                context, android.Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                        == PackageManager.PERMISSION_GRANTED;
+        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU || ContextCompat.checkSelfPermission(
+                context, android.Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED;
     }
 
     public static boolean s() {
@@ -79,7 +66,7 @@ public class Compatibility {
             final PackageManager packageManager = context.getPackageManager();
             final ApplicationInfo applicationInfo =
                     packageManager.getApplicationInfo(context.getPackageName(), 0);
-            return applicationInfo == null || applicationInfo.targetSdkVersion >= 26;
+            return applicationInfo.targetSdkVersion >= 26;
         } catch (PackageManager.NameNotFoundException | RuntimeException e) {
             return true; // when in doubt…
         }
@@ -90,7 +77,7 @@ public class Compatibility {
             final PackageManager packageManager = context.getPackageManager();
             final ApplicationInfo applicationInfo =
                     packageManager.getApplicationInfo(context.getPackageName(), 0);
-            return applicationInfo == null || applicationInfo.targetSdkVersion >= 24;
+            return applicationInfo.targetSdkVersion >= 24;
         } catch (PackageManager.NameNotFoundException | RuntimeException e) {
             return true; // when in doubt…
         }
@@ -108,54 +95,8 @@ public class Compatibility {
         return runsAndTargetsTwentySix(context)
                 || getBooleanPreference(
                         context,
-                        SettingsActivity.KEEP_FOREGROUND_SERVICE,
+                        AppSettings.KEEP_FOREGROUND_SERVICE,
                         R.bool.enable_foreground_service);
-    }
-
-    public static void removeUnusedPreferences(SettingsFragment settingsFragment) {
-        List<PreferenceCategory> categories =
-                Arrays.asList(
-                        (PreferenceCategory)
-                                settingsFragment.findPreference("notification_category"),
-                        (PreferenceCategory) settingsFragment.findPreference("advanced"));
-        for (String key :
-                (runsTwentySix()
-                        ? UNUSED_SETTINGS_POST_TWENTYSIX
-                        : UNUSED_SETTINGS_PRE_TWENTYSIX)) {
-            Preference preference = settingsFragment.findPreference(key);
-            if (preference != null) {
-                for (PreferenceCategory category : categories) {
-                    if (category != null) {
-                        category.removePreference(preference);
-                    }
-                }
-            }
-        }
-        if (Compatibility.runsTwentySix()) {
-            if (targetsTwentySix(settingsFragment.getContext())) {
-                Preference preference =
-                        settingsFragment.findPreference(SettingsActivity.KEEP_FOREGROUND_SERVICE);
-                if (preference != null) {
-                    for (PreferenceCategory category : categories) {
-                        if (category != null) {
-                            category.removePreference(preference);
-                        }
-                    }
-                }
-            }
-        }
-
-        try {
-            Class.forName("io.sentry.Sentry");
-            Preference preference = settingsFragment.findPreference("never_send");
-            if (preference != null) {
-                for (PreferenceCategory category : categories) {
-                    if (category != null) {
-                        category.removePreference(preference);
-                    }
-                }
-            }
-        } catch (final ClassNotFoundException e) { }
     }
 
     public static void startService(Context context, Intent intent) {
@@ -190,6 +131,17 @@ public class Compatibility {
                     "platform bug detected. Unable to get restrict background status",
                     e);
             return ConnectivityManager.RESTRICT_BACKGROUND_STATUS_DISABLED;
+        }
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.N)
+    public static boolean isActiveNetworkMetered(
+            @NonNull final ConnectivityManager connectivityManager) {
+        try {
+            return connectivityManager.isActiveNetworkMetered();
+        } catch (final RuntimeException e) {
+            // when in doubt better assume it's metered
+            return true;
         }
     }
 

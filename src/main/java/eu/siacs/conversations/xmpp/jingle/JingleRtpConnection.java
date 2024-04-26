@@ -1,5 +1,8 @@
 package eu.siacs.conversations.xmpp.jingle;
 
+import android.content.Intent;
+import android.telecom.TelecomManager;
+import android.telecom.VideoProfile;
 import android.util.Log;
 import android.os.Environment;
 
@@ -13,13 +16,11 @@ import com.google.common.base.Stopwatch;
 import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Collections2;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
-import com.google.common.primitives.Ints;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -30,12 +31,13 @@ import eu.siacs.conversations.Config;
 import eu.siacs.conversations.crypto.axolotl.AxolotlService;
 import eu.siacs.conversations.crypto.axolotl.CryptoFailedException;
 import eu.siacs.conversations.crypto.axolotl.FingerprintStatus;
+import eu.siacs.conversations.entities.Account;
 import eu.siacs.conversations.entities.Conversation;
 import eu.siacs.conversations.entities.Conversational;
 import eu.siacs.conversations.entities.Message;
 import eu.siacs.conversations.entities.RtpSessionStatus;
-import eu.siacs.conversations.services.AppRTCAudioManager;
-import eu.siacs.conversations.utils.IP;
+import eu.siacs.conversations.services.CallIntegration;
+import eu.siacs.conversations.ui.RtpSessionActivity;
 import eu.siacs.conversations.xml.Element;
 import eu.siacs.conversations.xml.Namespace;
 import eu.siacs.conversations.xmpp.Jid;
@@ -71,17 +73,22 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 public class JingleRtpConnection extends AbstractJingleConnection
-        implements WebRTCWrapper.EventCallback {
+        implements WebRTCWrapper.EventCallback, CallIntegration.Callback, OngoingRtpSession {
 
     public static final List<State> STATES_SHOWING_ONGOING_CALL =
             Arrays.asList(
-                    State.PROCEED, State.SESSION_INITIALIZED_PRE_APPROVED, State.SESSION_ACCEPTED);
+                    State.PROPOSED,
+                    State.PROCEED,
+                    State.SESSION_INITIALIZED_PRE_APPROVED,
+                    State.SESSION_ACCEPTED);
     private static final long BUSY_TIME_OUT = 30;
 
     private final WebRTCWrapper webRTCWrapper = new WebRTCWrapper(this);
-    private final Queue<Map.Entry<String, DescriptionTransport<RtpDescription,IceUdpTransportInfo>>>
+    private final Queue<
+                    Map.Entry<String, DescriptionTransport<RtpDescription, IceUdpTransportInfo>>>
             pendingIceCandidates = new LinkedList<>();
     private final OmemoVerification omemoVerification = new OmemoVerification();
+    public final CallIntegration callIntegration;
     private final Message message;
 
     private Set<Media> proposedMedia;
@@ -95,7 +102,28 @@ public class JingleRtpConnection extends AbstractJingleConnection
     private ScheduledFuture<?> ringingTimeoutFuture;
     private final long created = System.currentTimeMillis() / 1000L;
 
-    JingleRtpConnection(JingleConnectionManager jingleConnectionManager, Id id, Jid initiator) {
+    JingleRtpConnection(
+            final JingleConnectionManager jingleConnectionManager,
+            final Id id,
+            final Jid initiator) {
+        this(
+                jingleConnectionManager,
+                id,
+                initiator,
+                new CallIntegration(
+                        jingleConnectionManager
+                                .getXmppConnectionService()
+                                .getApplicationContext()));
+        this.callIntegration.setAddress(
+                CallIntegration.address(id.with.asBareJid()), TelecomManager.PRESENTATION_ALLOWED);
+        this.callIntegration.setInitialized();
+    }
+
+    JingleRtpConnection(
+            final JingleConnectionManager jingleConnectionManager,
+            final Id id,
+            final Jid initiator,
+            final CallIntegration callIntegration) {
         super(jingleConnectionManager, id, initiator);
         final Conversation conversation =
                 jingleConnectionManager
@@ -107,6 +135,8 @@ public class JingleRtpConnection extends AbstractJingleConnection
                         isInitiator() ? Message.STATUS_SEND : Message.STATUS_RECEIVED,
                         Message.TYPE_RTP_SESSION,
                         id.sessionId);
+        this.callIntegration = callIntegration;
+        this.callIntegration.setCallback(this);
     }
 
     @Override
@@ -231,8 +261,8 @@ public class JingleRtpConnection extends AbstractJingleConnection
 
     private void receiveTransportInfo(
             final JinglePacket jinglePacket, final RtpContentMap contentMap) {
-        final Set<Map.Entry<String, DescriptionTransport<RtpDescription,IceUdpTransportInfo>>> candidates =
-                contentMap.contents.entrySet();
+        final Set<Map.Entry<String, DescriptionTransport<RtpDescription, IceUdpTransportInfo>>>
+                candidates = contentMap.contents.entrySet();
         final RtpContentMap remote = getRemoteContentMap();
         final Set<String> remoteContentIds =
                 remote == null ? Collections.emptySet() : remote.contents.keySet();
@@ -1004,14 +1034,17 @@ public class JingleRtpConnection extends AbstractJingleConnection
     }
 
     private void processCandidates(
-            final Set<Map.Entry<String, DescriptionTransport<RtpDescription,IceUdpTransportInfo>>> contents) {
-        for (final Map.Entry<String, DescriptionTransport<RtpDescription,IceUdpTransportInfo>> content : contents) {
+            final Set<Map.Entry<String, DescriptionTransport<RtpDescription, IceUdpTransportInfo>>>
+                    contents) {
+        for (final Map.Entry<String, DescriptionTransport<RtpDescription, IceUdpTransportInfo>>
+                content : contents) {
             processCandidate(content);
         }
     }
 
     private void processCandidate(
-            final Map.Entry<String, DescriptionTransport<RtpDescription,IceUdpTransportInfo>> content) {
+            final Map.Entry<String, DescriptionTransport<RtpDescription, IceUdpTransportInfo>>
+                    content) {
         final RtpContentMap rtpContentMap = getRemoteContentMap();
         final List<String> indices = toIdentificationTags(rtpContentMap);
         final String sdpMid = content.getKey(); // aka content name
@@ -1167,6 +1200,7 @@ public class JingleRtpConnection extends AbstractJingleConnection
             target = State.SESSION_INITIALIZED_PRE_APPROVED;
         } else {
             target = State.SESSION_INITIALIZED;
+            setProposedMedia(contentMap.getMedia());
         }
         if (transition(target, () -> this.initiatorRtpContentMap = contentMap)) {
             respondOk(jinglePacket);
@@ -1381,7 +1415,7 @@ public class JingleRtpConnection extends AbstractJingleConnection
     }
 
     private void addIceCandidatesFromBlackLog() {
-        Map.Entry<String, DescriptionTransport<RtpDescription,IceUdpTransportInfo>> foo;
+        Map.Entry<String, DescriptionTransport<RtpDescription, IceUdpTransportInfo>> foo;
         while ((foo = this.pendingIceCandidates.poll()) != null) {
             processCandidate(foo);
             Log.d(
@@ -1637,7 +1671,7 @@ public class JingleRtpConnection extends AbstractJingleConnection
                                     + from
                                     + " for "
                                     + media);
-                    this.proposedMedia = Sets.newHashSet(media);
+                    this.setProposedMedia(Sets.newHashSet(media));
                 })) {
             if (serverMsgId != null) {
                 this.message.setServerMsgId(serverMsgId);
@@ -1657,6 +1691,7 @@ public class JingleRtpConnection extends AbstractJingleConnection
     }
 
     private void startRinging() {
+        this.callIntegration.setRinging();
         Log.d(
                 Config.LOGTAG,
                 id.account.getJid().asBareJid()
@@ -1666,6 +1701,9 @@ public class JingleRtpConnection extends AbstractJingleConnection
         ringingTimeoutFuture =
                 jingleConnectionManager.schedule(
                         this::ringingTimeout, BUSY_TIME_OUT, TimeUnit.SECONDS);
+        if (CallIntegration.selfManaged(xmppConnectionService)) {
+            return;
+        }
         xmppConnectionService.getNotificationService().startRinging(id, getMedia());
     }
 
@@ -1955,11 +1993,10 @@ public class JingleRtpConnection extends AbstractJingleConnection
         sendSessionTerminate(reason, null);
     }
 
-
     protected void sendSessionTerminate(final Reason reason, final String text) {
-        sendSessionTerminate(reason,text, this::writeLogMessage);
+        sendSessionTerminate(reason, text, this::writeLogMessage);
+        sendJingleMessageFinish(reason);
     }
-
 
     private void sendTransportInfo(
             final String contentName, IceUdpTransportInfo.Candidate candidate) {
@@ -2063,6 +2100,56 @@ public class JingleRtpConnection extends AbstractJingleConnection
         };
     }
 
+    private boolean isPeerConnectionConnected() {
+        try {
+            return webRTCWrapper.getState() == PeerConnection.PeerConnectionState.CONNECTED;
+        } catch (final WebRTCWrapper.PeerConnectionNotInitialized e) {
+            return false;
+        }
+    }
+
+    private void updateCallIntegrationState() {
+        switch (this.state) {
+            case NULL, PROPOSED, SESSION_INITIALIZED -> {
+                if (isInitiator()) {
+                    this.callIntegration.setDialing();
+                } else {
+                    this.callIntegration.setRinging();
+                }
+            }
+            case PROCEED, SESSION_INITIALIZED_PRE_APPROVED -> {
+                if (isInitiator()) {
+                    this.callIntegration.setDialing();
+                } else {
+                    this.callIntegration.setInitialized();
+                }
+            }
+            case SESSION_ACCEPTED -> {
+                if (isPeerConnectionConnected()) {
+                    this.callIntegration.setActive();
+                } else {
+                    this.callIntegration.setInitialized();
+                }
+            }
+            case REJECTED, REJECTED_RACED, TERMINATED_DECLINED_OR_BUSY -> {
+                if (isInitiator()) {
+                    this.callIntegration.busy();
+                } else {
+                    this.callIntegration.rejected();
+                }
+            }
+            case TERMINATED_SUCCESS -> this.callIntegration.success();
+            case ACCEPTED -> this.callIntegration.accepted();
+            case RETRACTED, RETRACTED_RACED, TERMINATED_CANCEL_OR_TIMEOUT -> this.callIntegration
+                    .retracted();
+            case TERMINATED_CONNECTIVITY_ERROR,
+                    TERMINATED_APPLICATION_FAILURE,
+                    TERMINATED_SECURITY_ERROR -> this.callIntegration.error();
+            default -> throw new IllegalStateException(
+                    String.format("%s is not handled", this.state));
+        }
+    }
+
     public ContentAddition getPendingContentAddition() {
         final RtpContentMap in = this.incomingContentAdd;
         final RtpContentMap out = this.outgoingContentAdd;
@@ -2144,15 +2231,6 @@ public class JingleRtpConnection extends AbstractJingleConnection
         }
     }
 
-    public void notifyPhoneCall() {
-        Log.d(Config.LOGTAG, "a phone call has just been started. killing jingle rtp connections");
-        if (Arrays.asList(State.PROPOSED, State.SESSION_INITIALIZED).contains(this.state)) {
-            rejectCall();
-        } else {
-            endCall();
-        }
-    }
-
     public synchronized void rejectCall() {
         if (isTerminated()) {
             Log.w(
@@ -2165,6 +2243,24 @@ public class JingleRtpConnection extends AbstractJingleConnection
             case PROPOSED -> rejectCallFromProposed();
             case SESSION_INITIALIZED -> rejectCallFromSessionInitiate();
             default -> throw new IllegalStateException("Can not reject call from " + this.state);
+        }
+    }
+
+    public synchronized void integrationFailure() {
+        final var state = getState();
+        if (state == State.PROPOSED) {
+            Log.e(
+                    Config.LOGTAG,
+                    id.account.getJid().asBareJid()
+                            + ": failed call integration in state proposed");
+            rejectCallFromProposed();
+        } else if (state == State.SESSION_INITIALIZED) {
+            Log.e(Config.LOGTAG, id.account.getJid().asBareJid() + ": failed call integration");
+            this.webRTCWrapper.close();
+            sendSessionTerminate(Reason.FAILED_APPLICATION, "CallIntegration failed");
+        } else {
+            throw new IllegalStateException(
+                    String.format("Can not fail integration in state %s", state));
         }
     }
 
@@ -2235,14 +2331,14 @@ public class JingleRtpConnection extends AbstractJingleConnection
             final boolean trickle)
             throws WebRTCWrapper.InitializationException {
         this.jingleConnectionManager.ensureConnectionIsRegistered(this);
-        this.webRTCWrapper.setup(
-                this.xmppConnectionService, AppRTCAudioManager.SpeakerPhonePreference.of(media));
+        this.webRTCWrapper.setup(this.xmppConnectionService);
         this.webRTCWrapper.initializePeerConnection(media, iceServers, trickle);
     }
 
     private void acceptCallFromProposed() {
         transitionOrThrow(State.PROCEED);
         xmppConnectionService.getNotificationService().cancelIncomingCallNotification();
+        this.callIntegration.startAudioRouting();
         this.sendJingleMessage("accept", id.account.getJid().asBareJid());
         this.sendJingleMessage("proceed");
     }
@@ -2291,6 +2387,15 @@ public class JingleRtpConnection extends AbstractJingleConnection
         xmppConnectionService.sendMessagePacket(id.account, messagePacket);
     }
 
+    private void sendJingleMessageFinish(final Reason reason) {
+        final var account = id.getAccount();
+        final MessagePacket messagePacket =
+                xmppConnectionService
+                        .getMessageGenerator()
+                        .sessionFinish(id.with, id.sessionId, reason);
+        xmppConnectionService.sendMessagePacket(account, messagePacket);
+    }
+
     private boolean isOmemoEnabled() {
         final Conversational conversational = message.getConversation();
         if (conversational instanceof Conversation) {
@@ -2302,9 +2407,9 @@ public class JingleRtpConnection extends AbstractJingleConnection
 
     private void acceptCallFromSessionInitialized() {
         xmppConnectionService.getNotificationService().cancelIncomingCallNotification();
+        this.callIntegration.startAudioRouting();
         sendSessionAccept();
     }
-
 
     @Override
     protected synchronized boolean transition(final State target, final Runnable runnable) {
@@ -2546,8 +2651,8 @@ public class JingleRtpConnection extends AbstractJingleConnection
     private void modifyLocalContentMap(final RtpContentMap rtpContentMap) {
         final RtpContentMap activeContents = rtpContentMap.activeContents();
         setLocalContentMap(activeContents);
-        this.webRTCWrapper.switchSpeakerPhonePreference(
-                AppRTCAudioManager.SpeakerPhonePreference.of(activeContents.getMedia()));
+        this.callIntegration.setAudioDeviceWhenAvailable(
+                CallIntegration.initialAudioDevice(activeContents.getMedia()));
         updateEndUserState();
     }
 
@@ -2580,8 +2685,9 @@ public class JingleRtpConnection extends AbstractJingleConnection
         return this.sessionDuration.elapsed(TimeUnit.MILLISECONDS);
     }
 
-    public AppRTCAudioManager getAudioManager() {
-        return webRTCWrapper.getAudioManager();
+    @Override
+    public CallIntegration getCallIntegration() {
+        return this.callIntegration;
     }
 
     public boolean isMicrophoneEnabled() {
@@ -2613,16 +2719,72 @@ public class JingleRtpConnection extends AbstractJingleConnection
     }
 
     @Override
+    public synchronized void onCallIntegrationShowIncomingCallUi() {
+        if (isTerminated()) {
+            // there might be race conditions with the call integration service invoking this
+            // callback when the rtp session has already ended.
+            Log.w(
+                    Config.LOGTAG,
+                    "CallIntegration requested incoming call UI but session was already terminated");
+            return;
+        }
+        // TODO apparently this can be called too early as well?
+        xmppConnectionService.getNotificationService().startRinging(id, getMedia());
+    }
+
+    @Override
+    public void onCallIntegrationDisconnect() {
+        Log.d(Config.LOGTAG, "a phone call has just been started. killing jingle rtp connections");
+        if (Arrays.asList(State.PROPOSED, State.SESSION_INITIALIZED).contains(this.state)) {
+            rejectCall();
+        } else {
+            endCall();
+        }
+    }
+
+    @Override
+    public void onCallIntegrationReject() {
+        Log.d(Config.LOGTAG, "rejecting call from system notification / call integration");
+        try {
+            rejectCall();
+        } catch (final IllegalStateException e) {
+            Log.w(Config.LOGTAG, "race condition on rejecting call from notification", e);
+        }
+    }
+
+    @Override
+    public void onCallIntegrationAnswer() {
+        // we need to start the UI to a) show it and b) be able to ask for permissions
+        final Intent intent = new Intent(xmppConnectionService, RtpSessionActivity.class);
+        intent.setAction(RtpSessionActivity.ACTION_ACCEPT_CALL);
+        intent.putExtra(RtpSessionActivity.EXTRA_ACCOUNT, id.account.getJid().toEscapedString());
+        intent.putExtra(RtpSessionActivity.EXTRA_WITH, id.with.toEscapedString());
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        intent.putExtra(RtpSessionActivity.EXTRA_SESSION_ID, id.sessionId);
+        Log.d(Config.LOGTAG, "start activity to accept call from call integration");
+        xmppConnectionService.startActivity(intent);
+    }
+
+    @Override
+    public void onCallIntegrationSilence() {
+        xmppConnectionService.getNotificationService().stopSoundAndVibration();
+    }
+
+    @Override
     public void onAudioDeviceChanged(
-            AppRTCAudioManager.AudioDevice selectedAudioDevice,
-            Set<AppRTCAudioManager.AudioDevice> availableAudioDevices) {
+            final CallIntegration.AudioDevice selectedAudioDevice,
+            final Set<CallIntegration.AudioDevice> availableAudioDevices) {
+        Log.d(
+                Config.LOGTAG,
+                "onAudioDeviceChanged(" + selectedAudioDevice + "," + availableAudioDevices + ")");
         xmppConnectionService.notifyJingleRtpConnectionUpdate(
                 selectedAudioDevice, availableAudioDevices);
     }
 
     private void updateEndUserState() {
         final RtpEndUserState endUserState = getEndUserState();
-        jingleConnectionManager.toneManager.transition(isInitiator(), endUserState, getMedia());
+        this.updateCallIntegrationState();
         xmppConnectionService.notifyJingleRtpConnectionUpdate(
                 id.account, id.with, id.sessionId, endUserState);
     }
@@ -2653,7 +2815,7 @@ public class JingleRtpConnection extends AbstractJingleConnection
                     request,
                     (account, response) -> {
                         final var iceServers = IceServers.parse(response);
-                        if (iceServers.size() == 0) {
+                        if (iceServers.isEmpty()) {
                             Log.w(
                                     Config.LOGTAG,
                                     id.account.getJid().asBareJid()
@@ -2669,7 +2831,7 @@ public class JingleRtpConnection extends AbstractJingleConnection
             onIceServersDiscovered.onIceServersDiscovered(Collections.emptyList());
         }
     }
-    
+
     @Override
     protected void terminateTransport() {
         this.webRTCWrapper.close();
@@ -2679,6 +2841,7 @@ public class JingleRtpConnection extends AbstractJingleConnection
     protected void finish() {
         if (isTerminated()) {
             this.cancelRingingTimeout();
+            this.callIntegration.verifyDisconnected();
             this.webRTCWrapper.verifyClosed();
             this.jingleConnectionManager.setTerminalSessionState(id, getEndUserState(), getMedia());
             super.finish();
@@ -2738,6 +2901,11 @@ public class JingleRtpConnection extends AbstractJingleConnection
 
     void setProposedMedia(final Set<Media> media) {
         this.proposedMedia = media;
+        this.callIntegration.setVideoState(
+                Media.audioOnly(media)
+                        ? VideoProfile.STATE_AUDIO_ONLY
+                        : VideoProfile.STATE_BIDIRECTIONAL);
+        this.callIntegration.setInitialAudioDevice(CallIntegration.initialAudioDevice(media));
     }
 
     public void fireStateUpdate() {
@@ -2760,6 +2928,21 @@ public class JingleRtpConnection extends AbstractJingleConnection
 
     private boolean remoteHasSdpOfferAnswer() {
         return remoteHasFeature(Namespace.SDP_OFFER_ANSWER);
+    }
+
+    @Override
+    public Account getAccount() {
+        return id.account;
+    }
+
+    @Override
+    public Jid getWith() {
+        return id.with;
+    }
+
+    @Override
+    public String getSessionId() {
+        return id.sessionId;
     }
 
     private interface OnIceServersDiscovered {

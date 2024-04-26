@@ -2,7 +2,7 @@ package com.cheogram.android;
 
 import android.app.Activity;
 import android.content.Context;
-import android.graphics.PorterDuff;
+import android.content.res.ColorStateList;
 import android.graphics.Rect;
 import android.util.AttributeSet;
 import android.view.LayoutInflater;
@@ -10,11 +10,14 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import com.google.android.material.color.MaterialColors;
+
 import com.tokenautocomplete.TokenCompleteTextView;
 
 import eu.siacs.conversations.R;
 import eu.siacs.conversations.entities.ListItem;
 import eu.siacs.conversations.utils.UIHelper;
+import eu.siacs.conversations.utils.XEP0392Helper;
 
 public class TagEditorView extends TokenCompleteTextView<ListItem.Tag> {
 	public TagEditorView(Context context, AttributeSet attrs) {
@@ -36,13 +39,13 @@ public class TagEditorView extends TokenCompleteTextView<ListItem.Tag> {
 		LayoutInflater inflater = (LayoutInflater) getContext().getSystemService(Activity.LAYOUT_INFLATER_SERVICE);
 		final TextView tv = (TextView) inflater.inflate(R.layout.list_item_tag, (ViewGroup) getParent(), false);
 		tv.setText(tag.getName());
-		tv.getBackground().mutate().setColorFilter(tag.getColor(), PorterDuff.Mode.SRC_IN);
+      tv.setBackgroundTintList(ColorStateList.valueOf(MaterialColors.harmonizeWithPrimary(getContext(),XEP0392Helper.rgbFromNick(tag.getName()))));
 		return tv;
 	}
 
 	@Override
 	protected ListItem.Tag defaultObject(String completionText) {
-		return new ListItem.Tag(completionText, UIHelper.getColorForName(completionText));
+		return new ListItem.Tag(completionText);
 	}
 
 	@Override

@@ -4,29 +4,22 @@
 
     <RelativeLayout xmlns:tools="http://schemas.android.com/tools"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:background="?attr/color_background_secondary">
+        android:layout_height="match_parent">
 
         <com.google.android.material.tabs.TabLayout
             android:visibility="gone"
             android:id="@+id/tab_layout"
             android:layout_width="match_parent"
             android:layout_height="30dp"
-            android:background="?attr/colorPrimary"
             android:elevation="@dimen/toolbar_elevation"
-            android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
             app:tabGravity="fill"
-            app:tabIndicatorColor="@color/white87"
-            app:tabMode="scrollable"
-            app:tabSelectedTextColor="@color/white"
-            app:tabTextColor="@color/white70" />
+            app:tabMode="scrollable" />
 
         <androidx.viewpager.widget.ViewPager
             android:id="@+id/conversation_view_pager"
             android:layout_below="@id/tab_layout"
             android:layout_width="fill_parent"
-            android:layout_height="fill_parent"
-            android:background="?attr/color_background_secondary">
+            android:layout_height="fill_parent">
 
             <RelativeLayout
                 android:layout_width="fill_parent"
@@ -38,15 +31,13 @@
                     android:layout_height="wrap_content"
                     android:layout_above="@+id/snackbar"
                     android:layout_alignParentStart="true"
-                    android:layout_alignParentLeft="true"
                     android:layout_alignParentTop="true"
-                    android:background="?attr/color_background_secondary"
                     android:divider="@null"
                     android:dividerHeight="0dp"
                     android:listSelector="@android:color/transparent"
                     android:stackFromBottom="true"
                     android:transcriptMode="normal"
-                    tools:listitem="@layout/message_sent"></ListView>
+                    tools:listitem="@layout/item_message_sent" />
 
                 <LinearLayout
                     android:id="@+id/context_preview"
@@ -64,7 +55,7 @@
                     android:background="@drawable/textsend">
 
                     <ImageView
-                        android:src="?attr/icon_quote"
+                        android:src="@drawable/ic_reply_24dp"
                         android:layout_width="20dp"
                         android:layout_height="20dp"
                         android:layout_marginRight="8dp"
@@ -82,69 +73,71 @@
                         android:layout_height="20dp"
                         android:padding="0dp"
                         android:layout_gravity="center_vertical"
-                        android:contentDescription="Cancel"
-                        android:background="?attr/color_background_primary"
-                        android:src="?attr/icon_cancel" />
+                        android:background="@android:color/transparent"
+                        android:src="@drawable/ic_cancel_24dp"
+                        android:contentDescription="Cancel" />
                 </LinearLayout>
 
                 <RelativeLayout
                     android:id="@+id/textsend"
-                    android:layout_width="fill_parent"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_alignParentStart="true"
-                    android:layout_alignParentLeft="true"
                     android:layout_alignParentBottom="true"
-                    android:clipToPadding="true"
-                    android:background="@drawable/textsend">
+                    android:paddingHorizontal="8dp"
+                    android:paddingVertical="6dp">
 
                     <LinearLayout
+                        android:id="@+id/input_layout"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:layout_centerVertical="true"
                         android:layout_toStartOf="@+id/textSendButton"
-                        android:layout_toLeftOf="@+id/textSendButton"
                         android:layout_toEndOf="@+id/thread_identicon_layout"
-                        android:layout_toRightOf="@+id/thread_identicon_layout"
-                        android:orientation="vertical">
+                        android:background="@drawable/background_message_bubble"
+                        android:backgroundTint="?colorTertiaryContainer"
+                        android:orientation="vertical"
+                        android:paddingHorizontal="16dp"
+                        android:paddingVertical="8dp">
+
+                        <TextView
+                            android:id="@+id/text_input_hint"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginBottom="8sp"
+                            android:maxLines="1"
+                            android:textAppearance="?textAppearanceBodySmall"
+                            android:textColor="?colorOnTertiaryContainer"
+                            android:visibility="visible"
+                            tools:text="@string/private_message_to" />
 
                         <androidx.recyclerview.widget.RecyclerView
                             android:id="@+id/media_preview"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:orientation="horizontal"
-                            android:paddingTop="8dp"
                             android:requiresFadingEdge="horizontal"
                             android:visibility="gone"
                             app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
-                            tools:listitem="@layout/media_preview">
+                            tools:listitem="@layout/item_media_preview">
 
                         </androidx.recyclerview.widget.RecyclerView>
 
                         <eu.siacs.conversations.ui.widget.EditMessage
                             android:id="@+id/textinput_subject"
-                            style="@style/Widget.Conversations.EditText"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:hint="Subject"
+                            android:textColor="?colorOnTertiaryContainer"
+                            android:textColorHint="@color/hint_on_tertiary_container"
                             android:maxLines="1"
                             android:padding="8dp"
                             android:imeOptions="flagNoExtractUi"
                             android:inputType="textShortMessage|textMultiLine|textCapSentences"
                             android:visibility="gone" />
 
-                        <TextView
-                            android:id="@+id/text_input_hint"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="8dp"
-                            android:maxLines="1"
-                            android:paddingLeft="8dp"
-                            android:paddingRight="8dp"
-                            android:textAppearance="@style/TextAppearance.Conversations.Caption.Highlight"
-                            android:visibility="gone" />
-
                         <eu.siacs.conversations.ui.widget.EditMessage
                             android:id="@+id/textinput"
-                            style="@style/Widget.Conversations.EditText"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:background="@android:color/transparent"
@@ -152,9 +145,10 @@
                             android:imeOptions="flagNoExtractUi|actionSend"
                             android:inputType="textShortMessage|textMultiLine|textCapSentences"
                             android:maxLines="8"
-                            android:minHeight="48dp"
-                            android:minLines="1"
-                            android:padding="8dp">
+                            android:minHeight="32dp"
+                            android:textColor="?colorOnTertiaryContainer"
+                            android:textColorHint="@color/hint_on_tertiary_container"
+                            android:minLines="1">
 
                             <requestFocus />
                         </eu.siacs.conversations.ui.widget.EditMessage>
@@ -168,7 +162,7 @@
                         android:layout_alignParentStart="true"
                         android:layout_alignParentLeft="true"
                         android:layout_centerVertical="true"
-                        android:layout_marginLeft="7dp"
+                        android:layout_marginEnd="8dp"
                         android:background="@drawable/thread_hint">
 
                         <com.lelloman.identicon.view.GithubIdenticonView
@@ -186,25 +180,26 @@
                             android:layout_alignParentEnd="true"
                             android:layout_alignParentRight="true"
                             android:visibility="gone"
-                            android:src="?attr/icon_small_lock"
                             android:contentDescription="Thread Locked" />
 
                     </RelativeLayout>
 
-                    <ImageButton
+                    <com.google.android.material.button.MaterialButton
                         android:id="@+id/textSendButton"
-                        android:layout_width="48dp"
-                        android:layout_height="48dp"
+                        style="?attr/materialIconButtonFilledTonalStyle"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
                         android:layout_alignParentEnd="true"
-                        android:layout_alignParentRight="true"
                         android:layout_centerVertical="true"
-                        android:background="@android:color/transparent"
+                        android:layout_marginStart="2dp"
+                        android:backgroundTint="?colorSurfaceContainerHigh"
                         android:contentDescription="@string/send_message"
-                        android:src="?attr/ic_send_text_offline" />
+                        app:icon="@drawable/ic_send_24dp"
+                        app:iconSize="32dp" />
 
-                    <Button
+                    <com.google.android.material.button.MaterialButton
+                        style="?attr/materialIconButtonFilledTonalStyle"
                         android:id="@+id/request_voice"
-                        style="@style/Widget.Conversations.Button.Borderless"
                         android:visibility="gone"
                         android:layout_width="wrap_content"
                         android:layout_height="48dp"
@@ -212,78 +207,73 @@
                         android:layout_alignParentEnd="true"
                         android:layout_alignParentRight="true"
                         android:layout_centerVertical="true"
-                        android:background="@android:color/transparent"
                         android:text="Request to Speak" />
                 </RelativeLayout>
+
                 <com.google.android.material.floatingactionbutton.FloatingActionButton
                     android:id="@+id/scroll_to_bottom_button"
+                    style="?attr/floatingActionButtonSmallSurfaceStyle"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_alignBottom="@+id/messages_view"
                     android:layout_alignParentEnd="true"
-                    android:layout_alignParentRight="true"
-                    android:alpha="0.85"
-                    android:src="?attr/icon_scroll_down"
-                    android:visibility="gone"
-                    app:backgroundTint="?attr/color_background_primary"
-                    app:fabSize="mini"
+                    android:src="@drawable/ic_keyboard_double_arrow_down_24dp"
+                    android:visibility="visible"
                     app:useCompatPadding="true" />
 
                 <eu.siacs.conversations.ui.widget.UnreadCountCustomView
                     android:id="@+id/unread_count_custom_view"
-                    android:layout_width="?attr/IconSize"
-                    android:layout_height="?attr/IconSize"
+                    android:layout_width="18sp"
+                    android:layout_height="18sp"
                     android:layout_alignTop="@+id/scroll_to_bottom_button"
                     android:layout_alignEnd="@+id/scroll_to_bottom_button"
-                    android:layout_alignRight="@+id/scroll_to_bottom_button"
                     android:layout_marginTop="16dp"
                     android:layout_marginEnd="8dp"
-                    android:layout_marginRight="8dp"
                     android:elevation="8dp"
                     android:visibility="gone"
-                    app:backgroundColor="?attr/unread_count"
+                    app:backgroundColor="?colorTertiaryContainer"
+                    app:textColor="?colorOnTertiaryContainer"
                     tools:ignore="RtlCompat" />
 
                 <RelativeLayout
                     android:id="@+id/snackbar"
                     android:layout_width="fill_parent"
                     android:layout_height="wrap_content"
-                    android:layout_above="@+id/context_preview"
+                    android:layout_above="@+id/textsend"
                     android:layout_marginLeft="8dp"
                     android:layout_marginRight="8dp"
                     android:layout_marginBottom="4dp"
                     android:background="@drawable/snackbar"
                     android:minHeight="48dp"
-                    android:visibility="gone">
+                    android:visibility="visible">
 
                     <TextView
                         android:id="@+id/snackbar_message"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_alignParentStart="true"
-                        android:layout_alignParentLeft="true"
                         android:layout_centerVertical="true"
+                        android:layout_marginStart="24dp"
                         android:layout_toStartOf="@+id/snackbar_action"
-                        android:layout_toLeftOf="@+id/snackbar_action"
-                        android:paddingStart="24dp"
-                        android:paddingLeft="24dp"
-                        android:textAppearance="@style/TextAppearance.Conversations.Body1.OnDark" />
+                        android:textColor="?colorOnSurfaceInverse"
+                        tools:text="@string/conference_kicked" />
 
                     <TextView
                         android:id="@+id/snackbar_action"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_alignParentEnd="true"
-                        android:layout_alignParentRight="true"
                         android:layout_centerVertical="true"
                         android:paddingLeft="24dp"
                         android:paddingTop="16dp"
                         android:paddingRight="24dp"
                         android:paddingBottom="16dp"
                         android:textAllCaps="true"
-                        android:textAppearance="@style/TextAppearance.Conversations.Body1.OnDark"
-                        android:textStyle="bold" />
+                        android:textColor="?colorOnSurfaceInverse"
+                        android:textStyle="bold"
+                        tools:text="@string/leave" />
                 </RelativeLayout>
+
 		        </RelativeLayout>
 
             <RelativeLayout
@@ -297,7 +287,6 @@
                     android:layout_alignParentStart="true"
                     android:layout_alignParentLeft="true"
                     android:layout_alignParentTop="true"
-                    android:background="?attr/color_background_secondary"
                     android:divider="@android:color/transparent"
                     android:dividerHeight="0dp"></ListView>
 
@@ -312,8 +301,7 @@
                     android:minHeight="?android:attr/listPreferredItemHeightSmall"
                     android:paddingLeft="8dp"
                     android:paddingRight="8dp"
-                    android:textAppearance="@style/TextAppearance.Conversations.Body1"
-                    android:textColor="?attr/edit_text_color" />
+                    android:textAppearance="?textAppearanceBodyMedium" />
 
                 <ProgressBar
                     android:id="@+id/commands_view_progressbar"

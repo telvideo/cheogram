@@ -15,8 +15,7 @@
             android:paddingRight="8dp"
             android:paddingBottom="8dp"
             android:gravity="center"
-            android:textAppearance="@style/TextAppearance.Conversations.Subhead"
-            android:textColor="?attr/edit_text_color" />
+            android:textAppearance="?textAppearanceBodyMedium" />
 
         <TextView
             android:id="@+id/desc"
@@ -25,8 +24,7 @@
             android:paddingLeft="16dp"
             android:paddingRight="8dp"
             android:gravity="center"
-            android:textAppearance="@style/TextAppearance.Conversations.Status"
-            android:textColor="?android:textColorSecondary" />
+            android:textAppearance="?textAppearanceBodyMedium" />
 
         <Button
             android:id="@+id/default_button"
@@ -60,8 +58,7 @@
             android:layout_marginLeft="8dp"
             android:layout_marginTop="40dp"
             android:gravity="center"
-            android:text="other / custom"
-            style="@style/Widget.Conversations.Button.Borderless" />
+            android:text="other / custom" />
 
     </LinearLayout>
 </layout>

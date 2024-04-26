@@ -39,7 +39,7 @@
         android:id="@+id/action_easy_invite"
         android:orderInCategory="89"
         app:showAsAction="ifRoom"
-        android:icon="?attr/icon_add_person"
+        android:icon="@drawable/ic_person_add_24dp"
         android:title="@string/invite_to_app" />
     <item
         android:id="@+id/action_accounts"

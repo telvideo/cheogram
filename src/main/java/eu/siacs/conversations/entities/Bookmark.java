@@ -5,6 +5,9 @@ import android.content.Context;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableList;
+
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -213,7 +216,7 @@ public class Bookmark extends Element implements ListItem {
 		for (Element element : getChildren()) {
 			if (element.getName().equals("group") && element.getContent() != null) {
 				String group = element.getContent();
-				tags.add(new Tag(group, UIHelper.getColorForName(group, true)));
+				tags.add(new Tag(group));
 			}
 		}
 
@@ -223,7 +226,7 @@ public class Bookmark extends Element implements ListItem {
 	@Override
 	public List<Tag> getTags(Context context) {
 		ArrayList<Tag> tags = new ArrayList<>();
-		tags.add(new Tag("Channel", UIHelper.getColorForName("Channel",true)));
+		tags.add(new Tag("Channel"));
 		tags.addAll(getGroupTags());
 		return tags;
 	}

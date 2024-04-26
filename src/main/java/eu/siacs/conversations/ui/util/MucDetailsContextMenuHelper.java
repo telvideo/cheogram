@@ -17,6 +17,8 @@ import androidx.databinding.DataBindingUtil;
 
 import java.util.ArrayList;
 
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+
 import eu.siacs.conversations.Config;
 import eu.siacs.conversations.R;
 import eu.siacs.conversations.databinding.DialogQuickeditBinding;
@@ -287,6 +289,7 @@ public final class MucDetailsContextMenuHelper {
                 activity.privateMsgInMuc(conversation, user.getName());
                 return true;
             case R.id.invite:
+                // TODO use direct invites for public conferences
                 if (user.getAffiliation().ranks(MucOptions.Affiliation.MEMBER)) {
                     activity.xmppConnectionService.directInvite(conversation, jid.asBareJid());
                 } else {
@@ -306,7 +309,7 @@ public final class MucDetailsContextMenuHelper {
                 activity.xmppConnectionService.changeRoleInConference(conversation, user.getName(), MucOptions.Role.NONE);
             }
         } else {
-            AlertDialog.Builder builder = new AlertDialog.Builder(activity);
+            final MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(activity);
             builder.setTitle(R.string.ban_from_conference);
             String jid = user.getRealJid().asBareJid().toString();
             SpannableString message = new SpannableString(activity.getString(R.string.removing_from_public_conference, jid));

@@ -68,10 +68,12 @@ import com.cheogram.android.ConversationPage;
 import com.cheogram.android.Util;
 import com.cheogram.android.WebxdcPage;
 
+import com.google.android.material.color.MaterialColors;
 import com.google.android.material.tabs.TabLayout;
 import com.google.android.material.textfield.TextInputLayout;
 import com.google.common.base.Optional;
 import com.google.common.collect.ComparisonChain;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 
 import io.ipfs.cid.Cid;
@@ -204,6 +206,7 @@ public class Conversation extends AbstractEntity implements Blockable, Comparabl
     protected boolean userSelectedThread = false;
     protected Message replyTo = null;
     protected HashMap<String, Thread> threads = new HashMap<>();
+    private String displayState = null;
 
     public Conversation(final String name, final Account account, final Jid contactJid,
                         final int mode) {
@@ -555,6 +558,17 @@ public class Conversation extends AbstractEntity implements Blockable, Comparabl
         return null;
     }
 
+    public Message findReceivedWithRemoteId(final String id) {
+        synchronized (this.messages) {
+            for (final Message message : this.messages) {
+                if (message.getStatus() == Message.STATUS_RECEIVED && id.equals(message.getRemoteMsgId())) {
+                    return message;
+                }
+            }
+        }
+        return null;
+    }
+
     public Message findMessageWithServerMsgId(String id) {
         synchronized (this.messages) {
             for (Message message : this.messages) {
@@ -836,20 +850,20 @@ public class Conversation extends AbstractEntity implements Blockable, Comparabl
         }
     }
 
-    public List<Message> markRead(String upToUuid) {
-        final List<Message> unread = new ArrayList<>();
+    public List<Message> markRead(final String upToUuid) {
+        final ImmutableList.Builder<Message> unread = new ImmutableList.Builder<>();
         synchronized (this.messages) {
-            for (Message message : this.messages) {
+            for (final Message message : this.messages) {
                 if (!message.isRead()) {
                     message.markRead();
                     unread.add(message);
                 }
                 if (message.getUuid().equals(upToUuid)) {
-                    return unread;
+                    return unread.build();
                 }
             }
         }
-        return unread;
+        return unread.build();
     }
 
     public Message getLatestMessage() {
@@ -1426,6 +1440,14 @@ public class Conversation extends AbstractEntity implements Blockable, Comparabl
         pagerAdapter.hide();
     }
 
+    public void setDisplayState(final String stanzaId) {
+        this.displayState = stanzaId;
+    }
+
+    public String getDisplayState() {
+        return this.displayState;
+    }
+
     public interface OnMessageFound {
         void onMessageFound(final Message message);
     }
@@ -1938,7 +1960,7 @@ public class Conversation extends AbstractEntity implements Blockable, Comparabl
                     Cell cell = (Cell) item;
 
                     if (cell.el == null) {
-                        binding.text.setTextAppearance(binding.getRoot().getContext(), R.style.TextAppearance_Conversations_Subhead);
+                        binding.text.setTextAppearance(binding.getRoot().getContext(), com.google.android.material.R.style.TextAppearance_Material3_TitleMedium);
                         setTextOrHide(binding.text, cell.reported.getLabel());
                     } else {
                         Element validate = cell.reported.el.findChild("validate", "http://jabber.org/protocol/xdata-validate");
@@ -1955,7 +1977,7 @@ public class Conversation extends AbstractEntity implements Blockable, Comparabl
                             } catch (final IllegalArgumentException | NumberParseException | NullPointerException e) { }
                         }
 
-                        binding.text.setTextAppearance(binding.getRoot().getContext(), R.style.TextAppearance_Conversations_Body1);
+                        binding.text.setTextAppearance(binding.getRoot().getContext(), com.google.android.material.R.style.TextAppearance_Material3_BodyMedium);
                         binding.text.setText(text);
 
                         BetterLinkMovementMethod method = BetterLinkMovementMethod.newInstance();
@@ -2041,6 +2063,7 @@ public class Conversation extends AbstractEntity implements Blockable, Comparabl
                 protected ArrayAdapter<Option> adapter;
                 protected boolean open;
                 protected boolean multi;
+                protected int textColor = -1;
 
                 @Override
                 public void bind(Item item) {
@@ -2057,12 +2080,13 @@ public class Conversation extends AbstractEntity implements Blockable, Comparabl
                     setTextOrHide(binding.label, field.getLabel());
                     setTextOrHide(binding.desc, field.getDesc());
 
+                    if (textColor == -1) textColor = binding.desc.getCurrentTextColor();
                     if (field.error != null) {
                         binding.desc.setVisibility(View.VISIBLE);
                         binding.desc.setText(field.error);
-                        binding.desc.setTextAppearance(binding.getRoot().getContext(), R.style.TextAppearance_Conversations_Design_Error);
+                        binding.desc.setTextColor(com.google.android.material.R.attr.colorError);
                     } else {
-                        binding.desc.setTextAppearance(binding.getRoot().getContext(), R.style.TextAppearance_Conversations_Status);
+                        binding.desc.setTextColor(textColor);
                     }
 
                     Element validate = field.el.findChild("validate", "http://jabber.org/protocol/xdata-validate");
@@ -2147,6 +2171,7 @@ public class Conversation extends AbstractEntity implements Blockable, Comparabl
                 }
                 protected Element mValue = null;
                 protected ArrayAdapter<Option> options;
+                protected int textColor = -1;
 
                 @Override
                 public void bind(Item item) {
@@ -2154,12 +2179,13 @@ public class Conversation extends AbstractEntity implements Blockable, Comparabl
                     setTextOrHide(binding.label, field.getLabel());
                     setTextOrHide(binding.desc, field.getDesc());
 
+                    if (textColor == -1) textColor = binding.desc.getCurrentTextColor();
                     if (field.error != null) {
                         binding.desc.setVisibility(View.VISIBLE);
                         binding.desc.setText(field.error);
-                        binding.desc.setTextAppearance(binding.getRoot().getContext(), R.style.TextAppearance_Conversations_Design_Error);
+                        binding.desc.setTextColor(com.google.android.material.R.attr.colorError);
                     } else {
-                        binding.desc.setTextAppearance(binding.getRoot().getContext(), R.style.TextAppearance_Conversations_Status);
+                        binding.desc.setTextColor(textColor);
                     }
 
                     mValue = field.getValue();
@@ -2295,6 +2321,7 @@ public class Conversation extends AbstractEntity implements Blockable, Comparabl
                 protected ArrayAdapter<Option> options;
                 protected Option defaultOption = null;
                 protected boolean mediaSelector = false;
+                protected int textColor = -1;
 
                 @Override
                 public void bind(Item item) {
@@ -2302,12 +2329,13 @@ public class Conversation extends AbstractEntity implements Blockable, Comparabl
                     setTextOrHide(binding.label, field.getLabel());
                     setTextOrHide(binding.desc, field.getDesc());
 
+                    if (textColor == -1) textColor = binding.desc.getCurrentTextColor();
                     if (field.error != null) {
                         binding.desc.setVisibility(View.VISIBLE);
                         binding.desc.setText(field.error);
-                        binding.desc.setTextAppearance(binding.getRoot().getContext(), R.style.TextAppearance_Conversations_Design_Error);
+                        binding.desc.setTextColor(com.google.android.material.R.attr.colorError);
                     } else {
-                        binding.desc.setTextAppearance(binding.getRoot().getContext(), R.style.TextAppearance_Conversations_Status);
+                        binding.desc.setTextColor(textColor);
                     }
 
                     mValue = field.getValue();
@@ -2748,7 +2776,7 @@ public class Conversation extends AbstractEntity implements Blockable, Comparabl
                     int resId = ctx.getResources().getIdentifier("action_" + getItem(position).first, "string" , ctx.getPackageName());
                     if (resId != 0 && getItem(position).second.equals(getItem(position).first)) tv.setText(ctx.getResources().getString(resId));
                     tv.setTextColor(ContextCompat.getColor(ctx, R.color.white));
-                    tv.setBackgroundColor(UIHelper.getColorForName(getItem(position).first));
+                    tv.setBackgroundColor(MaterialColors.harmonizeWithPrimary(ctx,UIHelper.getColorForName(getItem(position).first)));
                     return v;
                 }
 
@@ -2829,18 +2857,6 @@ public class Conversation extends AbstractEntity implements Blockable, Comparabl
                 mNode = node;
                 this.xmppConnectionService = xmppConnectionService;
                 if (mPager != null) setupLayoutManager();
-                actionsAdapter = new ActionsAdapter(xmppConnectionService);
-                actionsAdapter.registerDataSetObserver(new DataSetObserver() {
-                    @Override
-                    public void onChanged() {
-                        if (mBinding == null) return;
-
-                        mBinding.actions.setNumColumns(actionsAdapter.getCount() > 1 ? 2 : 1);
-                    }
-
-                    @Override
-                    public void onInvalidated() {}
-                });
             }
 
             public String getTitle() {
@@ -3407,6 +3423,19 @@ public class Conversation extends AbstractEntity implements Blockable, Comparabl
                 });
                 mBinding.form.setLayoutManager(setupLayoutManager());
                 mBinding.form.setAdapter(this);
+
+                actionsAdapter = new ActionsAdapter(mBinding.getRoot().getContext());
+                actionsAdapter.registerDataSetObserver(new DataSetObserver() {
+                    @Override
+                    public void onChanged() {
+                        if (mBinding == null) return;
+
+                        mBinding.actions.setNumColumns(actionsAdapter.getCount() > 1 ? 2 : 1);
+                    }
+
+                    @Override
+                    public void onInvalidated() {}
+                });
                 mBinding.actions.setAdapter(actionsAdapter);
                 mBinding.actions.setOnItemClickListener((parent, v, pos, id) -> {
                     if (execute(pos)) {

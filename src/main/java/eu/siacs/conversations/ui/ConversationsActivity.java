@@ -68,6 +68,7 @@ import com.cheogram.android.FinishOnboarding;
 import com.google.common.collect.ImmutableList;
 
 import io.michaelrocks.libphonenumber.android.NumberParseException;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 import org.openintents.openpgp.util.OpenPgpApi;
 
@@ -92,11 +93,11 @@ import eu.siacs.conversations.ui.interfaces.OnConversationArchived;
 import eu.siacs.conversations.ui.interfaces.OnConversationRead;
 import eu.siacs.conversations.ui.interfaces.OnConversationSelected;
 import eu.siacs.conversations.ui.interfaces.OnConversationsListItemUpdated;
-import eu.siacs.conversations.ui.util.ActionBarUtil;
 import eu.siacs.conversations.ui.util.ActivityResult;
 import eu.siacs.conversations.ui.util.ConversationMenuConfigurator;
 import eu.siacs.conversations.ui.util.MenuDoubleTabUtil;
 import eu.siacs.conversations.ui.util.PendingItem;
+import eu.siacs.conversations.ui.util.ToolbarUtils;
 import eu.siacs.conversations.utils.ExceptionHelper;
 import eu.siacs.conversations.utils.PhoneNumberUtilWrapper;
 import eu.siacs.conversations.utils.SignupUtils;
@@ -167,7 +168,7 @@ public class ConversationsActivity extends XmppActivity implements OnConversatio
     }
 
     @Override
-    void onBackendConnected() {
+    protected void onBackendConnected() {
         if (performRedirectIfNecessary(true)) {
             return;
         }
@@ -254,10 +255,8 @@ public class ConversationsActivity extends XmppActivity implements OnConversatio
     }
 
     private boolean openBatteryOptimizationDialogIfNeeded() {
-        if (isOptimizingBattery()
-                && android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M
-                && getPreferences().getBoolean(getBatteryOptimizationPreferenceKey(), true)) {
-            final AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        if (isOptimizingBattery() && getPreferences().getBoolean(getBatteryOptimizationPreferenceKey(), true)) {
+            final MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(this);
             builder.setTitle(R.string.battery_optimizations_enabled);
             builder.setMessage(getString(R.string.battery_optimizations_enabled_dialog, getString(R.string.app_name)));
             builder.setPositiveButton(R.string.next, (dialog, which) -> {
@@ -508,6 +507,7 @@ public class ConversationsActivity extends XmppActivity implements OnConversatio
         ConversationMenuConfigurator.reloadFeatures(this);
         OmemoSetting.load(this);
         this.binding = DataBindingUtil.setContentView(this, R.layout.activity_conversations);
+        Activities.setStatusAndNavigationBarColors(this, binding.getRoot());
         setSupportActionBar(binding.toolbar);
         configureActionBar(getSupportActionBar());
         this.getFragmentManager().addOnBackStackChangedListener(this::invalidateActionBarTitle);
@@ -602,9 +602,8 @@ public class ConversationsActivity extends XmppActivity implements OnConversatio
         conversationFragment.reInit(conversation, extras == null ? new Bundle() : extras);
         if (mainNeedsRefresh) {
             refreshFragment(R.id.main_fragment);
-        } else {
-            invalidateActionBarTitle();
         }
+        invalidateActionBarTitle();
     }
 
     private static void executePendingTransactions(final FragmentManager fragmentManager) {
@@ -730,15 +729,8 @@ public class ConversationsActivity extends XmppActivity implements OnConversatio
     }
 
     @Override
-    protected void onStart() {
+    public void onStart() {
         super.onStart();
-        final int theme = findTheme();
-        if (this.mTheme != theme || !this.mCustomColors.equals(ThemeHelper.applyCustomColors(this))) {
-            this.mSkipBackgroundBinding = true;
-            recreate();
-        } else {
-            this.mSkipBackgroundBinding = false;
-        }
         mRedirectInProcess.set(false);
     }
 
@@ -814,21 +806,27 @@ public class ConversationsActivity extends XmppActivity implements OnConversatio
         }
         final FragmentManager fragmentManager = getFragmentManager();
         final Fragment mainFragment = fragmentManager.findFragmentById(R.id.main_fragment);
-        if (mainFragment instanceof ConversationFragment) {
-            final Conversation conversation = ((ConversationFragment) mainFragment).getConversation();
+        if (mainFragment instanceof ConversationFragment conversationFragment) {
+            final Conversation conversation = conversationFragment.getConversation();
             if (conversation != null) {
                 actionBar.setTitle(conversation.getName());
                 actionBar.setDisplayHomeAsUpEnabled(!xmppConnectionService.isOnboarding() || !conversation.getJid().equals(Jid.of("cheogram.com")));
-                ActionBarUtil.setActionBarOnClickListener(
-                        binding.toolbar,
-                        (v) -> { if(!xmppConnectionService.isOnboarding()) openConversationDetails(conversation); }
-                );
                 return;
             }
         }
-        actionBar.setTitle(R.string.app_name);
+        final Fragment secondaryFragment = fragmentManager.findFragmentById(R.id.secondary_fragment);
+        if (secondaryFragment instanceof ConversationFragment conversationFragment) {
+            final Conversation conversation = conversationFragment.getConversation();
+            if (conversation != null) {
+                actionBar.setTitle(conversation.getName());
+            } else {
+                actionBar.setTitle(R.string.app_name);
+            }
+        } else {
+            actionBar.setTitle(R.string.app_name);
+        }
         actionBar.setDisplayHomeAsUpEnabled(false);
-        ActionBarUtil.resetActionBarOnClickListeners(binding.toolbar);
+        ToolbarUtils.resetActionBarOnClickListeners(binding.toolbar);
     }
 
     private void openConversationDetails(final Conversation conversation) {

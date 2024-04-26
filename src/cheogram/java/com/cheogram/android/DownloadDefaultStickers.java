@@ -150,7 +150,7 @@ public class DownloadDefaultStickers extends Service {
 
 		NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(getBaseContext(), "backup");
 		mBuilder.setContentTitle("Downloading Stickers")
-				.setSmallIcon(R.drawable.ic_archive_white_24dp)
+				.setSmallIcon(R.drawable.ic_archive_24dp)
 				.setProgress(1, 0, false);
 		startForeground(NOTIFICATION_ID, mBuilder.build());
 

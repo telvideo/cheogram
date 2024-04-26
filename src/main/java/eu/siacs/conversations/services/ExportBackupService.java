@@ -324,7 +324,7 @@ public class ExportBackupService extends Service {
     private List<File> export(boolean withCheogramDb) throws Exception {
         NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(getBaseContext(), "backup");
         mBuilder.setContentTitle(getString(R.string.notification_create_backup_title))
-                .setSmallIcon(R.drawable.ic_archive_white_24dp)
+                .setSmallIcon(R.drawable.ic_archive_24dp)
                 .setProgress(1, 0, false);
         startForeground(NOTIFICATION_ID, mBuilder.build());
         int count = 0;
@@ -432,10 +432,13 @@ public class ExportBackupService extends Service {
                 .setStyle(new NotificationCompat.BigTextStyle().bigText(getString(R.string.notification_backup_created_subtitle, FileBackend.getBackupDirectory(this).getAbsolutePath())))
                 .setAutoCancel(true)
                 .setContentIntent(openFolderIntent)
-                .setSmallIcon(R.drawable.ic_archive_white_24dp);
+                .setSmallIcon(R.drawable.ic_archive_24dp);
 
         if (shareFilesIntent != null) {
-            mBuilder.addAction(R.drawable.ic_share_white_24dp, getString(R.string.share_backup_files), shareFilesIntent);
+            mBuilder.addAction(
+                    R.drawable.ic_share_24dp,
+                    getString(R.string.share_backup_files),
+                    shareFilesIntent);
         }
 
         try { Thread.sleep(500); } catch (final Exception e) { }

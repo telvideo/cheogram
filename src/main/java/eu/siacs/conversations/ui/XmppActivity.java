@@ -4,7 +4,6 @@ import android.telephony.TelephonyManager;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
-import android.annotation.TargetApi;
 import android.app.PendingIntent;
 import android.content.ActivityNotFoundException;
 import android.content.ClipData;
@@ -19,10 +18,9 @@ import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
+import android.content.res.Configuration;
 import android.content.res.Resources;
-import android.content.res.TypedArray;
 import android.graphics.Bitmap;
-import android.graphics.Color;
 import android.graphics.Point;
 import android.graphics.drawable.AnimatedImageDrawable;
 import android.graphics.drawable.BitmapDrawable;
@@ -55,10 +53,11 @@ import androidx.annotation.BoolRes;
 import androidx.annotation.NonNull;
 import androidx.annotation.StringRes;
 import androidx.appcompat.app.AlertDialog;
-import androidx.appcompat.app.AlertDialog.Builder;
 import androidx.appcompat.app.AppCompatDelegate;
 import androidx.databinding.DataBindingUtil;
 
+import com.google.android.material.color.MaterialColors;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.common.base.Strings;
 
 import java.io.IOException;
@@ -69,6 +68,7 @@ import java.util.List;
 import java.util.PriorityQueue;
 import java.util.concurrent.RejectedExecutionException;
 
+import eu.siacs.conversations.AppSettings;
 import eu.siacs.conversations.BuildConfig;
 import eu.siacs.conversations.Config;
 import eu.siacs.conversations.R;
@@ -170,7 +170,6 @@ public abstract class XmppActivity extends ActionBarActivity {
 
         }
     };
-    public boolean mSkipBackgroundBinding = false;
 
     public static boolean cancelPotentialWork(Message message, ImageView imageView) {
         final BitmapWorkerTask bitmapWorkerTask = getBitmapWorkerTask(imageView);
@@ -228,14 +227,13 @@ public abstract class XmppActivity extends ActionBarActivity {
     abstract protected void refreshUiReal();
 
     @Override
-    protected void onStart() {
+    public void onStart() {
         super.onStart();
+        if (!this.mCustomColors.equals(ThemeHelper.applyCustomColors(this))) {
+            recreate();
+        }
         if (!xmppConnectionServiceBound) {
-            if (this.mSkipBackgroundBinding) {
-                Log.d(Config.LOGTAG, "skipping background binding");
-            } else {
-                connectToBackend();
-            }
+            connectToBackend();
         } else {
             this.registerListeners();
             this.onBackendConnected();
@@ -271,7 +269,7 @@ public abstract class XmppActivity extends ActionBarActivity {
     }
 
     public void showInstallPgpDialog() {
-        Builder builder = new AlertDialog.Builder(this);
+        final MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(this);
         builder.setTitle(getString(R.string.openkeychain_required));
         builder.setIconAttribute(android.R.attr.alertDialogIcon);
         builder.setMessage(Html.fromHtml(getString(R.string.openkeychain_required_long, getString(R.string.app_name))));
@@ -314,7 +312,7 @@ public abstract class XmppActivity extends ActionBarActivity {
     }
 
     protected void deleteAccount(final Account account, final Runnable postDelete) {
-        final AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        final MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(this);
         final View dialogView = getLayoutInflater().inflate(R.layout.dialog_delete_account, null);
         final CheckBox deleteFromServer =
                 dialogView.findViewById(R.id.delete_from_server);
@@ -371,7 +369,7 @@ public abstract class XmppActivity extends ActionBarActivity {
         dialog.show();
     }
 
-    abstract void onBackendConnected();
+    protected abstract void onBackendConnected();
 
     protected void registerListeners() {
         if (this instanceof XmppConnectionService.OnConversationUpdate) {
@@ -437,7 +435,7 @@ public abstract class XmppActivity extends ActionBarActivity {
     public boolean onOptionsItemSelected(final MenuItem item) {
         switch (item.getItemId()) {
             case R.id.action_settings:
-                startActivity(new Intent(this, SettingsActivity.class));
+                startActivity(new Intent(this, eu.siacs.conversations.ui.activity.SettingsActivity.class));
                 break;
             case R.id.action_privacy_policy:
                 openPrivacyPolicy();
@@ -508,30 +506,13 @@ public abstract class XmppActivity extends ActionBarActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         metrics = getResources().getDisplayMetrics();
-        ExceptionHelper.init(getApplicationContext());
         EmojiInitializationService.execute(this);
         this.isCameraFeatureAvailable = getPackageManager().hasSystemFeature(PackageManager.FEATURE_CAMERA_ANY);
-        this.mTheme = findTheme();
-        setTheme(this.mTheme);
         this.mCustomColors = ThemeHelper.applyCustomColors(this);
     }
 
     protected boolean isCameraFeatureAvailable() {
         return this.isCameraFeatureAvailable;
-    }
-
-    public boolean isDarkTheme() {
-        return ThemeHelper.isDark(mTheme);
-    }
-
-    public int getThemeResource(int r_attr_name, int r_drawable_def) {
-        int[] attrs = {r_attr_name};
-        TypedArray ta = this.getTheme().obtainStyledAttributes(attrs);
-
-        int res = ta.getResourceId(0, r_drawable_def);
-        ta.recycle();
-
-        return res;
     }
 
     protected boolean isOptimizingBattery() {
@@ -738,21 +719,10 @@ public abstract class XmppActivity extends ActionBarActivity {
         }
     }
 
-    @SuppressWarnings("deprecation")
-    @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
-    protected void setListItemBackgroundOnView(View view) {
-        int sdk = android.os.Build.VERSION.SDK_INT;
-        if (sdk < android.os.Build.VERSION_CODES.JELLY_BEAN) {
-            view.setBackgroundDrawable(getResources().getDrawable(R.drawable.greybackground));
-        } else {
-            view.setBackground(getResources().getDrawable(R.drawable.greybackground));
-        }
-    }
-
-    protected void choosePgpSignId(Account account) {
-        xmppConnectionService.getPgpEngine().chooseKey(account, new UiCallback<Account>() {
+    protected void choosePgpSignId(final Account account) {
+        xmppConnectionService.getPgpEngine().chooseKey(account, new UiCallback<>() {
             @Override
-            public void success(Account account1) {
+            public void success(final Account a) {
             }
 
             @Override
@@ -773,8 +743,7 @@ public abstract class XmppActivity extends ActionBarActivity {
 
     protected void displayErrorDialog(final int errorCode) {
         runOnUiThread(() -> {
-            Builder builder = new Builder(XmppActivity.this);
-            builder.setIconAttribute(android.R.attr.alertDialogIcon);
+            final MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(XmppActivity.this);
             builder.setTitle(getString(R.string.error));
             builder.setMessage(errorCode);
             builder.setNeutralButton(R.string.accept, null);
@@ -784,7 +753,7 @@ public abstract class XmppActivity extends ActionBarActivity {
     }
 
     protected void showAddToRosterDialog(final Contact contact) {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        final MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(this);
         builder.setTitle(contact.getJid().toString());
         builder.setMessage(getString(R.string.not_in_roster));
         builder.setNegativeButton(getString(R.string.cancel), null);
@@ -796,7 +765,7 @@ public abstract class XmppActivity extends ActionBarActivity {
     }
 
     private void showAskForPresenceDialog(final Contact contact) {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        final MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(this);
         builder.setTitle(contact.getJid().toString());
         builder.setMessage(R.string.request_presence_updates);
         builder.setNegativeButton(R.string.cancel, null);
@@ -835,8 +804,8 @@ public abstract class XmppActivity extends ActionBarActivity {
                            boolean password,
                            boolean permitEmpty,
                            boolean alwaysCallback) {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        DialogQuickeditBinding binding = DataBindingUtil.inflate(getLayoutInflater(), R.layout.dialog_quickedit, null, false);
+        final MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(this);
+        final DialogQuickeditBinding binding = DataBindingUtil.inflate(getLayoutInflater(), R.layout.dialog_quickedit, null, false);
         if (password) {
             binding.inputEditText.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
         }
@@ -877,7 +846,7 @@ public abstract class XmppActivity extends ActionBarActivity {
     }
 
     protected boolean hasStoragePermission(int requestCode) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
             if (checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
                 requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, requestCode);
                 return false;
@@ -937,7 +906,7 @@ public abstract class XmppActivity extends ActionBarActivity {
     }
 
     protected boolean manuallyChangePresence() {
-        return getBooleanPreference(SettingsActivity.MANUALLY_CHANGE_PRESENCE, R.bool.manually_change_presence);
+        return getBooleanPreference(AppSettings.MANUALLY_CHANGE_PRESENCE, R.bool.manually_change_presence);
     }
 
     protected String getShareableUri() {
@@ -978,11 +947,7 @@ public abstract class XmppActivity extends ActionBarActivity {
     @Override
     protected void onResume(){
         super.onResume();
-        SettingsUtils.applyScreenshotPreventionSetting(this);
-    }
-
-    protected int findTheme() {
-        return ThemeHelper.find(this);
+        SettingsUtils.applyScreenshotSetting(this);
     }
 
     @Override
@@ -1006,14 +971,23 @@ public abstract class XmppActivity extends ActionBarActivity {
         if (uri == null || uri.isEmpty()) {
             return;
         }
-        Point size = new Point();
+        final Point size = new Point();
         getWindowManager().getDefaultDisplay().getSize(size);
-        final int width = (size.x < size.y ? size.x : size.y);
-        Bitmap bitmap = BarcodeProvider.create2dBarcodeBitmap(uri, width);
-        ImageView view = new ImageView(this);
-        view.setBackgroundColor(Color.WHITE);
+        final int width = Math.min(size.x, size.y);
+        final int black;
+        final int white;
+        if (Activities.isNightMode(this)) {
+            black = MaterialColors.getColor(this, com.google.android.material.R.attr.colorSurfaceContainerHighest,"No surface color configured");
+            white = MaterialColors.getColor(this, com.google.android.material.R.attr.colorSurfaceInverse,"No inverse surface color configured");
+        } else {
+            black = MaterialColors.getColor(this, com.google.android.material.R.attr.colorSurfaceInverse,"No inverse surface color configured");
+            white = MaterialColors.getColor(this, com.google.android.material.R.attr.colorSurfaceContainerHighest,"No surface color configured");
+        }
+        final var bitmap = BarcodeProvider.create2dBarcodeBitmap(uri, width, black, white);
+        final ImageView view = new ImageView(this);
+        view.setBackgroundColor(white);
         view.setImageBitmap(bitmap);
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(this);
         builder.setView(view);
         builder.create().show();
     }
@@ -1080,14 +1054,15 @@ public abstract class XmppActivity extends ActionBarActivity {
             return invite;
         }
 
-        public boolean execute(XmppActivity activity) {
-            XmppConnectionService service = activity.xmppConnectionService;
-            Conversation conversation = service.findConversationByUuid(this.uuid);
+        public boolean execute(final XmppActivity activity) {
+            final XmppConnectionService service = activity.xmppConnectionService;
+            final Conversation conversation = service.findConversationByUuid(this.uuid);
             if (conversation == null) {
                 return false;
             }
             if (conversation.getMode() == Conversation.MODE_MULTI) {
-                for (Jid jid : jids) {
+                for (final Jid jid : jids) {
+                    // TODO use direct invites for public conferences
                     service.invite(conversation, jid);
                 }
                 return false;
@@ -1180,5 +1155,10 @@ public abstract class XmppActivity extends ActionBarActivity {
             context = ((ContextWrapper) context).getBaseContext();
         }
         return null;
+    }
+
+    public boolean isDark() {
+        int nightModeFlags = getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK;
+        return nightModeFlags == Configuration.UI_MODE_NIGHT_YES;
     }
 }

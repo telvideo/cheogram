@@ -8,7 +8,6 @@
         android:minHeight="?android:attr/listPreferredItemHeightSmall"
         android:paddingLeft="@dimen/avatar_item_distance"
         android:paddingRight="@dimen/avatar_item_distance"
-        android:background="@drawable/list_choice"
         android:orientation="horizontal">
 
         <com.lelloman.identicon.view.GithubIdenticonView
@@ -25,8 +24,7 @@
             android:gravity="center_vertical"
             android:maxLines="1"
             android:minHeight="?android:attr/listPreferredItemHeightSmall"
-            android:textAppearance="@style/TextAppearance.Conversations.Body1"
-            android:textColor="?attr/edit_text_color" />
+            android:textAppearance="?textAppearanceBodyMedium" />
 
     </LinearLayout>
 

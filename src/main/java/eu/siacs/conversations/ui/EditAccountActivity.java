@@ -36,9 +36,11 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AlertDialog;
-import androidx.appcompat.app.AlertDialog.Builder;
 import androidx.databinding.DataBindingUtil;
+import androidx.lifecycle.Lifecycle;
 
+import com.google.android.material.color.MaterialColors;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.textfield.TextInputLayout;
 import com.google.common.base.CharMatcher;
 
@@ -46,11 +48,15 @@ import com.rarepebble.colorpicker.ColorPickerView;
 
 import org.openintents.openpgp.util.OpenPgpUtils;
 
+import java.text.DateFormat;
 import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import eu.siacs.conversations.AppSettings;
 import eu.siacs.conversations.Config;
 import eu.siacs.conversations.R;
 import eu.siacs.conversations.crypto.axolotl.AxolotlService;
@@ -66,6 +72,7 @@ import eu.siacs.conversations.services.QuickConversationsService;
 import eu.siacs.conversations.services.XmppConnectionService;
 import eu.siacs.conversations.services.XmppConnectionService.OnAccountUpdate;
 import eu.siacs.conversations.services.XmppConnectionService.OnCaptchaRequested;
+import eu.siacs.conversations.ui.TimePreference;
 import eu.siacs.conversations.ui.adapter.KnownHostsAdapter;
 import eu.siacs.conversations.ui.adapter.PresenceTemplateAdapter;
 import eu.siacs.conversations.ui.util.AvatarWorkerTask;
@@ -87,7 +94,15 @@ import eu.siacs.conversations.xmpp.XmppConnection;
 import eu.siacs.conversations.xmpp.XmppConnection.Features;
 import eu.siacs.conversations.xmpp.forms.Data;
 import eu.siacs.conversations.xmpp.pep.Avatar;
+
 import okhttp3.HttpUrl;
+
+import org.openintents.openpgp.util.OpenPgpUtils;
+
+import java.util.Arrays;
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class EditAccountActivity extends OmemoActivity implements OnAccountUpdate, OnUpdateBlocklist,
         OnKeyStatusUpdated, OnCaptchaRequested, KeyChainAliasCallback, XmppConnectionService.OnShowErrorToast, XmppConnectionService.OnMamPreferencesFetched {
@@ -104,7 +119,7 @@ public class EditAccountActivity extends OmemoActivity implements OnAccountUpdat
     private Jid jidToEdit;
     private boolean mInitMode = false;
     private Boolean mForceRegister = null;
-    private boolean mUsernameMode = Config.DOMAIN_LOCK != null;
+    private boolean mUsernameMode = false;
     private boolean mShowOptions = false;
     private Account mAccount;
     private final OnClickListener mCancelButtonClickListener = v -> {
@@ -156,7 +171,7 @@ public class EditAccountActivity extends OmemoActivity implements OnAccountUpdat
             final boolean accountInfoEdited = accountInfoEdited();
 
             ColorDrawable previewColor = (ColorDrawable) binding.colorPreview.getBackground();
-            if (previewColor != null && previewColor.getColor() != mAccount.getColor(isDarkTheme())) {
+            if (previewColor != null && previewColor.getColor() != mAccount.getColor(isDark())) {
                 mAccount.setColor(previewColor.getColor());
             }
 
@@ -597,7 +612,7 @@ public class EditAccountActivity extends OmemoActivity implements OnAccountUpdat
         return jidEdited() ||
                 !this.mAccount.getPassword().equals(this.binding.accountPassword.getText().toString()) ||
                 !this.mAccount.getHostname().equals(this.binding.hostname.getText().toString()) ||
-                this.mAccount.getColor(isDarkTheme()) != (previewColor == null ? 0 : previewColor.getColor()) ||
+                this.mAccount.getColor(isDark()) != (previewColor == null ? 0 : previewColor.getColor()) ||
                 !String.valueOf(this.mAccount.getPort()).equals(this.binding.port.getText().toString());
     }
 
@@ -628,6 +643,7 @@ public class EditAccountActivity extends OmemoActivity implements OnAccountUpdat
             this.mSavedInstanceInit = savedInstanceState.getBoolean("initMode", false);
         }
         this.binding = DataBindingUtil.setContentView(this, R.layout.activity_edit_account);
+        Activities.setStatusAndNavigationBarColors(this, binding.getRoot());
         setSupportActionBar(binding.toolbar);
         binding.accountJid.addTextChangedListener(this.mTextWatcher);
         binding.accountJid.setOnFocusChangeListener(this.mEditTextFocusListener);
@@ -653,11 +669,35 @@ public class EditAccountActivity extends OmemoActivity implements OnAccountUpdat
         binding.accountColorBox.setOnClickListener((v) -> {
             showColorDialog();
         });
-        binding.quietHoursBox.setOnClickListener((v) -> {
-            Intent intent = new Intent(Intent.ACTION_VIEW, null, EditAccountActivity.this, SettingsActivity.class);
-            intent.putExtra("page", "quiet_hours");
-            intent.putExtra("suffix", ":" + mAccount.getUuid());
-            startActivity(intent);
+
+        final var preferences = getPreferences();
+        binding.quietHoursEnable.setOnClickListener((v) -> {
+            preferences.edit().putBoolean("enable_quiet_hours:" + mAccount.getUuid(), binding.quietHoursEnable.isChecked()).apply();
+            updateAccountInformation(false);
+        });
+        binding.quietHoursStartBox.setOnClickListener((v) -> {
+            final var picker = new com.google.android.material.timepicker.MaterialTimePicker.Builder()
+                .setTitleText("Quiet Hours Start")
+                .setHour((int)(preferences.getLong("quiet_hours_start:" + mAccount.getUuid(), 1320) / 60))
+                .setMinute((int)(preferences.getLong("quiet_hours_start:" + mAccount.getUuid(), 1320) % 60))
+                .build();
+            picker.addOnPositiveButtonClickListener((v2) -> {
+                preferences.edit().putLong("quiet_hours_start:" + mAccount.getUuid(), (picker.getHour() * 60) + picker.getMinute()).apply();
+                updateAccountInformation(false);
+            });
+            picker.show(getSupportFragmentManager(), "quiethoursstart");
+        });
+        binding.quietHoursEndBox.setOnClickListener((v) -> {
+            final var picker = new com.google.android.material.timepicker.MaterialTimePicker.Builder()
+                .setTitleText("Quiet Hours End")
+                .setHour((int)(preferences.getLong("quiet_hours_end:" + mAccount.getUuid(), 1320) / 60))
+                .setMinute((int)(preferences.getLong("quiet_hours_end:" + mAccount.getUuid(), 1320) % 60))
+                .build();
+            picker.addOnPositiveButtonClickListener((v2) -> {
+                preferences.edit().putLong("quiet_hours_end:" + mAccount.getUuid(), (picker.getHour() * 60) + picker.getMinute()).apply();
+                updateAccountInformation(false);
+            });
+            picker.show(getSupportFragmentManager(), "quiethoursend");
         });
         this.binding.scanButton.setOnClickListener((v) -> ScanActivity.scan(this));
     }
@@ -725,13 +765,10 @@ public class EditAccountActivity extends OmemoActivity implements OnAccountUpdat
     }
 
     @Override
-    protected void onStart() {
+    public void onStart() {
         super.onStart();
         final Intent intent = getIntent();
-        final int theme = findTheme();
-        if (this.mTheme != theme) {
-            recreate();
-        } else if (intent != null) {
+        if (intent != null) {
             try {
                 this.jidToEdit = Jid.ofEscaped(intent.getStringExtra("jid"));
             } catch (final IllegalArgumentException | NullPointerException ignored) {
@@ -789,7 +826,7 @@ public class EditAccountActivity extends OmemoActivity implements OnAccountUpdat
     }
 
     private void displayVerificationWarningDialog(final XmppUri xmppUri) {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        final MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(this);
         builder.setTitle(R.string.verify_omemo_keys);
         View view = getLayoutInflater().inflate(R.layout.dialog_verify_fingerprints, null);
         final CheckBox isTrustedSource = view.findViewById(R.id.trusted_source);
@@ -804,7 +841,7 @@ public class EditAccountActivity extends OmemoActivity implements OnAccountUpdat
             }
         });
         builder.setNegativeButton(R.string.cancel, (dialog, which) -> finish());
-        AlertDialog dialog = builder.create();
+        final var dialog = builder.create();
         dialog.setCanceledOnTouchOutside(false);
         dialog.setOnCancelListener(d -> finish());
         dialog.show();
@@ -866,7 +903,7 @@ public class EditAccountActivity extends OmemoActivity implements OnAccountUpdat
             this.binding.accountJidLayout.setHint(getString(R.string.username_hint));
         } else {
             final KnownHostsAdapter mKnownHostsAdapter = new KnownHostsAdapter(this,
-                    R.layout.simple_list_item,
+                    R.layout.item_autocomplete,
                     xmppConnectionService.getKnownHosts());
             this.binding.accountJid.setAdapter(mKnownHostsAdapter);
         }
@@ -884,7 +921,7 @@ public class EditAccountActivity extends OmemoActivity implements OnAccountUpdat
         if (mAccount != null && mAccount.getJid().getDomain() != null) {
             return mAccount.getServer();
         } else {
-            return Config.DOMAIN_LOCK;
+            return null;
         }
     }
 
@@ -983,8 +1020,8 @@ public class EditAccountActivity extends OmemoActivity implements OnAccountUpdat
 
     private void changePresence() {
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
-        boolean manualStatus = sharedPreferences.getBoolean(SettingsActivity.MANUALLY_CHANGE_PRESENCE, getResources().getBoolean(R.bool.manually_change_presence));
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        boolean manualStatus = sharedPreferences.getBoolean(AppSettings.MANUALLY_CHANGE_PRESENCE, getResources().getBoolean(R.bool.manually_change_presence));
+        final MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(this);
         final DialogPresenceBinding binding = DataBindingUtil.inflate(getLayoutInflater(), R.layout.dialog_presence, null, false);
         String current = mAccount.getPresenceStatusMessage();
         if (current != null && !current.trim().isEmpty()) {
@@ -993,7 +1030,7 @@ public class EditAccountActivity extends OmemoActivity implements OnAccountUpdat
         setAvailabilityRadioButton(mAccount.getPresenceStatus(), binding);
         binding.show.setVisibility(manualStatus ? View.VISIBLE : View.GONE);
         List<PresenceTemplate> templates = xmppConnectionService.getPresenceTemplates(mAccount);
-        PresenceTemplateAdapter presenceTemplateAdapter = new PresenceTemplateAdapter(this, R.layout.simple_list_item, templates);
+        PresenceTemplateAdapter presenceTemplateAdapter = new PresenceTemplateAdapter(this, R.layout.item_autocomplete, templates);
         binding.statusMessage.setAdapter(presenceTemplateAdapter);
         binding.statusMessage.setOnItemClickListener((parent, view, position, id) -> {
             PresenceTemplate template = (PresenceTemplate) parent.getItemAtPosition(position);
@@ -1047,7 +1084,7 @@ public class EditAccountActivity extends OmemoActivity implements OnAccountUpdat
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         final ColorPickerView picker = new ColorPickerView(this);
 
-        if (mAccount != null) picker.setColor(mAccount.getColor(isDarkTheme()));
+        if (mAccount != null) picker.setColor(mAccount.getColor(isDark()));
         picker.showAlpha(true);
         picker.showHex(true);
         picker.showPreview(true);
@@ -1081,6 +1118,27 @@ public class EditAccountActivity extends OmemoActivity implements OnAccountUpdat
 
         }
 
+        final var preferences = getPreferences();
+        binding.quietHoursEnable.setChecked(preferences.getBoolean("enable_quiet_hours:" + mAccount.getUuid(), false));
+
+        if (binding.quietHoursEnable.isChecked()) {
+            binding.quietHoursStartBox.setVisibility(View.VISIBLE);
+            binding.quietHoursEndBox.setVisibility(View.VISIBLE);
+        } else {
+            binding.quietHoursStartBox.setVisibility(View.GONE);
+            binding.quietHoursEndBox.setVisibility(View.GONE);
+        }
+
+        final var startTime = preferences.getLong("quiet_hours_start:" + mAccount.getUuid(), 1320);
+		final DateFormat dateFormat = android.text.format.DateFormat.getTimeFormat(this);
+		final Date date = TimePreference.minutesToCalender(startTime).getTime();
+        binding.quietHoursStart.setText(dateFormat.format(date.getTime()));
+
+        final var endTime = preferences.getLong("quiet_hours_end:" + mAccount.getUuid(), 480);
+		final DateFormat dateFormatE = android.text.format.DateFormat.getTimeFormat(this);
+		final Date dateE = TimePreference.minutesToCalender(endTime).getTime();
+        binding.quietHoursEnd.setText(dateFormat.format(dateE.getTime()));
+
         if (!mInitMode && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             this.binding.accountPassword.setImportantForAutofill(View.IMPORTANT_FOR_AUTOFILL_NO);
         }
@@ -1097,7 +1155,7 @@ public class EditAccountActivity extends OmemoActivity implements OnAccountUpdat
 
         if (xmppConnectionService != null && xmppConnectionService.getAccounts().size() > 1) {
             binding.accountColorBox.setVisibility(View.VISIBLE);
-            binding.colorPreview.setBackgroundColor(mAccount.getColor(isDarkTheme()));
+            binding.colorPreview.setBackgroundColor(mAccount.getColor(isDark()));
             binding.quietHoursBox.setVisibility(View.VISIBLE);
         } else {
             binding.accountColorBox.setVisibility(View.GONE);
@@ -1215,7 +1273,7 @@ public class EditAccountActivity extends OmemoActivity implements OnAccountUpdat
                 this.binding.pgpFingerprint.setText(OpenPgpUtils.convertKeyIdToHex(pgpKeyId));
                 this.binding.pgpFingerprint.setOnClickListener(openPgp);
                 if ("pgp".equals(messageFingerprint)) {
-                    this.binding.pgpFingerprintDesc.setTextAppearance(this, R.style.TextAppearance_Conversations_Caption_Highlight);
+                    this.binding.pgpFingerprintDesc.setTextColor(MaterialColors.getColor(binding.pgpFingerprintDesc, com.google.android.material.R.attr.colorPrimaryVariant));
                 }
                 this.binding.pgpFingerprintDesc.setOnClickListener(openPgp);
                 this.binding.actionDeletePgp.setOnClickListener(delete);
@@ -1226,10 +1284,10 @@ public class EditAccountActivity extends OmemoActivity implements OnAccountUpdat
             if (ownAxolotlFingerprint != null && Config.supportOmemo()) {
                 this.binding.axolotlFingerprintBox.setVisibility(View.VISIBLE);
                 if (ownAxolotlFingerprint.equals(messageFingerprint)) {
-                    this.binding.ownFingerprintDesc.setTextAppearance(this, R.style.TextAppearance_Conversations_Caption_Highlight);
+                    this.binding.ownFingerprintDesc.setTextColor(MaterialColors.getColor(binding.ownFingerprintDesc, com.google.android.material.R.attr.colorPrimaryVariant));
                     this.binding.ownFingerprintDesc.setText(R.string.omemo_fingerprint_selected_message);
                 } else {
-                    this.binding.ownFingerprintDesc.setTextAppearance(this, R.style.TextAppearance_Conversations_Caption);
+                    this.binding.ownFingerprintDesc.setTextColor(MaterialColors.getColor(binding.ownFingerprintDesc, com.google.android.material.R.attr.colorOnSurface));
                     this.binding.ownFingerprintDesc.setText(R.string.omemo_fingerprint);
                 }
                 this.binding.axolotlFingerprint.setText(CryptoHelper.prettifyFingerprint(ownAxolotlFingerprint.substring(2)));
@@ -1307,10 +1365,10 @@ public class EditAccountActivity extends OmemoActivity implements OnAccountUpdat
     private void updateDisplayName(String displayName) {
         if (TextUtils.isEmpty(displayName)) {
             this.binding.yourName.setText(R.string.no_name_set_instructions);
-            this.binding.yourName.setTextAppearance(this, R.style.TextAppearance_Conversations_Body1_Tertiary);
+            this.binding.yourName.setTextColor(MaterialColors.getColor(binding.yourName, com.google.android.material.R.attr.colorOnSurfaceVariant));
         } else {
             this.binding.yourName.setText(displayName);
-            this.binding.yourName.setTextAppearance(this, R.style.TextAppearance_Conversations_Body1);
+            this.binding.yourName.setTextColor(MaterialColors.getColor(binding.yourName, com.google.android.material.R.attr.colorOnSurfaceVariant));
         }
     }
 
@@ -1334,7 +1392,7 @@ public class EditAccountActivity extends OmemoActivity implements OnAccountUpdat
     }
 
     private void showDeletePgpDialog() {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        final MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(this);
         builder.setTitle(R.string.unpublish_pgp);
         builder.setMessage(R.string.unpublish_pgp_message);
         builder.setNegativeButton(R.string.cancel, null);
@@ -1364,7 +1422,7 @@ public class EditAccountActivity extends OmemoActivity implements OnAccountUpdat
                     Toast.makeText(EditAccountActivity.this, getString(R.string.device_does_not_support_data_saver, getString(R.string.app_name)), Toast.LENGTH_SHORT).show();
                 }
             });
-        } else if (showBatteryWarning && android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
+        } else if (showBatteryWarning) {
             this.binding.osOptimizationDisable.setText(R.string.disable);
             this.binding.osOptimizationHeadline.setText(R.string.battery_optimizations_enabled);
             this.binding.osOptimizationBody.setText(getString(R.string.battery_optimizations_enabled_explained, getString(R.string.app_name)));
@@ -1382,7 +1440,7 @@ public class EditAccountActivity extends OmemoActivity implements OnAccountUpdat
     }
 
     public void showWipePepDialog() {
-        Builder builder = new Builder(this);
+        final MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(this);
         builder.setTitle(getString(R.string.clear_other_devices));
         builder.setIconAttribute(android.R.attr.alertDialogIcon);
         builder.setMessage(getString(R.string.clear_other_devices_desc));
@@ -1409,7 +1467,11 @@ public class EditAccountActivity extends OmemoActivity implements OnAccountUpdat
             if (mCaptchaDialog != null && mCaptchaDialog.isShowing()) {
                 mCaptchaDialog.dismiss();
             }
-            final Builder builder = new Builder(EditAccountActivity.this);
+            if (!getLifecycle().getCurrentState().isAtLeast(Lifecycle.State.RESUMED)) {
+                Log.d(Config.LOGTAG,"activity not running when captcha was requested");
+                return;
+            }
+            final MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(EditAccountActivity.this);
             final View view = getLayoutInflater().inflate(R.layout.captcha, null);
             final ImageView imageView = view.findViewById(R.id.captcha);
             final EditText input = view.findViewById(R.id.input);
@@ -1457,7 +1519,7 @@ public class EditAccountActivity extends OmemoActivity implements OnAccountUpdat
             if (mFetchingMamPrefsToast != null) {
                 mFetchingMamPrefsToast.cancel();
             }
-            Builder builder = new Builder(EditAccountActivity.this);
+            final MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(EditAccountActivity.this);
             builder.setTitle(R.string.server_side_mam_prefs);
             String defaultAttr = prefs.getAttribute("default");
             final List<String> defaults = Arrays.asList("never", "roster", "always");

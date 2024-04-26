@@ -4,7 +4,7 @@
 
     <item
         android:id="@+id/action_edit_contact"
-        android:icon="?attr/icon_edit"
+        android:icon="@drawable/ic_edit_24dp"
         android:orderInCategory="10"
         app:showAsAction="collapseActionView|always"
         android:title="@string/action_edit_contact"
@@ -12,14 +12,14 @@
 
     <item
         android:id="@+id/action_save"
-        android:icon="@drawable/ic_save_white_24dp"
+        android:icon="@drawable/ic_save_24dp"
         android:title="@string/save"
         android:visible="false"
         app:showAsAction="always" />
 
     <item
         android:id="@+id/action_share"
-        android:icon="?attr/icon_share"
+        android:icon="@drawable/ic_share_24dp"
         android:orderInCategory="15"
         app:showAsAction="always"
         android:title="@string/share_uri_with">

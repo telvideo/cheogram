@@ -37,6 +37,7 @@ import androidx.core.graphics.drawable.IconCompat;
 import androidx.core.util.Consumer;
 import androidx.databinding.DataBindingUtil;
 
+import com.google.android.material.color.MaterialColors;
 import com.google.common.io.ByteStreams;
 
 import io.ipfs.cid.Cid;
@@ -301,7 +302,7 @@ public class WebxdcPage implements ConversationPage {
 				TextView tv = (TextView) v.findViewById(android.R.id.text1);
 				tv.setGravity(Gravity.CENTER);
 				tv.setTextColor(ContextCompat.getColor(context, R.color.white));
-				tv.setBackgroundColor(UIHelper.getColorForName(getItem(position)));
+            tv.setBackgroundColor(MaterialColors.harmonizeWithPrimary(activity.get(),UIHelper.getColorForName(getItem(position))));
 				return v;
 			}
 		});

@@ -22,17 +22,17 @@ public class PickServerActivity extends XmppActivity {
     }
 
     @Override
-    void onBackendConnected() {
+    protected void onBackendConnected() {
 
     }
 
     @Override
     public void onStart() {
         super.onStart();
-        final int theme = findTheme();
+        /* final int theme = findTheme();
         if (this.mTheme != theme) {
             recreate();
-        }
+        }*/
     }
 
 

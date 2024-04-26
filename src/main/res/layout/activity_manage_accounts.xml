@@ -1,20 +1,29 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="fill_parent"
-    android:layout_height="fill_parent"
-    android:background="?attr/color_background_primary"
-    android:orientation="vertical"
-    xmlns:app="http://schemas.android.com/apk/res-auto">
+<layout xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto">
 
-    <include layout="@layout/toolbar" />
-
-    <ListView
-        android:id="@+id/account_list"
+    <LinearLayout
         android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:divider="@android:color/transparent"
-        android:dividerHeight="0dp" >
-    </ListView>
+        android:layout_height="fill_parent"
+        android:orientation="vertical">
+
+        <com.google.android.material.appbar.AppBarLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <com.google.android.material.appbar.MaterialToolbar
+                android:id="@+id/toolbar"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:minHeight="?attr/actionBarSize" />
+
+        </com.google.android.material.appbar.AppBarLayout>
+
+        <ListView
+            android:id="@+id/account_list"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:divider="@android:color/transparent"
+            android:dividerHeight="0dp" />
 
     <RelativeLayout
         android:id="@+id/phone_accounts"
@@ -31,9 +40,9 @@
             android:layout_width="48dp"
             android:layout_height="48dp"
             android:layout_alignParentLeft="true"
-            android:src="@drawable/ic_call_white_48dp"
             android:background="@color/yeller"
-            app:strokeColor="@color/custom_theme_accent"
+            android:src="@drawable/ic_call_24dp"
+            android:tint="@color/white"
             app:shapeAppearance="@style/ShapeAppearanceOverlay.Photo" />
 
         <LinearLayout
@@ -50,13 +59,13 @@
                 android:scrollHorizontally="false"
                 android:singleLine="true"
                 android:text="Manage Phone Accounts"
-                android:textAppearance="@style/TextAppearance.Conversations.Subhead" />
+                android:textAppearance="?textAppearanceBodyLarge" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Android system dialler integration"
-                android:textAppearance="@style/TextAppearance.Conversations.Body2" />
+                android:textAppearance="?textAppearanceBodyMedium" />
         </LinearLayout>
 
         <com.google.android.material.imageview.ShapeableImageView
@@ -66,9 +75,10 @@
             android:layout_alignParentRight="true"
             android:layout_centerVertical="true"
             android:paddingRight="16dp"
-            android:src="?attr/icon_settings"
             app:strokeColor="@null"
+            android:src="@drawable/ic_settings_24dp"
             app:shapeAppearance="@style/ShapeAppearanceOverlay.Photo" />
     </RelativeLayout>
 
-</LinearLayout>
+    </LinearLayout>
+</layout>

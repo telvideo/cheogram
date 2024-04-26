@@ -18,7 +18,6 @@
         app:showAsAction="never" />
     <item
         android:id="@+id/action_ongoing_call"
-        android:icon="?attr/icon_ongoing_call"
         android:orderInCategory="30"
         android:title="@string/return_to_ongoing_call"
         app:showAsAction="always" />
@@ -29,13 +28,12 @@
         app:showAsAction="never" />
     <item
         android:id="@+id/action_muc_details"
-        android:icon="?attr/icon_group"
         android:orderInCategory="40"
         android:title="@string/action_muc_details"
         app:showAsAction="never" />
     <item
         android:id="@+id/action_archive"
         android:orderInCategory="60"
-        android:title="@string/action_end_conversation"
+        android:title="@string/action_archive_chat"
         app:showAsAction="never" />
 </menu>

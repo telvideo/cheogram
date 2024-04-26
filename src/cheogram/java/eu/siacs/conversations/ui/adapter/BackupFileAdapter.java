@@ -22,7 +22,7 @@ import java.util.List;
 import java.util.concurrent.RejectedExecutionException;
 
 import eu.siacs.conversations.R;
-import eu.siacs.conversations.databinding.AccountRowBinding;
+import eu.siacs.conversations.databinding.ItemAccountBinding;
 import eu.siacs.conversations.services.AvatarService;
 import eu.siacs.conversations.services.ImportBackupService;
 import eu.siacs.conversations.utils.BackupFileHeader;
@@ -39,7 +39,7 @@ public class BackupFileAdapter extends RecyclerView.Adapter<BackupFileAdapter.Ba
     @NonNull
     @Override
     public BackupFileViewHolder onCreateViewHolder(@NonNull ViewGroup viewGroup, int i) {
-        return new BackupFileViewHolder(DataBindingUtil.inflate(LayoutInflater.from(viewGroup.getContext()), R.layout.account_row, viewGroup, false));
+        return new BackupFileViewHolder(DataBindingUtil.inflate(LayoutInflater.from(viewGroup.getContext()), R.layout.item_account, viewGroup, false));
     }
 
     @Override
@@ -73,9 +73,9 @@ public class BackupFileAdapter extends RecyclerView.Adapter<BackupFileAdapter.Ba
     }
 
     static class BackupFileViewHolder extends RecyclerView.ViewHolder {
-        private final AccountRowBinding binding;
+        private final ItemAccountBinding binding;
 
-        BackupFileViewHolder(AccountRowBinding binding) {
+        BackupFileViewHolder(ItemAccountBinding binding) {
             super(binding.getRoot());
             this.binding = binding;
         }

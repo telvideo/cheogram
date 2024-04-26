@@ -38,6 +38,7 @@ import android.os.Build;
 import android.text.Editable;
 import android.text.Spanned;
 import android.text.style.URLSpan;
+import android.view.SoundEffectConstants;
 import android.view.View;
 import android.widget.Toast;
 
@@ -46,6 +47,7 @@ import java.util.Arrays;
 import eu.siacs.conversations.R;
 import eu.siacs.conversations.entities.Account;
 import eu.siacs.conversations.ui.ConversationsActivity;
+import eu.siacs.conversations.ui.ShowLocationActivity;
 
 @SuppressLint("ParcelCreator")
 public class FixedURLSpan extends URLSpan {
@@ -61,14 +63,18 @@ public class FixedURLSpan extends URLSpan {
 		this.account = account;
 	}
 
-	public static void fix(final Editable editable) {
-		for (final URLSpan urlspan : editable.getSpans(0, editable.length() - 1, URLSpan.class)) {
-			final int start = editable.getSpanStart(urlspan);
-			final int end = editable.getSpanEnd(urlspan);
-			editable.removeSpan(urlspan);
-			editable.setSpan(new FixedURLSpan(urlspan.getURL()), start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-		}
-	}
+    public static void fix(final Editable editable) {
+        for (final URLSpan urlspan : editable.getSpans(0, editable.length() - 1, URLSpan.class)) {
+            final int start = editable.getSpanStart(urlspan);
+            final int end = editable.getSpanEnd(urlspan);
+            editable.removeSpan(urlspan);
+            editable.setSpan(
+                    new FixedURLSpan(urlspan.getURL()),
+                    start,
+                    end,
+                    Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        }
+    }
 
 	@Override
 	public void onClick(View widget) {
@@ -77,24 +83,27 @@ public class FixedURLSpan extends URLSpan {
 		final boolean candidateToProcessDirectly = "xmpp".equals(uri.getScheme()) || ("https".equals(uri.getScheme()) && "conversations.im".equals(uri.getHost()) && uri.getPathSegments().size() > 1 && Arrays.asList("j","i").contains(uri.getPathSegments().get(0)));
 		if (candidateToProcessDirectly && context instanceof ConversationsActivity) {
 			if (((ConversationsActivity) context).onXmppUriClicked(uri)) {
-				widget.playSoundEffect(0);
+				widget.playSoundEffect(SoundEffectConstants.CLICK);
 				return;
 			}
 		}
 
 		if (("sms".equals(uri.getScheme()) || "tel".equals(uri.getScheme())) && context instanceof ConversationsActivity) {
 			if (((ConversationsActivity) context).onTelUriClicked(uri, account)) {
-				widget.playSoundEffect(0);
+				widget.playSoundEffect(SoundEffectConstants.CLICK);
 				return;
 			}
 		}
 
 		final Intent intent = new Intent(Intent.ACTION_VIEW, uri);
-		intent.setFlags(Intent.FLAG_ACTIVITY_NEW_DOCUMENT);
-		//intent.putExtra(Browser.EXTRA_APPLICATION_ID, context.getPackageName());
+      if ("geo".equalsIgnoreCase(uri.getScheme())) {
+          intent.setClass(context, ShowLocationActivity.class);
+      } else {
+          intent.setFlags(Intent.FLAG_ACTIVITY_NEW_DOCUMENT);
+		}
 		try {
 			context.startActivity(intent);
-			widget.playSoundEffect(0);
+			widget.playSoundEffect(SoundEffectConstants.CLICK);
 		} catch (ActivityNotFoundException e) {
 			Toast.makeText(context, R.string.no_application_found_to_open_link, Toast.LENGTH_SHORT).show();
 		}

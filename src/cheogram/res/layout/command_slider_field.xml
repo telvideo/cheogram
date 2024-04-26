@@ -15,8 +15,7 @@
             android:paddingLeft="13dp"
             android:paddingRight="8dp"
             android:paddingBottom="8dp"
-            android:textAppearance="@style/TextAppearance.Conversations.Subhead"
-            android:textColor="?attr/edit_text_color" />
+            android:textAppearance="?textAppearanceBodyMedium" />
 
         <com.google.android.material.slider.Slider
             android:id="@+id/slider"
@@ -24,9 +23,7 @@
             android:layout_height="wrap_content"
             android:paddingLeft="8dp"
             android:paddingRight="8dp"
-            android:paddingBottom="8dp"
-            app:trackColorInactive="?color_background_primary"
-            app:trackColorActive="?colorAccent" />
+            android:paddingBottom="8dp" />
 
         <TextView
             android:id="@+id/desc"
@@ -34,8 +31,8 @@
             android:layout_height="wrap_content"
             android:paddingLeft="16dp"
             android:paddingRight="8dp"
-            android:textAppearance="@style/TextAppearance.Conversations.Status"
-            android:textColor="?android:textColorSecondary" />
+            android:textStyle="italic"
+            android:textAppearance="?textAppearanceBodySmall" />
 
     </LinearLayout>
 

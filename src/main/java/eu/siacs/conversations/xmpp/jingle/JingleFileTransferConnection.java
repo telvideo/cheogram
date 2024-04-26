@@ -253,6 +253,7 @@ public class JingleFileTransferConnection extends AbstractJingleConnection
                     id.account.getJid().asBareJid() + ": improperly formatted contents",
                     Throwables.getRootCause(e));
             respondOk(jinglePacket);
+            terminateTransport();
             sendSessionTerminate(Reason.of(e), e.getMessage());
             return;
         }
@@ -534,6 +535,7 @@ public class JingleFileTransferConnection extends AbstractJingleConnection
         if (isTerminated()) {
             return;
         }
+        terminateTransport();
         final Throwable rootCause = Throwables.getRootCause(throwable);
         Log.d(Config.LOGTAG, "unable to send session accept", rootCause);
         sendSessionTerminate(Reason.ofThrowable(rootCause), rootCause.getMessage());
@@ -603,6 +605,7 @@ public class JingleFileTransferConnection extends AbstractJingleConnection
                     id.account.getJid().asBareJid() + ": improperly formatted contents",
                     Throwables.getRootCause(e));
             respondOk(jinglePacket);
+            terminateTransport();
             sendSessionTerminate(Reason.of(e), e.getMessage());
             return;
         }
@@ -646,6 +649,7 @@ public class JingleFileTransferConnection extends AbstractJingleConnection
                     id.account.getJid().asBareJid() + ": improperly formatted contents",
                     Throwables.getRootCause(e));
             respondOk(jinglePacket);
+            terminateTransport();
             sendSessionTerminate(Reason.of(e), e.getMessage());
             return;
         }
@@ -708,6 +712,7 @@ public class JingleFileTransferConnection extends AbstractJingleConnection
         } else if (transportInfo
                 instanceof SocksByteStreamsTransportInfo.CandidateUsed candidateUsed) {
             if (!socksBytestreamsTransport.setCandidateUsed(candidateUsed.cid)) {
+                terminateTransport();
                 sendSessionTerminate(
                         Reason.FAILED_TRANSPORT,
                         String.format(
@@ -734,6 +739,7 @@ public class JingleFileTransferConnection extends AbstractJingleConnection
                     id.account.getJid().asBareJid() + ": improperly formatted contents",
                     Throwables.getRootCause(e));
             respondOk(jinglePacket);
+            terminateTransport();
             sendSessionTerminate(Reason.of(e), e.getMessage());
             return;
         }
@@ -843,6 +849,9 @@ public class JingleFileTransferConnection extends AbstractJingleConnection
         if (transport == null) {
             return;
         }
+        // TODO consider setting transport callback to null. requires transport to handle null
+        // callback
+        // transport.setTransportCallback(null);
         transport.terminate();
         this.transport = null;
     }
@@ -873,8 +882,12 @@ public class JingleFileTransferConnection extends AbstractJingleConnection
                     }
 
                     @Override
-                    public void onFailure(@NonNull Throwable throwable) {
-                        onFileTransmissionFailed(throwable);
+                    public void onFailure(@NonNull final Throwable throwable) {
+                        // The state transition in here should be synchronized to not race with the
+                        // state transition in receiveSessionTerminate
+                        synchronized (JingleFileTransferConnection.this) {
+                            onFileTransmissionFailed(throwable);
+                        }
                     }
                 },
                 MoreExecutors.directExecutor());
@@ -980,7 +993,10 @@ public class JingleFileTransferConnection extends AbstractJingleConnection
     public void onTransportSetupFailed() {
         final var transport = this.transport;
         if (transport == null) {
-            // this really is not supposed to happen
+            // this can happen on IQ timeouts
+            if (isTerminated()) {
+                return;
+            }
             sendSessionTerminate(Reason.FAILED_APPLICATION, null);
             return;
         }
@@ -1227,6 +1243,13 @@ public class JingleFileTransferConnection extends AbstractJingleConnection
         if (transition(target)) {
             // we change state before terminating transport so we don't consume the following
             // IOException and turn it into a connectivity error
+
+            if (isInitiator() && reason == Reason.CANCEL) {
+                // message hooks have already run so we need to mark to persist the 'cancelled'
+                // status
+                xmppConnectionService.markMessage(
+                        message, Message.STATUS_SEND_FAILED, Message.ERROR_MESSAGE_CANCELLED);
+            }
             terminateTransport();
             final JinglePacket jinglePacket =
                     new JinglePacket(JinglePacket.Action.SESSION_TERMINATE, id.sessionId);

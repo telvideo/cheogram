@@ -45,7 +45,7 @@ import io.michaelrocks.libphonenumber.android.NumberParseException;
 import eu.siacs.conversations.R;
 import eu.siacs.conversations.entities.Account;
 import eu.siacs.conversations.persistance.FileBackend;
-import eu.siacs.conversations.services.AppRTCAudioManager;
+import eu.siacs.conversations.services.CallIntegration;
 import eu.siacs.conversations.services.AvatarService;
 import eu.siacs.conversations.services.EventReceiver;
 import eu.siacs.conversations.services.XmppConnectionService.XmppConnectionBinder;
@@ -120,7 +120,7 @@ public class ConnectionService extends android.telecom.ConnectionService {
 			);
 		}
 
-		if (xmppConnectionService.getJingleConnectionManager().isBusy() != null) {
+		if (xmppConnectionService.getJingleConnectionManager().isBusy()) {
 			return Connection.createFailedConnection(
 				new DisconnectCause(DisconnectCause.BUSY)
 			);
@@ -154,7 +154,7 @@ public class ConnectionService extends android.telecom.ConnectionService {
 					account,
 					with,
 					ImmutableSet.of(Media.AUDIO)
-				));
+				).sessionId);
 			}
 
 			@Override
@@ -245,6 +245,7 @@ public class ConnectionService extends android.telecom.ConnectionService {
 				Connection.CAPABILITY_CAN_SEND_RESPONSE_VIA_CONNECTION |
 				Connection.CAPABILITY_MUTE
 			);
+        setRingbackRequested(true);
 		}
 
 		public void setSessionId(final String sessionId) {
@@ -290,7 +291,7 @@ public class ConnectionService extends android.telecom.ConnectionService {
 		}
 
 		@Override
-		public void onAudioDeviceChanged(AppRTCAudioManager.AudioDevice selectedAudioDevice, Set<AppRTCAudioManager.AudioDevice> availableAudioDevices) {
+		public void onAudioDeviceChanged(CallIntegration.AudioDevice selectedAudioDevice, Set<CallIntegration.AudioDevice> availableAudioDevices) {
 			if (Build.VERSION.SDK_INT < 26) return;
 
 			if (pendingState != null) {
@@ -322,29 +323,13 @@ public class ConnectionService extends android.telecom.ConnectionService {
 		@Override
 		public void onCallAudioStateChanged(CallAudioState state) {
 			pendingState = null;
-			if (rtpConnection == null || rtpConnection.get() == null || rtpConnection.get().getAudioManager() == null) {
+			if (rtpConnection == null || rtpConnection.get() == null) {
 				pendingState = state;
 				return;
 			}
 
 			Log.d("com.cheogram.android.CheogramConnection", "onCallAudioStateChanged: " + state);
-
-			switch(state.getRoute()) {
-				case CallAudioState.ROUTE_SPEAKER:
-					rtpConnection.get().getAudioManager().setDefaultAudioDevice(AppRTCAudioManager.AudioDevice.SPEAKER_PHONE);
-					break;
-				case CallAudioState.ROUTE_WIRED_HEADSET:
-					rtpConnection.get().getAudioManager().setDefaultAudioDevice(AppRTCAudioManager.AudioDevice.WIRED_HEADSET);
-					break;
-				case CallAudioState.ROUTE_EARPIECE:
-					rtpConnection.get().getAudioManager().setDefaultAudioDevice(AppRTCAudioManager.AudioDevice.EARPIECE);
-					break;
-				case CallAudioState.ROUTE_BLUETOOTH:
-					rtpConnection.get().getAudioManager().setDefaultAudioDevice(AppRTCAudioManager.AudioDevice.BLUETOOTH);
-					break;
-				default:
-					rtpConnection.get().getAudioManager().setDefaultAudioDevice(AppRTCAudioManager.AudioDevice.NONE);
-			}
+			rtpConnection.get().callIntegration.onCallAudioStateChanged(state);
 
 			try {
 				rtpConnection.get().setMicrophoneEnabled(!state.isMuted());

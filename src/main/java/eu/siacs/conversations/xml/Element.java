@@ -1,10 +1,10 @@
 package eu.siacs.conversations.xml;
 
+import androidx.annotation.NonNull;
+
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
 import com.google.common.primitives.Ints;
-
-import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -178,6 +178,25 @@ public class Element implements Node {
 		return this;
 	}
 
+	public String toString() {
+		final StringBuilder elementOutput = new StringBuilder();
+		if (childNodes.size() == 0) {
+			Tag emptyTag = Tag.empty(name);
+			emptyTag.setAttributes(this.attributes);
+			elementOutput.append(emptyTag.toString());
+		} else {
+			Tag startTag = Tag.start(name);
+			startTag.setAttributes(this.attributes);
+			elementOutput.append(startTag);
+			for (Node child : ImmutableList.copyOf(childNodes)) {
+				elementOutput.append(child.toString());
+			}
+			Tag endTag = Tag.end(name);
+			elementOutput.append(endTag);
+		}
+		return elementOutput.toString();
+	}
+
 	public Element removeAttribute(String name) {
 		this.attributes.remove(name);
 		return this;
@@ -218,26 +237,6 @@ public class Element implements Node {
 
 	public Hashtable<String, String> getAttributes() {
 		return this.attributes;
-	}
-
-	@NotNull
-	public String toString() {
-		final StringBuilder elementOutput = new StringBuilder();
-		if (childNodes.size() == 0) {
-			Tag emptyTag = Tag.empty(name);
-			emptyTag.setAttributes(this.attributes);
-			elementOutput.append(emptyTag.toString());
-		} else {
-			Tag startTag = Tag.start(name);
-			startTag.setAttributes(this.attributes);
-			elementOutput.append(startTag);
-			for (Node child : ImmutableList.copyOf(childNodes)) {
-				elementOutput.append(child.toString());
-			}
-			Tag endTag = Tag.end(name);
-			elementOutput.append(endTag);
-		}
-		return elementOutput.toString();
 	}
 
 	public final String getName() {

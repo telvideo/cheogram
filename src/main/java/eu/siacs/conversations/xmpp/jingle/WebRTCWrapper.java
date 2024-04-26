@@ -1,10 +1,9 @@
 package eu.siacs.conversations.xmpp.jingle;
 
 import android.content.Context;
+import android.media.AudioManager;
 import android.media.ToneGenerator;
 import android.os.Build;
-import android.os.Handler;
-import android.os.Looper;
 import android.util.Log;
 
 import com.google.common.base.Optional;
@@ -17,7 +16,6 @@ import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.SettableFuture;
 
 import eu.siacs.conversations.Config;
-import eu.siacs.conversations.services.AppRTCAudioManager;
 import eu.siacs.conversations.services.XmppConnectionService;
 
 import org.webrtc.AudioSource;
@@ -56,7 +54,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-@SuppressWarnings("UnstableApiUsage")
 public class WebRTCWrapper {
 
     private static final String EXTENDED_LOGGING_TAG = WebRTCWrapper.class.getSimpleName();
@@ -66,6 +63,7 @@ public class WebRTCWrapper {
             Executors.newSingleThreadExecutor();
 
     private static final int TONE_DURATION = 500;
+    private static final int DEFAULT_TONE_VOLUME = 60;
     private static final Map<String,Integer> TONE_CODES;
     static {
         ImmutableMap.Builder<String,Integer> builder = new ImmutableMap.Builder<>();
@@ -107,16 +105,6 @@ public class WebRTCWrapper {
     private final EventCallback eventCallback;
     private final AtomicBoolean readyToReceivedIceCandidates = new AtomicBoolean(false);
     private final Queue<IceCandidate> iceCandidates = new LinkedList<>();
-    private final AppRTCAudioManager.AudioManagerEvents audioManagerEvents =
-            new AppRTCAudioManager.AudioManagerEvents() {
-                @Override
-                public void onAudioDeviceChanged(
-                        AppRTCAudioManager.AudioDevice selectedAudioDevice,
-                        Set<AppRTCAudioManager.AudioDevice> availableAudioDevices) {
-                    eventCallback.onAudioDeviceChanged(selectedAudioDevice, availableAudioDevices);
-                }
-            };
-    private final Handler mainHandler = new Handler(Looper.getMainLooper());
     private TrackWrapper<AudioTrack> localAudioTrack = null;
     private TrackWrapper<VideoTrack> localVideoTrack = null;
     private VideoTrack remoteVideoTrack = null;
@@ -238,8 +226,6 @@ public class WebRTCWrapper {
             };
     @Nullable private PeerConnectionFactory peerConnectionFactory = null;
     @Nullable private PeerConnection peerConnection = null;
-    private AppRTCAudioManager appRTCAudioManager = null;
-    private ToneManager toneManager = null;
     private Context context = null;
     private EglBase eglBase = null;
     private VideoSourceWrapper videoSourceWrapper;
@@ -256,10 +242,7 @@ public class WebRTCWrapper {
         }
     }
 
-    public void setup(
-            final XmppConnectionService service,
-            @Nonnull final AppRTCAudioManager.SpeakerPhonePreference speakerPhonePreference)
-            throws InitializationException {
+    public void setup(final XmppConnectionService service) throws InitializationException {
         try {
             PeerConnectionFactory.initialize(
                     PeerConnectionFactory.InitializationOptions.builder(service)
@@ -274,16 +257,6 @@ public class WebRTCWrapper {
             throw new InitializationException("Unable to create EGL base", e);
         }
         this.context = service;
-        this.toneManager = service.getJingleConnectionManager().toneManager;
-        mainHandler.post(
-                () -> {
-                    appRTCAudioManager = AppRTCAudioManager.create(service, speakerPhonePreference);
-                    toneManager.setAppRtcAudioManagerHasControl(true);
-                    appRTCAudioManager.start(audioManagerEvents);
-                    eventCallback.onAudioDeviceChanged(
-                            appRTCAudioManager.getSelectedAudioDevice(),
-                            appRTCAudioManager.getAudioDevices());
-                });
     }
 
     synchronized void initializePeerConnection(
@@ -486,15 +459,10 @@ public class WebRTCWrapper {
         final PeerConnection peerConnection = this.peerConnection;
         final PeerConnectionFactory peerConnectionFactory = this.peerConnectionFactory;
         final VideoSourceWrapper videoSourceWrapper = this.videoSourceWrapper;
-        final AppRTCAudioManager audioManager = this.appRTCAudioManager;
         final EglBase eglBase = this.eglBase;
         if (peerConnection != null) {
             this.peerConnection = null;
             dispose(peerConnection);
-        }
-        if (audioManager != null) {
-            toneManager.setAppRtcAudioManagerHasControl(false);
-            mainHandler.post(audioManager::stop);
         }
         this.localVideoTrack = null;
         this.remoteVideoTrack = null;
@@ -522,8 +490,8 @@ public class WebRTCWrapper {
                 || this.eglBase != null
                 || this.localVideoTrack != null
                 || this.remoteVideoTrack != null) {
-            final IllegalStateException e =
-                    new IllegalStateException("WebRTCWrapper hasn't been closed properly");
+            final AssertionError e =
+                    new AssertionError("WebRTCWrapper hasn't been closed properly");
             Log.e(Config.LOGTAG, "verifyClosed() failed. Going to throw", e);
             throw e;
         }
@@ -742,11 +710,10 @@ public class WebRTCWrapper {
     }
 
     public boolean applyDtmfTone(String tone) {
-        if (toneManager == null || peerConnection == null || localAudioTrack == null) {
-            return false;
-        }
         localAudioTrack.rtpSender.dtmf().insertDtmf(tone, TONE_DURATION, 100);
-        toneManager.startTone(TONE_CODES.get(tone), TONE_DURATION);
+        final var toneGenerator =
+                new ToneGenerator(AudioManager.STREAM_VOICE_CALL, DEFAULT_TONE_VOLUME);
+        toneGenerator.startTone(TONE_CODES.get(tone), TONE_DURATION);
         return true;
     }
 
@@ -799,26 +766,14 @@ public class WebRTCWrapper {
         return context;
     }
 
-    AppRTCAudioManager getAudioManager() {
-        return appRTCAudioManager;
-    }
-
     void execute(final Runnable command) {
         this.executorService.execute(command);
-    }
-
-    public void switchSpeakerPhonePreference(AppRTCAudioManager.SpeakerPhonePreference preference) {
-        mainHandler.post(() -> appRTCAudioManager.switchSpeakerPhonePreference(preference));
     }
 
     public interface EventCallback {
         void onIceCandidate(IceCandidate iceCandidate);
 
         void onConnectionChange(PeerConnection.PeerConnectionState newState);
-
-        void onAudioDeviceChanged(
-                AppRTCAudioManager.AudioDevice selectedAudioDevice,
-                Set<AppRTCAudioManager.AudioDevice> availableAudioDevices);
 
         void onRenegotiationNeeded();
     }

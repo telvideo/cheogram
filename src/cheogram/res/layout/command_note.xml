@@ -13,8 +13,9 @@
             android:layout_width="match_parent"
             android:layout_height="50dp"
             android:layout_centerHorizontal="true"
-            android:scaleType="fitCenter"
-            android:src="@drawable/ic_send_cancel_dnd" />
+            android:src="@drawable/ic_cancel_96dp"
+            android:tint="?colorError"
+            android:scaleType="fitCenter" />
 
         <TextView
             android:id="@+id/message"
@@ -24,8 +25,7 @@
             android:minHeight="?android:attr/listPreferredItemHeightSmall"
             android:paddingLeft="8dp"
             android:paddingRight="8dp"
-            android:textAppearance="@style/TextAppearance.Conversations.Body1"
-            android:textColor="?attr/edit_text_color" />
+            android:textAppearance="?textAppearanceBodyMedium" />
 
     </LinearLayout>
 </layout>

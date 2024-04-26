@@ -47,7 +47,6 @@
             android:layout_height="wrap_content"
             android:layout_marginBottom="15dp"
             android:fontFamily="@font/poppins"
-            android:textColor="?attr/edit_text_color"
             android:text="Cheogram Android is an app that connects you to a global network called Jabber.  This network includes services, called gateways, for chatting with other networks such as SMS, IRC, Matrix, and more." />
 
         <com.wefika.flowlayout.FlowLayout
@@ -75,14 +74,14 @@
                 android:layout_height="60dp"
                 android:layout_margin="10dp"
                 android:adjustViewBounds="true"
-                android:src="?attr/ic_make_audio_call" />
+                android:src="@drawable/ic_call_24dp" />
 
             <ImageView
                 android:layout_width="60dp"
                 android:layout_height="60dp"
                 android:layout_margin="10dp"
                 android:adjustViewBounds="true"
-                android:src="?attr/icon_email" />
+                android:src="@drawable/ic_email_48dp" />
 
             <ImageView
                 android:layout_width="60dp"
@@ -156,7 +155,6 @@
             android:layout_height="wrap_content"
             android:layout_marginBottom="15dp"
             android:fontFamily="@font/poppins"
-            android:textColor="?attr/edit_text_color"
             android:text="The Jabber network is powered by a protocol called XMPP. It is a decentralized network, which means no one owns or controls the whole thing. It is a federated network which means anyone can run a Jabber service. Messages to other Jabber users can be end-to-end encrypted by enabling OMEMO for the conversation.\n\nAddresses are called Jabber IDs and look similar to email addresses:" />
 
         <TextView
@@ -183,10 +181,6 @@
         android:layout_height="match_parent"
         android:orientation="vertical">
 
-        <include
-            android:id="@+id/toolbar"
-            layout="@layout/toolbar" />
-
         <ScrollView
             android:layout_width="match_parent"
             android:layout_height="match_parent"
@@ -197,7 +191,7 @@
                 android:layout_height="wrap_content"
                 android:weightSum="2"
                 android:orientation="vertical"
-                android:background="?attr/color_background_primary">
+                android:background="?colorSurface">
 
                 <RelativeLayout
                     android:layout_width="match_parent"
@@ -226,59 +220,55 @@
                     android:paddingRight="16dp"
                     android:paddingBottom="10dp">
 
-                    <Button
+                    <com.google.android.material.button.MaterialButton
                         android:id="@+id/register_new_account"
-                        style="@style/Widget.Conversations.Button.Borderless"
+                        style="@style/Widget.Material3.Button.TextButton"
                         android:textAllCaps="false"
-                        android:textSize="?TextSizeTitle"
+                        android:textSize="20sp"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginBottom="10dp"
                         android:layout_gravity="center"
                         android:drawableLeft="@drawable/getjid"
                         android:fontFamily="@font/poppins"
-                        android:text="@string/create_new_account"
-                        android:textColor="?colorAccent" />
+                        android:text="@string/create_new_account" />
 
-                    <Button
+                    <com.google.android.material.button.MaterialButton
                         android:id="@+id/use_existing"
-                        style="@style/Widget.Conversations.Button.Borderless"
+                        style="@style/Widget.Material3.Button.TextButton"
                         android:textAllCaps="false"
-                        android:textSize="?TextSizeTitle"
+                        android:textSize="20sp"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginBottom="10dp"
                         android:layout_gravity="center"
                         android:drawableLeft="@drawable/havejid"
                         android:fontFamily="@font/poppins"
-                        android:text="@string/i_already_have_an_account"
-                        android:textColor="?colorAccent" />
+                        android:text="@string/i_already_have_an_account" />
 
-                    <Button
+                    <com.google.android.material.button.MaterialButton
                         android:id="@+id/use_snikket"
-                        style="@style/Widget.Conversations.Button.Borderless"
+                        style="@style/Widget.Material3.Button.TextButton"
                         android:textAllCaps="false"
-                        android:textSize="?TextSizeTitle"
+                        android:textSize="20sp"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_gravity="center"
                         android:drawableLeft="@drawable/snikket"
                         android:fontFamily="@font/poppins"
-                        android:text="@string/i_am_snikket_user"
-                        android:textColor="?colorAccent" />
+                        android:text="@string/i_am_snikket_user" />
 
-                    <Button
+                    <com.google.android.material.button.MaterialButton
                         android:id="@+id/use_backup"
-                        style="@style/Widget.Conversations.Button.Borderless"
+                        style="@style/Widget.Material3.Button.TextButton"
                         android:textAllCaps="false"
-                        android:textSize="?TextSizeTitle"
+                        android:textSize="20sp"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_gravity="center"
                         android:drawableLeft="@drawable/restore"
                         android:fontFamily="@font/poppins"
-                        android:text="@string/restore_backup"
-                        android:textColor="?colorAccent" />
+                        android:text="@string/restore_backup" />
                 </LinearLayout>
             </LinearLayout>
         </ScrollView>
@@ -314,7 +304,7 @@
             app:layout_constraintTop_toTopOf="parent"
             app:selectedDotColor="#FFFFFF" />
 
-        <Button
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/button_next"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -330,7 +320,7 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toBottomOf="@id/dots_indicator" />
 
-        <Button
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/button_privacy"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

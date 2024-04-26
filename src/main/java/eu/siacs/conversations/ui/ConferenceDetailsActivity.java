@@ -5,7 +5,7 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.graphics.PorterDuff;
+import android.content.res.ColorStateList;
 import android.net.Uri;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
@@ -25,9 +25,14 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
+import androidx.core.view.ViewCompat;
 import androidx.databinding.DataBindingUtil;
 
 import com.cheogram.android.Util;
+
+import com.google.android.material.color.MaterialColors;
+import com.google.common.collect.ImmutableList;
+import com.google.common.primitives.Ints;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -68,12 +73,15 @@ import eu.siacs.conversations.utils.StringUtils;
 import eu.siacs.conversations.utils.StylingHelper;
 import eu.siacs.conversations.utils.UIHelper;
 import eu.siacs.conversations.utils.XmppUri;
+import eu.siacs.conversations.utils.XEP0392Helper;
 import eu.siacs.conversations.xmpp.Jid;
 import eu.siacs.conversations.xmpp.XmppConnection;
 import me.drakeet.support.toast.ToastCompat;
 
 import static eu.siacs.conversations.entities.Bookmark.printableValue;
 import static eu.siacs.conversations.utils.StringUtils.changed;
+
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 public class ConferenceDetailsActivity extends XmppActivity implements OnConversationUpdate, OnMucRosterUpdate, XmppConnectionService.OnAffiliationChanged, XmppConnectionService.OnConfigurationPushed, XmppConnectionService.OnRoomDestroy, TextWatcher, OnMediaLoaded {
     public static final String ACTION_VIEW_MUC = "view_muc";
@@ -118,7 +126,7 @@ public class ConferenceDetailsActivity extends XmppActivity implements OnConvers
     private final OnClickListener mNotifyStatusClickListener = new OnClickListener() {
         @Override
         public void onClick(View v) {
-            AlertDialog.Builder builder = new AlertDialog.Builder(ConferenceDetailsActivity.this);
+            final MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(ConferenceDetailsActivity.this);
             builder.setTitle(R.string.pref_notification_settings);
             String[] choices = {
                     getString(R.string.notify_on_all_messages),
@@ -153,7 +161,7 @@ public class ConferenceDetailsActivity extends XmppActivity implements OnConvers
         @Override
         public void onClick(View v) {
             final MucOptions mucOptions = mConversation.getMucOptions();
-            AlertDialog.Builder builder = new AlertDialog.Builder(ConferenceDetailsActivity.this);
+            final MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(ConferenceDetailsActivity.this);
             MucConfiguration configuration = MucConfiguration.get(ConferenceDetailsActivity.this, mAdvancedMode, mucOptions);
             builder.setTitle(configuration.title);
             final boolean[] values = configuration.values;
@@ -192,7 +200,8 @@ public class ConferenceDetailsActivity extends XmppActivity implements OnConvers
         super.onCreate(savedInstanceState);
         this.binding = DataBindingUtil.setContentView(this, R.layout.activity_muc_details);
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
-        showDynamicTags = preferences.getBoolean(SettingsActivity.SHOW_DYNAMIC_TAGS, getResources().getBoolean(R.bool.show_dynamic_tags));
+        showDynamicTags = preferences.getBoolean("show_dynamic_tags", getResources().getBoolean(R.bool.show_dynamic_tags));
+        Activities.setStatusAndNavigationBarColors(this, binding.getRoot());
         this.binding.changeConferenceButton.setOnClickListener(this.mChangeConferenceSettings);
         setSupportActionBar(binding.toolbar);
         configureActionBar(getSupportActionBar());
@@ -251,12 +260,8 @@ public class ConferenceDetailsActivity extends XmppActivity implements OnConvers
     }
 
     @Override
-    protected void onStart() {
+    public void onStart() {
         super.onStart();
-        final int theme = findTheme();
-        if (this.mTheme != theme) {
-            recreate();
-        }
         binding.mediaWrapper.setVisibility(Compatibility.hasStoragePermission(this) ? View.VISIBLE : View.GONE);
     }
 
@@ -277,9 +282,6 @@ public class ConferenceDetailsActivity extends XmppActivity implements OnConvers
                 break;
             case R.id.action_save_as_bookmark:
                 saveAsBookmark();
-                break;
-            case R.id.action_delete_bookmark:
-                deleteBookmark();
                 break;
             case R.id.action_destroy_room:
                 destroyRoom();
@@ -315,7 +317,7 @@ public class ConferenceDetailsActivity extends XmppActivity implements OnConvers
             final MucOptions mucOptions = mConversation.getMucOptions();
             this.binding.mucEditor.setVisibility(View.VISIBLE);
             this.binding.mucDisplay.setVisibility(View.GONE);
-            this.binding.editMucNameButton.setImageResource(getThemeResource(R.attr.icon_cancel, R.drawable.ic_cancel_black_24dp));
+            this.binding.editMucNameButton.setImageResource(R.drawable.ic_cancel_24dp);
             final String name = mucOptions.getName();
             this.binding.mucEditTitle.setText("");
             final boolean owner = mucOptions.getSelf().getAffiliation().ranks(MucOptions.Affiliation.OWNER);
@@ -389,7 +391,7 @@ public class ConferenceDetailsActivity extends XmppActivity implements OnConvers
     private void hideEditor() {
         this.binding.mucEditor.setVisibility(View.GONE);
         this.binding.mucDisplay.setVisibility(View.VISIBLE);
-        this.binding.editMucNameButton.setImageResource(getThemeResource(R.attr.icon_edit_body, R.drawable.ic_edit_black_24dp));
+        this.binding.editMucNameButton.setImageResource(R.drawable.ic_edit_24dp);
     }
 
     private void onMucInfoUpdated(String subject, String name) {
@@ -420,28 +422,21 @@ public class ConferenceDetailsActivity extends XmppActivity implements OnConvers
     }
 
     @Override
-    public boolean onPrepareOptionsMenu(Menu menu) {
-        MenuItem menuItemSaveBookmark = menu.findItem(R.id.action_save_as_bookmark);
-        MenuItem menuItemDeleteBookmark = menu.findItem(R.id.action_delete_bookmark);
-        MenuItem menuItemAdvancedMode = menu.findItem(R.id.action_advanced_mode);
-        MenuItem menuItemDestroyRoom = menu.findItem(R.id.action_destroy_room);
+    public boolean onPrepareOptionsMenu(final Menu menu) {
+        final MenuItem menuItemSaveBookmark = menu.findItem(R.id.action_save_as_bookmark);
+        final MenuItem menuItemAdvancedMode = menu.findItem(R.id.action_advanced_mode);
+        final MenuItem menuItemDestroyRoom = menu.findItem(R.id.action_destroy_room);
         menuItemAdvancedMode.setChecked(mAdvancedMode);
         if (mConversation == null) {
             return true;
         }
-        if (mConversation.getBookmark() != null) {
-            menuItemSaveBookmark.setVisible(false);
-            menuItemDeleteBookmark.setVisible(true);
-        } else {
-            menuItemDeleteBookmark.setVisible(false);
-            menuItemSaveBookmark.setVisible(true);
-        }
+        menuItemSaveBookmark.setVisible(mConversation.getBookmark() == null);
         menuItemDestroyRoom.setVisible(mConversation.getMucOptions().getSelf().getAffiliation().ranks(MucOptions.Affiliation.OWNER));
         return true;
     }
 
     @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
+    public boolean onCreateOptionsMenu(final Menu menu) {
         final boolean groupChat = mConversation != null && mConversation.isPrivateAndNonAnonymous();
         getMenuInflater().inflate(R.menu.muc_details, menu);
         final MenuItem share = menu.findItem(R.id.action_share);
@@ -467,17 +462,9 @@ public class ConferenceDetailsActivity extends XmppActivity implements OnConvers
         xmppConnectionService.saveConversationAsBookmark(mConversation, mConversation.getMucOptions().getName());
     }
 
-    protected void deleteBookmark() {
-        final Account account = mConversation.getAccount();
-        final Bookmark bookmark = mConversation.getBookmark();
-        bookmark.setConversation(null);
-        xmppConnectionService.deleteBookmark(account, bookmark);
-        updateView();
-    }
-
     protected void destroyRoom() {
         final boolean groupChat = mConversation != null && mConversation.isPrivateAndNonAnonymous();
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        final MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(this);
         builder.setTitle(groupChat ? R.string.destroy_room : R.string.destroy_channel);
         builder.setMessage(groupChat ? R.string.destroy_room_dialog : R.string.destroy_channel_dialog);
         builder.setPositiveButton(R.string.ok, (dialog, which) -> {
@@ -490,7 +477,7 @@ public class ConferenceDetailsActivity extends XmppActivity implements OnConvers
     }
 
     @Override
-    void onBackendConnected() {
+    protected void onBackendConnected() {
         if (mPendingConferenceInvite != null) {
             mPendingConferenceInvite.execute(this);
             mPendingConferenceInvite = null;
@@ -527,12 +514,7 @@ public class ConferenceDetailsActivity extends XmppActivity implements OnConvers
         }
         final MucOptions mucOptions = mConversation.getMucOptions();
         final User self = mucOptions.getSelf();
-        String account;
-        if (Config.DOMAIN_LOCK != null) {
-            account = mConversation.getAccount().getJid().getEscapedLocal();
-        } else {
-            account = mConversation.getAccount().getJid().asBareJid().toEscapedString();
-        }
+        final String account = mConversation.getAccount().getJid().asBareJid().toEscapedString();
         setTitle(mucOptions.isPrivateAndNonAnonymous() ? R.string.action_muc_details : R.string.channel_details);
         final Bookmark bookmark = mConversation.getBookmark();
         final XmppConnection connection = mConversation.getAccount().getXmppConnection();
@@ -567,7 +549,7 @@ public class ConferenceDetailsActivity extends XmppActivity implements OnConvers
             StylingHelper.format(spannable, this.binding.mucSubject.getCurrentTextColor());
             MyLinkify.addLinks(spannable, false);
             this.binding.mucSubject.setText(spannable);
-            this.binding.mucSubject.setTextAppearance(this, subject.length() > (hasTitle ? 128 : 196) ? R.style.TextAppearance_Conversations_Body1_Linkified : R.style.TextAppearance_Conversations_Subhead);
+            this.binding.mucSubject.setTextAppearance( subject.length() > (hasTitle ? 128 : 196) ? com.google.android.material.R.style.TextAppearance_Material3_BodyMedium : com.google.android.material.R.style.TextAppearance_Material3_BodyLarge);
             this.binding.mucSubject.setAutoLinkMask(0);
             this.binding.mucSubject.setVisibility(View.VISIBLE);
             this.binding.mucSubject.setMovementMethod(LinkMovementMethod.getInstance());
@@ -605,27 +587,22 @@ public class ConferenceDetailsActivity extends XmppActivity implements OnConvers
             this.binding.mucSettings.setVisibility(View.GONE);
         }
 
-        int ic_notifications = getThemeResource(R.attr.icon_notifications, R.drawable.ic_notifications_black_24dp);
-        int ic_notifications_off = getThemeResource(R.attr.icon_notifications_off, R.drawable.ic_notifications_off_black_24dp);
-        int ic_notifications_paused = getThemeResource(R.attr.icon_notifications_paused, R.drawable.ic_notifications_paused_black_24dp);
-        int ic_notifications_none = getThemeResource(R.attr.icon_notifications_none, R.drawable.ic_notifications_none_black_24dp);
-
-        long mutedTill = mConversation.getLongAttribute(Conversation.ATTRIBUTE_MUTED_TILL, 0);
+        final long mutedTill = mConversation.getLongAttribute(Conversation.ATTRIBUTE_MUTED_TILL, 0);
         if (mutedTill == Long.MAX_VALUE) {
             this.binding.notificationStatusText.setText(R.string.notify_never);
-            this.binding.notificationStatusButton.setImageResource(ic_notifications_off);
+            this.binding.notificationStatusButton.setImageResource(R.drawable.ic_notifications_off_24dp);
         } else if (System.currentTimeMillis() < mutedTill) {
             this.binding.notificationStatusText.setText(R.string.notify_paused);
-            this.binding.notificationStatusButton.setImageResource(ic_notifications_paused);
+            this.binding.notificationStatusButton.setImageResource(R.drawable.ic_notifications_paused_24dp);
         } else if (mConversation.alwaysNotify()) {
             this.binding.notificationStatusText.setText(R.string.notify_on_all_messages);
-            this.binding.notificationStatusButton.setImageResource(ic_notifications);
+            this.binding.notificationStatusButton.setImageResource(R.drawable.ic_notifications_24dp);
         } else if (mConversation.notifyReplies()) {
             this.binding.notificationStatusText.setText(R.string.notify_only_when_highlighted_or_replied);
-            this.binding.notificationStatusButton.setImageResource(ic_notifications_none);
+            this.binding.notificationStatusButton.setImageResource(R.drawable.ic_notifications_none_24dp);
         } else {
             this.binding.notificationStatusText.setText(R.string.notify_only_when_highlighted);
-            this.binding.notificationStatusButton.setImageResource(ic_notifications_none);
+            this.binding.notificationStatusButton.setImageResource(R.drawable.ic_notifications_none_24dp);
         }
         final List<User> users = mucOptions.getUsers();
         Collections.sort(users, (a, b) -> {
@@ -671,19 +648,25 @@ public class ConferenceDetailsActivity extends XmppActivity implements OnConvers
             Util.justifyListViewHeightBasedOnChildren(binding.recentThreads);
         }
 
-        List<ListItem.Tag> tagList = bookmark.getTags(this);
-        if (tagList.size() == 0 || !showDynamicTags) {
+        final List<ListItem.Tag> tagList = bookmark.getTags(this);
+        if (tagList.isEmpty() || !this.showDynamicTags) {
             binding.tags.setVisibility(View.GONE);
         } else {
             final LayoutInflater inflater = getLayoutInflater();
             binding.tags.setVisibility(View.VISIBLE);
-            binding.tags.removeAllViewsInLayout();
+            binding.tags.removeViews(1, binding.tags.getChildCount() - 1);
+            final ImmutableList.Builder<Integer> viewIdBuilder = new ImmutableList.Builder<>();
             for (final ListItem.Tag tag : tagList) {
+                final String name = tag.getName();
                 final TextView tv = (TextView) inflater.inflate(R.layout.list_item_tag, binding.tags, false);
-                tv.setText(tag.getName());
-                tv.getBackground().mutate().setColorFilter(tag.getColor(), PorterDuff.Mode.SRC_IN);
+                tv.setText(name);
+                tv.setBackgroundTintList(ColorStateList.valueOf(MaterialColors.harmonizeWithPrimary(this,XEP0392Helper.rgbFromNick(name))));
+                final int id = ViewCompat.generateViewId();
+                tv.setId(id);
+                viewIdBuilder.add(id);
                 binding.tags.addView(tv);
             }
+            binding.flowWidget.setReferencedIds(Ints.toArray(viewIdBuilder.build()));
         }
     }
 
@@ -760,9 +743,9 @@ public class ConferenceDetailsActivity extends XmppActivity implements OnConvers
             boolean nameChanged = changed(binding.mucEditTitle.getEditableText().toString(), mucOptions.getName());
             final Bookmark bookmark = mConversation.getBookmark();
             if (subjectChanged || nameChanged || (bookmark != null && mConversation.getAccount().getXmppConnection().getFeatures().bookmarks2())) {
-                this.binding.editMucNameButton.setImageResource(getThemeResource(R.attr.icon_save, R.drawable.ic_save_black_24dp));
+                this.binding.editMucNameButton.setImageResource(R.drawable.ic_save_24dp);
             } else {
-                this.binding.editMucNameButton.setImageResource(getThemeResource(R.attr.icon_cancel, R.drawable.ic_cancel_black_24dp));
+                this.binding.editMucNameButton.setImageResource(R.drawable.ic_cancel_24dp);
             }
         }
     }

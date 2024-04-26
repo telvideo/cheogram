@@ -4,7 +4,7 @@ import static eu.siacs.conversations.utils.Random.SECURE_RANDOM;
 
 import android.util.Log;
 
-import org.jetbrains.annotations.NotNull;
+import androidx.annotation.NonNull;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -281,10 +281,18 @@ public class MessageArchiveService implements OnAdvancedStreamFeaturesLoaded {
         if (conversation != null) {
             conversation.sort();
             conversation.setHasMessagesLeftOnServer(!done);
+            final var displayState = conversation.getDisplayState();
+            if (displayState != null) {
+                mXmppConnectionService.markReadUpToStanzaId(conversation, displayState);
+            }
         } else {
-            for (Conversation tmp : this.mXmppConnectionService.getConversations()) {
+            for (final Conversation tmp : this.mXmppConnectionService.getConversations()) {
                 if (tmp.getAccount() == query.getAccount()) {
                     tmp.sort();
+                    final var displayState = tmp.getDisplayState();
+                    if (displayState != null) {
+                        mXmppConnectionService.markReadUpToStanzaId(tmp, displayState);
+                    }
                 }
             }
         }
@@ -631,7 +639,7 @@ public class MessageArchiveService implements OnAdvancedStreamFeaturesLoaded {
             }
         }
 
-        @NotNull
+        @NonNull
         @Override
         public String toString() {
             StringBuilder builder = new StringBuilder();

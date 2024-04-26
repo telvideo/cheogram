@@ -10,7 +10,6 @@
         android:paddingLeft="8dp"
         android:paddingRight="8dp"
         android:paddingBottom="8dp"
-        android:textAppearance="@style/TextAppearance.Conversations.Body1"
-        android:textColor="?attr/edit_text_color" />
+        android:textAppearance="?textAppearanceBodyMedium" />
 
 </layout>

@@ -10,8 +10,6 @@
     android:minHeight="?android:attr/listPreferredItemHeightSmall"
     android:paddingLeft="@dimen/avatar_item_distance"
     android:paddingRight="@dimen/avatar_item_distance"
-    android:textAppearance="@style/TextAppearance.Conversations.Body1"
-    android:textColor="?attr/edit_text_color"
-    android:background="@drawable/list_choice" />
+    android:textAppearance="?textAppearanceBodyMedium" />
 
 </layout>

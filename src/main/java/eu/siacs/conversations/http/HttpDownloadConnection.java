@@ -93,8 +93,7 @@ public class HttpDownloadConnection implements Transferable {
             final AbstractConnectionManager.Extension extension = AbstractConnectionManager.Extension.of(mUrl.encodedPath());
             if (VALID_CRYPTO_EXTENSIONS.contains(extension.main)) {
                 this.message.setEncryption(Message.ENCRYPTION_PGP);
-            } else if (message.getEncryption() != Message.ENCRYPTION_OTR
-                    && message.getEncryption() != Message.ENCRYPTION_AXOLOTL) {
+            } else if (message.getEncryption() != Message.ENCRYPTION_AXOLOTL) {
                 this.message.setEncryption(Message.ENCRYPTION_NONE);
             }
             String ext = extension.getExtension();

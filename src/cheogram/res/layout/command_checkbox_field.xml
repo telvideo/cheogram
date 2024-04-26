@@ -24,14 +24,14 @@
                 android:layout_height="wrap_content"
                 android:paddingLeft="13dp"
                 android:scrollHorizontally="false"
-                android:textAppearance="@style/TextAppearance.Conversations.Subhead" />
+                android:textAppearance="?textAppearanceBodyMedium" />
 
             <TextView
                 android:id="@+id/desc"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:paddingLeft="16dp"
-                android:textAppearance="@style/TextAppearance.Conversations.Status"
+                android:textAppearance="?textAppearanceBodySmall"
                 android:textColor="?android:textColorSecondary" />
 
         </LinearLayout>

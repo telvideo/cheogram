@@ -14,8 +14,7 @@
             android:paddingLeft="13dp"
             android:paddingRight="8dp"
             android:paddingBottom="8dp"
-            android:textAppearance="@style/TextAppearance.Conversations.Subhead"
-            android:textColor="?attr/edit_text_color" />
+            android:textAppearance="?textAppearanceBodyMedium" />
 
         <com.cheogram.android.GridView
             android:id="@+id/radios"
@@ -30,7 +29,6 @@
         <EditText
             android:id="@+id/open"
             android:visibility="gone"
-            style="@style/Widget.Conversations.EditText"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginLeft="8dp"
@@ -46,8 +44,8 @@
             android:layout_height="wrap_content"
             android:paddingLeft="16dp"
             android:paddingRight="8dp"
-            android:textAppearance="@style/TextAppearance.Conversations.Status"
-            android:textColor="?android:textColorSecondary" />
+            android:textStyle="italic"
+            android:textAppearance="?textAppearanceBodySmall" />
 
     </LinearLayout>
 </layout>

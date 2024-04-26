@@ -52,6 +52,8 @@ import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.material.color.MaterialColors;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.common.base.Optional;
 import com.google.common.collect.Collections2;
@@ -76,7 +78,6 @@ import eu.siacs.conversations.ui.util.MenuDoubleTabUtil;
 import eu.siacs.conversations.ui.util.PendingActionHelper;
 import eu.siacs.conversations.ui.util.PendingItem;
 import eu.siacs.conversations.ui.util.ScrollState;
-import eu.siacs.conversations.ui.util.StyledAttributes;
 import eu.siacs.conversations.utils.AccountUtils;
 import eu.siacs.conversations.utils.EasyOnboardingInvite;
 import eu.siacs.conversations.utils.ThemeHelper;
@@ -116,7 +117,7 @@ public class ConversationsOverviewFragment extends XmppFragment {
 			super.onChildDraw(c, recyclerView, viewHolder, dX, dY, actionState, isCurrentlyActive);
 			if(actionState != ItemTouchHelper.ACTION_STATE_IDLE){
 				Paint paint = new Paint();
-				paint.setColor(StyledAttributes.getColor(activity,R.attr.conversations_overview_background));
+				paint.setColor(MaterialColors.getColor(viewHolder.itemView, com.google.android.material.R.attr.colorSecondaryFixedDim));
 				paint.setStyle(Paint.Style.FILL);
 				c.drawRect(viewHolder.itemView.getLeft(),viewHolder.itemView.getTop()
 						,viewHolder.itemView.getRight(),viewHolder.itemView.getBottom(), paint);
@@ -159,7 +160,7 @@ public class ConversationsOverviewFragment extends XmppFragment {
 					title = R.string.title_undo_swipe_out_channel;
 				}
 			} else {
-				title = R.string.title_undo_swipe_out_conversation;
+				title = R.string.title_undo_swipe_out_chat;
 			}
 
 			final Snackbar snackbar = Snackbar.make(binding.list, title, 5000)
@@ -201,8 +202,6 @@ public class ConversationsOverviewFragment extends XmppFragment {
 					activity.xmppConnectionService.archiveConversation(c);
 				}
 			});
-
-			ThemeHelper.fix(snackbar);
 			snackbar.show();
 		}
 	};
@@ -307,6 +306,9 @@ public class ConversationsOverviewFragment extends XmppFragment {
 		this.binding.list.setAdapter(this.conversationsAdapter);
 		this.binding.list.setLayoutManager(new LinearLayoutManager(getActivity(),LinearLayoutManager.VERTICAL,false));
 		registerForContextMenu(this.binding.list);
+		this.binding.list.addOnScrollListener(ExtendedFabSizeChanger.of(binding.fab));
+		this.touchHelper = new ItemTouchHelper(this.callback);
+		this.touchHelper.attachToRecyclerView(this.binding.list);
 		return binding.getRoot();
 	}
 
@@ -456,14 +458,14 @@ public class ConversationsOverviewFragment extends XmppFragment {
 
 	private void selectAccountToStartEasyInvite() {
 		final List<Account> accounts = EasyOnboardingInvite.getSupportingAccounts(activity.xmppConnectionService);
-		if (accounts.size() == 0) {
+		if (accounts.isEmpty()) {
 			//This can technically happen if opening the menu item races with accounts reconnecting or something
 			Toast.makeText(getActivity(),R.string.no_active_accounts_support_this, Toast.LENGTH_LONG).show();
 		} else if (accounts.size() == 1) {
 			openEasyInviteScreen(accounts.get(0));
 		} else {
 			final AtomicReference<Account> selectedAccount = new AtomicReference<>(accounts.get(0));
-			final AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(activity);
+			final MaterialAlertDialogBuilder alertDialogBuilder = new MaterialAlertDialogBuilder(activity);
 			alertDialogBuilder.setTitle(R.string.choose_account);
 			final String[] asStrings = Collections2.transform(accounts, a -> a.getJid().asBareJid().toEscapedString()).toArray(new String[0]);
 			alertDialogBuilder.setSingleChoiceItems(asStrings, 0, (dialog, which) -> selectedAccount.set(accounts.get(which)));

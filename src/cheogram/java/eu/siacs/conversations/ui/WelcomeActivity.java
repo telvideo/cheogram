@@ -108,17 +108,13 @@ public class WelcomeActivity extends XmppActivity implements XmppConnectionServi
     }
 
     @Override
-    void onBackendConnected() {
+    protected void onBackendConnected() {
 
     }
 
     @Override
     public void onStart() {
         super.onStart();
-        final int theme = findTheme();
-        if (this.mTheme != theme) {
-            recreate();
-        }
         new InstallReferrerUtils(this);
     }
 
@@ -159,7 +155,6 @@ public class WelcomeActivity extends XmppActivity implements XmppConnectionServi
         binding.buttonPrivacy.setOnClickListener((v) ->
             startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://cheogram.com/android-privacy.html")))
         );
-        setSupportActionBar(binding.toolbar);
         configureActionBar(getSupportActionBar(), false);
         binding.registerNewAccount.setOnClickListener(v -> {
             if (hasInviteUri()) {

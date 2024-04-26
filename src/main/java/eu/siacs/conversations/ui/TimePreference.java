@@ -61,7 +61,7 @@ public class TimePreference extends DialogPreference implements Preference.OnPre
 		}
 	}
 
-	private static Calendar minutesToCalender(long time) {
+	public static Calendar minutesToCalender(long time) {
 		final Calendar c = Calendar.getInstance();
 		c.set(Calendar.HOUR_OF_DAY, (int) ((time % (24 * 60)) / 60));
 		c.set(Calendar.MINUTE, (int) ((time % (24 * 60)) % 60));

@@ -3,7 +3,7 @@ package eu.siacs.conversations.ui.adapter;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.IntentSender;
-import android.graphics.PorterDuff;
+import android.content.res.ColorStateList;
 import android.view.ContextMenu;
 import android.view.LayoutInflater;
 import android.widget.TextView;
@@ -11,10 +11,15 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
+import androidx.core.view.ViewCompat;
 import androidx.databinding.DataBindingUtil;
 import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.ListAdapter;
 import androidx.recyclerview.widget.RecyclerView;
+
+import com.google.android.material.color.MaterialColors;
+import com.google.common.collect.ImmutableList;
+import com.google.common.primitives.Ints;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -23,7 +28,7 @@ import org.openintents.openpgp.util.OpenPgpUtils;
 
 import eu.siacs.conversations.R;
 import eu.siacs.conversations.crypto.PgpEngine;
-import eu.siacs.conversations.databinding.ContactBinding;
+import eu.siacs.conversations.databinding.ItemContactBinding;
 import eu.siacs.conversations.entities.Contact;
 import eu.siacs.conversations.entities.MucOptions;
 import eu.siacs.conversations.services.XmppConnectionService;
@@ -68,7 +73,7 @@ public class UserAdapter extends ListAdapter<MucOptions.User, UserAdapter.ViewHo
     @NonNull
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup viewGroup, int position) {
-        return new ViewHolder(DataBindingUtil.inflate(LayoutInflater.from(viewGroup.getContext()), R.layout.contact, viewGroup, false));
+        return new ViewHolder(DataBindingUtil.inflate(LayoutInflater.from(viewGroup.getContext()), R.layout.item_contact, viewGroup, false));
     }
 
     @Override
@@ -123,20 +128,32 @@ public class UserAdapter extends ListAdapter<MucOptions.User, UserAdapter.ViewHo
             viewHolder.binding.key.setVisibility(View.GONE);
         }
 
+        final Context context = viewHolder.binding.getRoot().getContext();
+        final LayoutInflater inflater = LayoutInflater.from(context);
         viewHolder.binding.tags.setVisibility(View.VISIBLE);
-        viewHolder.binding.tags.removeAllViewsInLayout();
+        viewHolder.binding.tags.removeViews(1, viewHolder.binding.tags.getChildCount() - 1);
+        final ImmutableList.Builder<Integer> viewIdBuilder = new ImmutableList.Builder<>();
         for (MucOptions.Hat hat : getPseudoHats(viewHolder.binding.getRoot().getContext(), user)) {
-            TextView tv = (TextView) LayoutInflater.from(viewHolder.binding.getRoot().getContext()).inflate(R.layout.list_item_tag, viewHolder.binding.tags, false);
-            tv.setText(hat.toString());
-            tv.getBackground().mutate().setColorFilter(hat.getColor(), PorterDuff.Mode.SRC_IN);
+            final String tag = hat.toString();
+            final TextView tv = (TextView) inflater.inflate(R.layout.list_item_tag, viewHolder.binding.tags, false);
+            tv.setText(tag);
+            tv.setBackgroundTintList(ColorStateList.valueOf(MaterialColors.harmonizeWithPrimary(context,hat.getColor())));
+            final int id = ViewCompat.generateViewId();
+            tv.setId(id);
+            viewIdBuilder.add(id);
             viewHolder.binding.tags.addView(tv);
         }
         for (MucOptions.Hat hat : user.getHats()) {
-            TextView tv = (TextView) LayoutInflater.from(viewHolder.binding.getRoot().getContext()).inflate(R.layout.list_item_tag, viewHolder.binding.tags, false);
-            tv.setText(hat.toString());
-            tv.getBackground().mutate().setColorFilter(hat.getColor(), PorterDuff.Mode.SRC_IN);
+            final String tag = hat.toString();
+            final TextView tv = (TextView) inflater.inflate(R.layout.list_item_tag, viewHolder.binding.tags, false);
+            tv.setText(tag);
+            tv.setBackgroundTintList(ColorStateList.valueOf(MaterialColors.harmonizeWithPrimary(context,hat.getColor())));
+            final int id = ViewCompat.generateViewId();
+            tv.setId(id);
+            viewIdBuilder.add(id);
             viewHolder.binding.tags.addView(tv);
         }
+        viewHolder.binding.flowWidget.setReferencedIds(Ints.toArray(viewIdBuilder.build()));
 
         if (viewHolder.binding.tags.getChildCount() < 1) {
             viewHolder.binding.contactJid.setVisibility(View.VISIBLE);
@@ -164,11 +181,11 @@ public class UserAdapter extends ListAdapter<MucOptions.User, UserAdapter.ViewHo
         MucDetailsContextMenuHelper.onCreateContextMenu(menu,v);
     }
 
-    class ViewHolder extends RecyclerView.ViewHolder {
+    static class ViewHolder extends RecyclerView.ViewHolder {
 
-        private final ContactBinding binding;
+        private final ItemContactBinding binding;
 
-        private ViewHolder(ContactBinding binding) {
+        private ViewHolder(ItemContactBinding binding) {
             super(binding.getRoot());
             this.binding = binding;
         }

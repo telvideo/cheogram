@@ -21,6 +21,5 @@
     android:minHeight="?android:attr/listPreferredItemHeightSmall"
     android:paddingLeft="8dp"
     android:paddingRight="8dp"
-    android:textAppearance="@style/TextAppearance.Conversations.Body1"
-    android:textColor="?attr/edit_text_color"
-    android:background="@drawable/list_choice" />
+    android:textAppearance="?textAppearanceBodyMedium"
+    android:background="@drawable/background_selectable_list_item" />

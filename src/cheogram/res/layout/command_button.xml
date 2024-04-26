@@ -1,12 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <layout xmlns:android="http://schemas.android.com/apk/res/android">
-<TextView
+<com.google.android.material.button.MaterialButton
     android:id="@+id/command"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
-    style="?android:attr/buttonStyleSmall"
-    android:background="@drawable/pill"
-    android:paddingLeft="10dp"
-    android:paddingRight="10dp"
-    />
+    style="@style/Widget.Material3.Button.ElevatedButton" />
 </layout>

@@ -22,15 +22,9 @@ public interface ListItem extends Comparable<ListItem>, AvatarService.Avatarable
 
 	final class Tag implements Serializable {
 		private final String name;
-		private final int color;
 
-		public Tag(final String name, final int color) {
+		public Tag(final String name) {
 			this.name = name;
-			this.color = color;
-		}
-
-		public int getColor() {
-			return this.color;
 		}
 
 		public String getName() {
@@ -44,7 +38,7 @@ public interface ListItem extends Comparable<ListItem>, AvatarService.Avatarable
 		public boolean equals(Object o) {
 			if (!(o instanceof Tag)) return false;
 			Tag ot = (Tag) o;
-			return name.toLowerCase(Locale.US).equals(ot.getName().toLowerCase(Locale.US)) && color == ot.getColor();
+			return name.toLowerCase(Locale.US).equals(ot.getName().toLowerCase(Locale.US));
 		}
 
 		public int hashCode() {

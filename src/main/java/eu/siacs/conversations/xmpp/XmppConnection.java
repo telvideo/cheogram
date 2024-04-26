@@ -69,6 +69,7 @@ import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.X509KeyManager;
 import javax.net.ssl.X509TrustManager;
 
+import eu.siacs.conversations.AppSettings;
 import eu.siacs.conversations.Config;
 import eu.siacs.conversations.R;
 import eu.siacs.conversations.crypto.XmppDomainVerifier;
@@ -204,6 +205,7 @@ public class XmppConnection implements Runnable {
             new Hashtable<>();
     private final Set<OnAdvancedStreamFeaturesLoaded> advancedStreamFeaturesLoadedListeners =
             new HashSet<>();
+    private final AppSettings appSettings;
     private final XmppConnectionService mXmppConnectionService;
     private Socket socket;
     private XmlReader tagReader;
@@ -212,6 +214,7 @@ public class XmppConnection implements Runnable {
     private boolean inSmacksSession = false;
     private boolean quickStartInProgress = false;
     private boolean isBound = false;
+    private boolean offlineMessagesRetrieved = false;
     private Element streamFeatures;
     private Element boundStreamFeatures;
     private StreamId streamId = null;
@@ -251,9 +254,10 @@ public class XmppConnection implements Runnable {
     public XmppConnection(final Account account, final XmppConnectionService service) {
         this.account = account;
         this.mXmppConnectionService = service;
+        this.appSettings = new AppSettings(mXmppConnectionService.getApplicationContext());
     }
 
-    private static void fixResource(Context context, Account account) {
+    private static void fixResource(final Context context, final Account account) {
         String resource = account.getResource();
         int fixedPartLength =
                 context.getString(R.string.app_name).length() + 1; // include the trailing dot
@@ -1201,7 +1205,12 @@ public class XmppConnection implements Runnable {
                 mXmppConnectionService.updateConversationUi();
             }
         } else {
-            Log.d(Config.LOGTAG, account.getJid().asBareJid() + ": resumption failed");
+            Log.d(
+                    Config.LOGTAG,
+                    account.getJid().asBareJid()
+                            + ": resumption failed ("
+                            + XmlHelper.print(failed.getChildren())
+                            + ")");
         }
         resetStreamId();
         if (sendBindRequest) {
@@ -1712,6 +1721,7 @@ public class XmppConnection implements Runnable {
                             + mechanisms);
             throw new StateChangingException(Account.State.INCOMPATIBLE_SERVER);
         }
+        validateRequireChannelBinding(saslMechanism);
         if (SaslMechanism.hashedToken(saslMechanism)) {
             return;
         }
@@ -1727,6 +1737,17 @@ public class XmppConnection implements Runnable {
                             + pinnedMechanism
                             + "). Possible downgrade attack?");
             throw new StateChangingException(Account.State.DOWNGRADE_ATTACK);
+        }
+    }
+
+    private void validateRequireChannelBinding(@NonNull final SaslMechanism mechanism)
+            throws StateChangingException {
+        if (appSettings.isRequireChannelBinding()) {
+            if (mechanism instanceof ChannelBindingMechanism) {
+                return;
+            }
+            Log.d(Config.LOGTAG, account.getJid() + ": server did not offer channel binding");
+            throw new StateChangingException(Account.State.INCOMPATIBLE_SERVER);
         }
     }
 
@@ -2276,6 +2297,7 @@ public class XmppConnection implements Runnable {
     }
 
     private void finalizeBind() {
+        this.offlineMessagesRetrieved = false;
         if (bindListener != null) {
             bindListener.onBind(account);
         }
@@ -2432,7 +2454,10 @@ public class XmppConnection implements Runnable {
         final SaslMechanism quickStartMechanism;
         if (secureConnection) {
             quickStartMechanism =
-                    SaslMechanism.ensureAvailable(account.getQuickStartMechanism(), sslVersion);
+                    SaslMechanism.ensureAvailable(
+                            account.getQuickStartMechanism(),
+                            sslVersion,
+                            appSettings.isRequireChannelBinding());
         } else {
             quickStartMechanism = null;
         }
@@ -2821,6 +2846,28 @@ public class XmppConnection implements Runnable {
         return mXmppConnectionService.getIqGenerator();
     }
 
+    public void trackOfflineMessageRetrieval(boolean trackOfflineMessageRetrieval) {
+        if (trackOfflineMessageRetrieval) {
+            final IqPacket iqPing = new IqPacket(IqPacket.TYPE.GET);
+            iqPing.addChild("ping", Namespace.PING);
+            this.sendIqPacket(
+                    iqPing,
+                    (a, response) -> {
+                        Log.d(
+                                Config.LOGTAG,
+                                account.getJid().asBareJid()
+                                        + ": got ping response after sending initial presence");
+                        XmppConnection.this.offlineMessagesRetrieved = true;
+                    });
+        } else {
+            this.offlineMessagesRetrieved = true;
+        }
+    }
+
+    public boolean isOfflineMessagesRetrieved() {
+        return this.offlineMessagesRetrieved;
+    }
+
     private class MyKeyManager implements X509KeyManager {
         @Override
         public String chooseClientAlias(String[] strings, Principal[] principals, Socket socket) {
@@ -3031,6 +3078,10 @@ public class XmppConnection implements Runnable {
             return hasDiscoFeature(account.getJid().asBareJid(), Namespace.PUBSUB_PUBLISH_OPTIONS);
         }
 
+        public boolean pepConfigNodeMax() {
+            return hasDiscoFeature(account.getJid().asBareJid(), Namespace.PUBSUB_CONFIG_NODE_MAX);
+        }
+
         public boolean pepOmemoWhitelisted() {
             return hasDiscoFeature(
                     account.getJid().asBareJid(), AxolotlService.PEP_OMEMO_WHITELISTED);
@@ -3130,6 +3181,16 @@ public class XmppConnection implements Runnable {
 
         public boolean externalServiceDiscovery() {
             return hasDiscoFeature(account.getDomain(), Namespace.EXTERNAL_SERVICE_DISCOVERY);
+        }
+
+        public boolean mds() {
+            return pepPublishOptions()
+                    && pepConfigNodeMax()
+                    && Config.MESSAGE_DISPLAYED_SYNCHRONIZATION;
+        }
+
+        public boolean mdsServerAssist() {
+            return hasDiscoFeature(account.getJid().asBareJid(), Namespace.MDS_DISPLAYED);
         }
     }
 }

@@ -7,8 +7,8 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
-import android.graphics.PorterDuff;
 import android.graphics.drawable.Drawable;
+import android.content.res.ColorStateList;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -36,9 +36,16 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
+import androidx.core.content.ContextCompat;
+import androidx.core.view.ViewCompat;
 import androidx.databinding.DataBindingUtil;
 
 import com.cheogram.android.Util;
+
+import com.google.android.material.color.MaterialColors;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.google.common.collect.ImmutableList;
+import com.google.common.primitives.Ints;
 
 import org.openintents.openpgp.util.OpenPgpUtils;
 
@@ -50,6 +57,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import eu.siacs.conversations.AppSettings;
 import eu.siacs.conversations.Config;
 import eu.siacs.conversations.R;
 import eu.siacs.conversations.crypto.axolotl.AxolotlService;
@@ -61,6 +69,7 @@ import eu.siacs.conversations.entities.Account;
 import eu.siacs.conversations.entities.Bookmark;
 import eu.siacs.conversations.entities.Contact;
 import eu.siacs.conversations.entities.ListItem;
+import eu.siacs.conversations.entities.Presence;
 import eu.siacs.conversations.services.AbstractQuickConversationsService;
 import eu.siacs.conversations.services.QuickConversationsService;
 import eu.siacs.conversations.services.XmppConnectionService.OnAccountUpdate;
@@ -80,6 +89,7 @@ import eu.siacs.conversations.utils.Emoticons;
 import eu.siacs.conversations.utils.IrregularUnicodeDetector;
 import eu.siacs.conversations.utils.PhoneNumberUtilWrapper;
 import eu.siacs.conversations.utils.UIHelper;
+import eu.siacs.conversations.utils.XEP0392Helper;
 import eu.siacs.conversations.utils.XmppUri;
 import eu.siacs.conversations.xml.Element;
 import eu.siacs.conversations.xml.Namespace;
@@ -165,7 +175,7 @@ public class ContactDetailsActivity extends OmemoActivity implements OnAccountUp
         } else {
             value = jid.toEscapedString();
         }
-        final AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        final MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(this);
         builder.setTitle(getString(R.string.action_add_phone_book));
         builder.setMessage(getString(R.string.add_phone_book_text, value));
         builder.setNegativeButton(getString(R.string.cancel), null);
@@ -235,6 +245,7 @@ public class ContactDetailsActivity extends OmemoActivity implements OnAccountUp
         }
         this.messageFingerprint = getIntent().getStringExtra("fingerprint");
         this.binding = DataBindingUtil.setContentView(this, R.layout.activity_contact_details);
+        Activities.setStatusAndNavigationBarColors(this, binding.getRoot());
 
         setSupportActionBar(binding.toolbar);
         configureActionBar(getSupportActionBar());
@@ -258,14 +269,9 @@ public class ContactDetailsActivity extends OmemoActivity implements OnAccountUp
     @Override
     public void onStart() {
         super.onStart();
-        final int theme = findTheme();
-        if (this.mTheme != theme) {
-            recreate();
-        } else {
-            final SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
-            this.showDynamicTags = preferences.getBoolean(SettingsActivity.SHOW_DYNAMIC_TAGS, getResources().getBoolean(R.bool.show_dynamic_tags));
-            this.showLastSeen = preferences.getBoolean("last_activity", false);
-        }
+        final SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
+        this.showDynamicTags = preferences.getBoolean(AppSettings.SHOW_DYNAMIC_TAGS, false);
+        this.showLastSeen = preferences.getBoolean("last_activity", false);
         binding.mediaWrapper.setVisibility(Compatibility.hasStoragePermission(this) ? View.VISIBLE : View.GONE);
         mMediaAdapter.setAttachments(Collections.emptyList());
     }
@@ -301,8 +307,6 @@ public class ContactDetailsActivity extends OmemoActivity implements OnAccountUp
         if (MenuDoubleTabUtil.shouldIgnoreTap()) {
             return false;
         }
-        final AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setNegativeButton(getString(R.string.cancel), null);
         switch (menuItem.getItemId()) {
             case android.R.id.home:
                 finish();
@@ -314,6 +318,8 @@ public class ContactDetailsActivity extends OmemoActivity implements OnAccountUp
                 shareLink(false);
                 break;
             case R.id.action_delete_contact:
+                final MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(this);
+                builder.setNegativeButton(getString(R.string.cancel), null);
                 builder.setTitle(getString(R.string.action_delete_contact))
                         .setMessage(JidDialog.style(this, R.string.remove_contact_text, contact.getJid().toEscapedString()))
                         .setPositiveButton(getString(R.string.delete),
@@ -520,12 +526,7 @@ public class ContactDetailsActivity extends OmemoActivity implements OnAccountUp
         }
 
         binding.detailsContactjid.setText(IrregularUnicodeDetector.style(this, contact.getJid()));
-        String account;
-        if (Config.DOMAIN_LOCK != null) {
-            account = contact.getAccount().getJid().getEscapedLocal();
-        } else {
-            account = contact.getAccount().getJid().asBareJid().toEscapedString();
-        }
+        final String account = contact.getAccount().getJid().asBareJid().toEscapedString();
         binding.detailsAccount.setText(getString(R.string.using_account, account));
         AvatarWorkerTask.loadAvatar(contact, binding.detailsContactBadge, R.dimen.avatar_on_details_screen_size);
         binding.detailsContactBadge.setOnClickListener(this::onBadgeClick);
@@ -587,7 +588,7 @@ public class ContactDetailsActivity extends OmemoActivity implements OnAccountUp
             TextView keyType = view.findViewById(R.id.key_type);
             keyType.setText(R.string.openpgp_key_id);
             if ("pgp".equals(messageFingerprint)) {
-                keyType.setTextAppearance(this, R.style.TextAppearance_Conversations_Caption_Highlight);
+                keyType.setTextColor(MaterialColors.getColor(keyType, com.google.android.material.R.attr.colorPrimaryVariant));
             }
             key.setText(OpenPgpUtils.convertKeyIdToHex(contact.getPgpKeyId()));
             final OnClickListener openKey = v -> launchOpenKeyChain(contact.getPgpKeyId());
@@ -598,18 +599,50 @@ public class ContactDetailsActivity extends OmemoActivity implements OnAccountUp
         }
         binding.keysWrapper.setVisibility(hasKeys ? View.VISIBLE : View.GONE);
 
-        List<ListItem.Tag> tagList = contact.getTags(this);
-        if (tagList.size() == 0 || !this.showDynamicTags) {
+        final List<ListItem.Tag> tagList = contact.getTags(this);
+        final boolean hasMetaTags = contact.isBlocked() || contact.getShownStatus() != Presence.Status.OFFLINE;
+        if ((tagList.isEmpty() && !hasMetaTags) || !this.showDynamicTags) {
             binding.tags.setVisibility(View.GONE);
         } else {
             binding.tags.setVisibility(View.VISIBLE);
-            binding.tags.removeAllViewsInLayout();
+            binding.tags.removeViews(1, binding.tags.getChildCount() - 1);
+            final ImmutableList.Builder<Integer> viewIdBuilder = new ImmutableList.Builder<>();
             for (final ListItem.Tag tag : tagList) {
+                final String name = tag.getName();
                 final TextView tv = (TextView) inflater.inflate(R.layout.list_item_tag, binding.tags, false);
-                tv.setText(tag.getName());
-                tv.getBackground().mutate().setColorFilter(tag.getColor(), PorterDuff.Mode.SRC_IN);
+                tv.setText(name);
+                tv.setBackgroundTintList(ColorStateList.valueOf(MaterialColors.harmonizeWithPrimary(this,XEP0392Helper.rgbFromNick(name))));
+                final int id = ViewCompat.generateViewId();
+                tv.setId(id);
+                viewIdBuilder.add(id);
                 binding.tags.addView(tv);
             }
+            if (contact.isBlocked()) {
+                final TextView tv =
+                        (TextView)
+                                inflater.inflate(
+                                        R.layout.list_item_tag, binding.tags, false);
+                tv.setText(R.string.blocked);
+                tv.setBackgroundTintList(ColorStateList.valueOf(MaterialColors.harmonizeWithPrimary(tv.getContext(), ContextCompat.getColor(tv.getContext(),R.color.gray_800))));
+                final int id = ViewCompat.generateViewId();
+                tv.setId(id);
+                viewIdBuilder.add(id);
+                binding.tags.addView(tv);
+            } else {
+                final Presence.Status status = contact.getShownStatus();
+                if (status != Presence.Status.OFFLINE) {
+                    final TextView tv =
+                            (TextView)
+                                    inflater.inflate(
+                                            R.layout.list_item_tag, binding.tags, false);
+                    UIHelper.setStatus(tv, status);
+                    final int id = ViewCompat.generateViewId();
+                    tv.setId(id);
+                    viewIdBuilder.add(id);
+                    binding.tags.addView(tv);
+                }
+            }
+            binding.flowWidget.setReferencedIds(Ints.toArray(viewIdBuilder.build()));
         }
     }
 
@@ -735,10 +768,8 @@ public class ContactDetailsActivity extends OmemoActivity implements OnAccountUp
     class VcardAdapter extends ArrayAdapter<Element> {
         VcardAdapter() { super(ContactDetailsActivity.this, 0); }
 
-        private Drawable getDrawable(int attr) {
-            final TypedValue typedvalueattr = new TypedValue();
-            getTheme().resolveAttribute(attr, typedvalueattr, true);
-            return getResources().getDrawable(typedvalueattr.resourceId);
+        private Drawable getDrawable(int d) {
+            return ContactDetailsActivity.this.getDrawable(d);
         }
 
         @Override
@@ -747,13 +778,13 @@ public class ContactDetailsActivity extends OmemoActivity implements OnAccountUp
             final Element item = getItem(position);
 
             if (item.getName().equals("org")) {
-                binding.command.setCompoundDrawablesRelativeWithIntrinsicBounds(getDrawable(R.attr.icon_org), null, null, null);
+                binding.command.setCompoundDrawablesRelativeWithIntrinsicBounds(getDrawable(R.drawable.ic_business_24dp), null, null, null);
                 binding.command.setCompoundDrawablePadding(20);
             } else if (item.getName().equals("impp")) {
-                binding.command.setCompoundDrawablesRelativeWithIntrinsicBounds(getDrawable(R.attr.icon_chat), null, null, null);
+                binding.command.setCompoundDrawablesRelativeWithIntrinsicBounds(getDrawable(R.drawable.ic_chat_black_24dp), null, null, null);
                 binding.command.setCompoundDrawablePadding(20);
             } else if (item.getName().equals("url")) {
-                binding.command.setCompoundDrawablesRelativeWithIntrinsicBounds(getDrawable(R.attr.icon_link), null, null, null);
+                binding.command.setCompoundDrawablesRelativeWithIntrinsicBounds(getDrawable(R.drawable.ic_link_24dp), null, null, null);
                 binding.command.setCompoundDrawablePadding(20);
             }
 
@@ -761,19 +792,19 @@ public class ContactDetailsActivity extends OmemoActivity implements OnAccountUp
             if (uri != null && uri.getScheme() != null) {
                 if (uri.getScheme().equals("xmpp")) {
                     binding.command.setText(uri.getSchemeSpecificPart());
-                    binding.command.setCompoundDrawablesRelativeWithIntrinsicBounds(getResources().getDrawable(R.drawable.jabber), null, null, null);
+                    binding.command.setCompoundDrawablesRelativeWithIntrinsicBounds(getDrawable(R.drawable.jabber), null, null, null);
                     binding.command.setCompoundDrawablePadding(20);
                 } else if (uri.getScheme().equals("tel")) {
                     binding.command.setText(uri.getSchemeSpecificPart());
-                    binding.command.setCompoundDrawablesRelativeWithIntrinsicBounds(getDrawable(R.attr.ic_make_audio_call), null, null, null);
+                    binding.command.setCompoundDrawablesRelativeWithIntrinsicBounds(getDrawable(R.drawable.ic_call_24dp), null, null, null);
                     binding.command.setCompoundDrawablePadding(20);
                 } else if (uri.getScheme().equals("mailto")) {
                     binding.command.setText(uri.getSchemeSpecificPart());
-                    binding.command.setCompoundDrawablesRelativeWithIntrinsicBounds(getDrawable(R.attr.icon_email), null, null, null);
+                    binding.command.setCompoundDrawablesRelativeWithIntrinsicBounds(getDrawable(R.drawable.ic_email_24dp), null, null, null);
                     binding.command.setCompoundDrawablePadding(20);
                 } else if (uri.getScheme().equals("http") || uri.getScheme().equals("https")) {
                     binding.command.setText(uri.toString());
-                    binding.command.setCompoundDrawablesRelativeWithIntrinsicBounds(getDrawable(R.attr.icon_link), null, null, null);
+                    binding.command.setCompoundDrawablesRelativeWithIntrinsicBounds(getDrawable(R.drawable.ic_link_24dp), null, null, null);
                     binding.command.setCompoundDrawablePadding(20);
                 } else {
                     binding.command.setText(uri.toString());

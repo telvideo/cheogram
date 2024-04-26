@@ -18,8 +18,12 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
+import androidx.core.content.ContextCompat;
 import androidx.databinding.DataBindingUtil;
 
+import com.google.android.material.color.MaterialColors;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.common.base.Strings;
 
 import java.util.Collections;
@@ -39,7 +43,6 @@ import eu.siacs.conversations.services.QuickConversationsService;
 import eu.siacs.conversations.ui.adapter.ChannelSearchResultAdapter;
 import eu.siacs.conversations.ui.util.PendingItem;
 import eu.siacs.conversations.ui.util.SoftKeyboardUtils;
-import eu.siacs.conversations.ui.util.StyledAttributes;
 import eu.siacs.conversations.utils.AccountUtils;
 import eu.siacs.conversations.xmpp.Jid;
 
@@ -65,7 +68,7 @@ public class ChannelDiscoveryActivity extends XmppActivity implements MenuItem.O
     }
 
     @Override
-    void onBackendConnected() {
+    protected void onBackendConnected() {
         if (pendingServices != null) {
             mucServices = new HashMap<>();
             for (int i = 0; i < pendingServices.length; i += 2) {
@@ -92,6 +95,7 @@ public class ChannelDiscoveryActivity extends XmppActivity implements MenuItem.O
         super.onCreate(savedInstanceState);
         binding = DataBindingUtil.setContentView(this, R.layout.activity_channel_discovery);
         setSupportActionBar(binding.toolbar);
+        Activities.setStatusAndNavigationBarColors(this, binding.getRoot());
         configureActionBar(getSupportActionBar(), true);
         binding.list.setAdapter(this.adapter);
         this.adapter.setOnChannelSearchResultSelectedListener(this);
@@ -145,7 +149,7 @@ public class ChannelDiscoveryActivity extends XmppActivity implements MenuItem.O
     }
 
     @Override
-    public boolean onMenuItemActionExpand(MenuItem item) {
+    public boolean onMenuItemActionExpand(@NonNull MenuItem item) {
         mSearchEditText.post(() -> {
             mSearchEditText.requestFocus();
             final InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
@@ -155,7 +159,7 @@ public class ChannelDiscoveryActivity extends XmppActivity implements MenuItem.O
     }
 
     @Override
-    public boolean onMenuItemActionCollapse(MenuItem item) {
+    public boolean onMenuItemActionCollapse(@NonNull MenuItem item) {
         final InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
         imm.hideSoftInputFromWindow(mSearchEditText.getWindowToken(), InputMethodManager.HIDE_IMPLICIT_ONLY);
         mSearchEditText.setText("");
@@ -169,7 +173,7 @@ public class ChannelDiscoveryActivity extends XmppActivity implements MenuItem.O
     private void toggleLoadingScreen() {
         adapter.submitList(Collections.emptyList());
         binding.progressBar.setVisibility(View.VISIBLE);
-        binding.list.setBackgroundColor(StyledAttributes.getColor(this, R.attr.color_background_primary));
+        binding.list.setBackgroundColor(MaterialColors.getColor(binding.list, com.google.android.material.R.attr.colorSurface));
     }
 
     @Override
@@ -177,13 +181,13 @@ public class ChannelDiscoveryActivity extends XmppActivity implements MenuItem.O
         super.onStart();
         this.method = getMethod(this);
         if (pendingServices == null && !optedIn && method == ChannelDiscoveryService.Method.JABBER_NETWORK) {
-            final AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            final MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(this);
             builder.setTitle(R.string.channel_discovery_opt_in_title);
             builder.setMessage(Html.fromHtml(getString(R.string.channel_discover_opt_in_message)));
             builder.setNegativeButton(R.string.cancel, (dialog, which) -> finish());
             builder.setPositiveButton(R.string.confirm, (dialog, which) -> optIn());
             builder.setOnCancelListener(dialog -> finish());
-            final AlertDialog dialog = builder.create();
+            final androidx.appcompat.app.AlertDialog dialog = builder.create();
             dialog.setOnShowListener(d -> {
                 final TextView textView = dialog.findViewById(android.R.id.message);
                 if (textView == null) {
@@ -200,11 +204,11 @@ public class ChannelDiscoveryActivity extends XmppActivity implements MenuItem.O
     private void holdLoading() {
         adapter.submitList(Collections.emptyList());
         binding.progressBar.setVisibility(View.GONE);
-        binding.list.setBackgroundColor(StyledAttributes.getColor(this, R.attr.color_background_primary));
+        binding.list.setBackgroundColor(MaterialColors.getColor(binding.list, com.google.android.material.R.attr.colorSurface));
     }
 
     @Override
-    public void onSaveInstanceState(Bundle savedInstanceState) {
+    public void onSaveInstanceState(@NonNull Bundle savedInstanceState) {
         if (mMenuSearchView != null && mMenuSearchView.isActionViewExpanded()) {
             savedInstanceState.putString("search", mSearchEditText != null ? mSearchEditText.getText().toString() : null);
         }
@@ -234,10 +238,10 @@ public class ChannelDiscoveryActivity extends XmppActivity implements MenuItem.O
         runOnUiThread(() -> {
             adapter.submitList(results);
             binding.progressBar.setVisibility(View.GONE);
-            if (results.size() == 0) {
-                binding.list.setBackground(StyledAttributes.getDrawable(this, R.attr.activity_primary_background_no_results));
+            if (results.isEmpty()) {
+                binding.list.setBackground(ContextCompat.getDrawable(this,R.drawable.background_no_results));
             } else {
-                binding.list.setBackgroundColor(StyledAttributes.getColor(this, R.attr.color_background_primary));
+                binding.list.setBackgroundColor(MaterialColors.getColor(binding.list, com.google.android.material.R.attr.colorSurface));
             }
         });
 
@@ -248,11 +252,11 @@ public class ChannelDiscoveryActivity extends XmppActivity implements MenuItem.O
         final List<String> accounts = AccountUtils.getEnabledAccounts(xmppConnectionService);
         if (accounts.size() == 1) {
             joinChannelSearchResult(accounts.get(0), result);
-        } else if (accounts.size() == 0) {
+        } else if (accounts.isEmpty()) {
             Toast.makeText(this, R.string.please_enable_an_account, Toast.LENGTH_LONG).show();
         } else {
             final AtomicReference<String> account = new AtomicReference<>(accounts.get(0));
-            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            final MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(this);
             builder.setTitle(R.string.choose_account);
             builder.setSingleChoiceItems(accounts.toArray(new CharSequence[0]), 0, (dialog, which) -> account.set(accounts.get(which)));
             builder.setPositiveButton(R.string.join, (dialog, which) -> joinChannelSearchResult(account.get(), result));
@@ -263,40 +267,43 @@ public class ChannelDiscoveryActivity extends XmppActivity implements MenuItem.O
     }
 
     @Override
-    public boolean onContextItemSelected(MenuItem item) {
+    public boolean onContextItemSelected(@NonNull MenuItem item) {
         final Room room = adapter.getCurrent();
-        if (room != null) {
-            switch (item.getItemId()) {
-                case R.id.share_with:
-                    StartConversationActivity.shareAsChannel(this, room.address);
-                    return true;
-                case R.id.open_join_dialog:
-                    final Intent intent = new Intent(this, StartConversationActivity.class);
-                    intent.setAction(Intent.ACTION_VIEW);
-                    intent.putExtra("force_dialog", true);
-                    intent.setData(Uri.parse(String.format("xmpp:%s?join", room.address)));
-                    startActivity(intent);
-                    return true;
-            }
+        if (room == null) {
+            return false;
         }
-        return false;
+        final int itemId = item.getItemId();
+        if (itemId == R.id.share_with) {
+            StartConversationActivity.shareAsChannel(this, room.address);
+            return true;
+        } else if (itemId == R.id.open_join_dialog) {
+            final Intent intent = new Intent(this, StartConversationActivity.class);
+            intent.setAction(Intent.ACTION_VIEW);
+            intent.putExtra("force_dialog", true);
+            intent.setData(Uri.parse(String.format("xmpp:%s?join", room.address)));
+            startActivity(intent);
+            return true;
+        } else {
+            return false;
+        }
     }
 
-    public void joinChannelSearchResult(String selectedAccount, Room result) {
-        final Jid jid = Config.DOMAIN_LOCK == null ? Jid.ofEscaped(selectedAccount) : Jid.ofLocalAndDomainEscaped(selectedAccount, Config.DOMAIN_LOCK);
-        final boolean syncAutoJoin = getBooleanPreference("autojoin", R.bool.autojoin);
+    public void joinChannelSearchResult(final String selectedAccount, final Room result) {
+        final Jid jid = Jid.ofEscaped(selectedAccount);
         final Account account = xmppConnectionService.findAccountByJid(jid);
-        final Conversation conversation = xmppConnectionService.findOrCreateConversation(account, result.getRoom(), true, true, true);
-        Bookmark bookmark = conversation.getBookmark();
-        if (bookmark != null) {
-            if (!bookmark.autojoin() && syncAutoJoin) {
-                bookmark.setAutojoin(true);
-                xmppConnectionService.createBookmark(account, bookmark);
-            }
-        } else {
-            bookmark = new Bookmark(account, conversation.getJid().asBareJid());
-            bookmark.setAutojoin(syncAutoJoin);
+        final Conversation conversation =
+                xmppConnectionService.findOrCreateConversation(
+                        account, result.getRoom(), true, true, true);
+        final var existingBookmark = conversation.getBookmark();
+        if (existingBookmark == null) {
+            final var bookmark = new Bookmark(account, conversation.getJid().asBareJid());
+            bookmark.setAutojoin(true);
             xmppConnectionService.createBookmark(account, bookmark);
+        } else {
+            if (!existingBookmark.autojoin()) {
+                existingBookmark.setAutojoin(true);
+                xmppConnectionService.createBookmark(account, existingBookmark);
+            }
         }
         switchToConversation(conversation);
     }

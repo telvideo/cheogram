@@ -6,16 +6,12 @@
         <item>@string/pref_theme_automatic</item>
         <item>@string/pref_theme_light</item>
         <item>@string/pref_theme_dark</item>
-        <item>@string/pref_theme_obsidian</item>
-        <item>@string/pref_theme_oledblack</item>
         <item>@string/pref_theme_custom</item>
     </string-array>
     <string-array name="themes_values" tools:ignore="InconsistentArrays">
 		<item>automatic</item>
 		<item>light</item>
 		<item>dark</item>
-		<item>obsidian</item>
-		<item>oledblack</item>
 		<item>custom</item>
 	</string-array>
 

@@ -18,4 +18,14 @@
 	<item name="cornerSize">@dimen/incoming_call_radius</item>
 </style>
 
+    <style name="DialpadNumberStyle">
+        <item name="android:includeFontPadding">false</item>
+        <item name="android:textSize">@dimen/dialpad_text_size</item>
+    </style>
+
+    <style name="DialpadLetterStyle">
+        <item name="android:textSize">@dimen/smaller_text_size</item>
+        <item name="android:alpha">0.8</item>
+    </style>
+
 </resources>

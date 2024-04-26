@@ -14,7 +14,7 @@
                 android:right="5dp"
                 android:top="0dp" />
             <size android:width="10dp" android:height="10dp" />
-            <solid android:color="?message_bubble_sent_bg" />
+            <solid android:color="?colorSurface" />
         </shape>
     </item>
     <item android:bottom="0dp" android:right="-5dp" android:gravity="bottom|right" android:width="7dp" android:height="7dp">
@@ -25,8 +25,8 @@
            android:viewportHeight="24.0">
            <path
                 android:pathData="M0,24 V 0 L24,24 z"
-                android:strokeColor="?message_bubble_sent_bg"
-                android:fillColor="?message_bubble_sent_bg"/>
+                android:strokeColor="?colorSurface"
+                android:fillColor="?colorSurface"/>
         </vector>
     </item>
 </layer-list>
