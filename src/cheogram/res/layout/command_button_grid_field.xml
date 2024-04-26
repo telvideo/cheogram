@@ -26,7 +26,8 @@
             android:gravity="center"
             android:textAppearance="?textAppearanceBodyMedium" />
 
-        <Button
+        <com.google.android.material.button.MaterialButton
+            style="@style/Widget.Material3.Button.TonalButton"
             android:id="@+id/default_button"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -50,7 +51,8 @@
             android:gravity="center"
             android:numColumns="auto_fit" />
 
-        <Button
+        <com.google.android.material.button.MaterialButton
+            style="@style/Widget.Material3.Button.TextButton"
             android:id="@+id/open_button"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
