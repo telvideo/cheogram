@@ -350,7 +350,7 @@ public class MessageAdapter extends ArrayAdapter<Message> {
             if (fileSize != null) {
                 timeInfoBuilder.add(fileSize);
             }
-            if (mForceNames || multiReceived) {
+            if (mForceNames || multiReceived || (message.getTrueCounterpart() != null && message.getContact() != null)) {
                 final String displayName = UIHelper.getMessageDisplayName(message);
                 if (displayName != null) {
                     timeInfoBuilder.add(displayName);
