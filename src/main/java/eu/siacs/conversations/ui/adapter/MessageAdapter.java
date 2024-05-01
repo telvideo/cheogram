@@ -301,6 +301,7 @@ public class MessageAdapter extends ArrayAdapter<Message> {
         } else {
             setTextColor(viewHolder.time, bubbleColor);
         }
+        setTextColor(viewHolder.subject, bubbleColor);
         if (message.getEncryption() == Message.ENCRYPTION_NONE) {
             viewHolder.indicator.setVisibility(View.GONE);
         } else {
@@ -1402,16 +1403,6 @@ public class MessageAdapter extends ArrayAdapter<Message> {
                 viewHolder.subject.setText(subject);
             }
         }
-
-        /* TODO
-        if (darkBackground) {
-            if (viewHolder.subject != null) viewHolder.subject.setTextAppearance(getContext(), R.style.TextAppearance_Conversations_Caption_OnDark_Bold);
-            if (viewHolder.encryption != null) viewHolder.encryption.setTextAppearance(getContext(), R.style.TextAppearance_Conversations_Caption_OnDark_Bold);
-        } else {
-            if (viewHolder.subject != null) viewHolder.subject.setTextAppearance(getContext(), R.style.TextAppearance_Conversations_Caption_Bold);
-            if (viewHolder.encryption != null) viewHolder.encryption.setTextAppearance(getContext(), R.style.TextAppearance_Conversations_Caption_Bold);
-        }
-        */
 
         displayStatus(viewHolder, message, type, bubbleColor);
 

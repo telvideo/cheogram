@@ -62,7 +62,8 @@
                         android:accessibilityTraversalAfter="@id/message_photo"
                         android:accessibilityTraversalBefore="@id/message_time"
                         android:gravity="center_vertical"
-                        android:textAppearance="?textAppearanceBodySmall"
+                        android:textAppearance="?textAppearanceLabelSmall"
+                        android:textColor="?colorOnTertiaryContainer"
                         android:visibility="gone" />
 
                     <TextView
