@@ -1355,6 +1355,7 @@ public class MessageAdapter extends ArrayAdapter<Message> {
 
         setBackgroundTint(viewHolder.message_box, bubbleColor);
         setTextColor(viewHolder.messageBody, bubbleColor);
+        viewHolder.messageBody.setLinkTextColor(bubbleToOnSurfaceColor(viewHolder.messageBody, bubbleColor));
 
         if (type == RECEIVED) {
             if (!muted && commands != null && conversation instanceof Conversation) {
