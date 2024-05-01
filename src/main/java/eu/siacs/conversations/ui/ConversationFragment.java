@@ -84,6 +84,7 @@ import com.cheogram.android.BobTransfer;
 import com.cheogram.android.EmojiSearch;
 import com.cheogram.android.WebxdcPage;
 
+import com.google.android.material.color.MaterialColors;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
@@ -3060,6 +3061,17 @@ public class ConversationFragment extends XmppFragment
         if (!activity.xmppConnectionService.isConversationStillOpen(this.conversation)) {
             activity.onConversationArchived(this.conversation);
             return false;
+        }
+
+        if (activity.xmppConnectionService != null && activity.xmppConnectionService.getAccounts().size() > 1) {
+            final var colors = MaterialColors.getColorRoles(activity, conversation.getAccount().getColor(activity.isDark()));
+            binding.inputLayout.setBackgroundTintList(ColorStateList.valueOf(colors.getAccentContainer()));
+            binding.textinputSubject.setTextColor(colors.getOnAccentContainer());
+            binding.textinput.setTextColor(colors.getOnAccentContainer());
+        } else {
+            binding.inputLayout.setBackgroundTintList(ColorStateList.valueOf(MaterialColors.getColor(binding.inputLayout, com.google.android.material.R.attr.colorTertiaryContainer)));
+            binding.textinputSubject.setTextColor(MaterialColors.getColor(binding.textinputSubject, com.google.android.material.R.attr.colorOnTertiaryContainer));
+            binding.textinput.setTextColor(MaterialColors.getColor(binding.textinput, com.google.android.material.R.attr.colorOnTertiaryContainer));
         }
 
         setThread(conversation.getThread());
