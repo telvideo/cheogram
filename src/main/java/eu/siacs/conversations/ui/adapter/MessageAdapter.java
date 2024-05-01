@@ -598,6 +598,12 @@ public class MessageAdapter extends ArrayAdapter<Message> {
                 int end = body.getSpanEnd(mergeSeparator);
                 body.setSpan(new DividerSpan(true), start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
             }
+            for (final android.text.style.QuoteSpan quote : body.getSpans(0, body.length(), android.text.style.QuoteSpan.class)) {
+                int start = body.getSpanStart(quote);
+                int end = body.getSpanEnd(quote);
+                body.removeSpan(quote);
+                applyQuoteSpan(viewHolder.messageBody, body, start, end, bubbleColor);
+            }
             boolean startsWithQuote = handleTextQuotes(viewHolder.messageBody, body, bubbleColor);
             if (!message.isPrivateMessage()) {
                 if (hasMeCommand) {
