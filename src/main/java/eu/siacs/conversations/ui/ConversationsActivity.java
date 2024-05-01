@@ -811,6 +811,10 @@ public class ConversationsActivity extends XmppActivity implements OnConversatio
             if (conversation != null) {
                 actionBar.setTitle(conversation.getName());
                 actionBar.setDisplayHomeAsUpEnabled(!xmppConnectionService.isOnboarding() || !conversation.getJid().equals(Jid.of("cheogram.com")));
+                ToolbarUtils.setActionBarOnClickListener(
+                        binding.toolbar,
+                        (v) -> { if(!xmppConnectionService.isOnboarding()) openConversationDetails(conversation); }
+                );
                 return;
             }
         }
