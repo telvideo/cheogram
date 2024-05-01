@@ -405,14 +405,16 @@ public class NotificationService {
     }
 
     private boolean isQuietHours(Account account) {
-        if (mXmppConnectionService.getAccounts().size() < 2) account = null;
-        final String suffix = account == null ? "" : ":" + account.getUuid();
-        if (!mXmppConnectionService.getBooleanPreference(
-                "enable_quiet_hours" + suffix, R.bool.enable_quiet_hours)) {
+        return isQuietHours(mXmppConnectionService, account);
+    }
+
+    public static boolean isQuietHours(Context context, Account account) {
+        // if (mXmppConnectionService.getAccounts().size() < 2) account = null;
+        final var suffix = account == null ? "" : ":" + account.getUuid();
+        final var preferences = PreferenceManager.getDefaultSharedPreferences(context);
+        if (!preferences.getBoolean("enable_quiet_hours" + suffix, context.getResources().getBoolean(R.bool.enable_quiet_hours))) {
             return false;
         }
-        final SharedPreferences preferences =
-                PreferenceManager.getDefaultSharedPreferences(mXmppConnectionService);
         final long startTime =
                 TimePreference.minutesToTimestamp(
                         preferences.getLong("quiet_hours_start" + suffix, TimePreference.DEFAULT_VALUE));
@@ -580,68 +582,8 @@ public class NotificationService {
         notify(DELIVERY_FAILED_NOTIFICATION_ID, summaryNotification);
     }
 
-    private synchronized boolean tryRingingWithDialerUI(final AbstractJingleConnection.Id id, final Set<Media> media) {
-        if (Build.VERSION.SDK_INT < 23) return false;
-
-        if (!mXmppConnectionService.getPreferences().getBoolean("dialler_integration_incoming", true)) return false;
-
-        if (mXmppConnectionService.checkSelfPermission(Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
-            // We cannot request audio permission in Dialer UI
-            // when Dialer is shown over keyguard, the user cannot even necessarily
-            // see notifications.
-            return false;
-        }
-
-        if (media.size() != 1 || !media.contains(Media.AUDIO)) {
-            // Currently our ConnectionService only handles single audio calls
-            Log.w(Config.LOGTAG, "only audio calls can be handled by cheogram connection service");
-            return false;
-        }
-
-        PhoneAccountHandle handle = null;
-        for (Contact contact : id.account.getRoster().getContacts()) {
-            if (!contact.getJid().getDomain().equals(id.with.getDomain())) {
-                continue;
-            }
-
-            if (!contact.getPresences().anyIdentity("gateway", "pstn")) {
-                continue;
-            }
-
-            handle = contact.phoneAccountHandle();
-            break;
-        }
-
-        if (handle == null) {
-            Log.w(Config.LOGTAG, "Could not find phone account handle for " + id.account.getJid().toString());
-            return false;
-        }
-
-        Bundle callInfo = new Bundle();
-        callInfo.putString("account", id.account.getJid().toString());
-        callInfo.putString("with", id.with.toString());
-        callInfo.putString("sessionId", id.sessionId);
-
-        TelecomManager telecomManager = mXmppConnectionService.getSystemService(TelecomManager.class);
-
-        try {
-            telecomManager.addNewIncomingCall(handle, callInfo);
-        } catch (SecurityException e) {
-            // If the account is not registered or enabled, it could result in a security exception
-            // Just fall back to the built-in UI in this case.
-            Log.w(Config.LOGTAG, e);
-            return false;
-        }
-
-        return true;
-    }
-
     public synchronized void startRinging(final AbstractJingleConnection.Id id, final Set<Media> media) {
         if (isQuietHours(id.getContact().getAccount())) return;
-
-        if (tryRingingWithDialerUI(id, media)) {
-            return;
-        }
 
         showIncomingCallNotification(id, media, false);
     }

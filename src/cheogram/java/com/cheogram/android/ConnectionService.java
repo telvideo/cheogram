@@ -46,6 +46,7 @@ import eu.siacs.conversations.R;
 import eu.siacs.conversations.entities.Account;
 import eu.siacs.conversations.persistance.FileBackend;
 import eu.siacs.conversations.services.CallIntegration;
+import eu.siacs.conversations.services.CallIntegrationConnectionService;
 import eu.siacs.conversations.services.AvatarService;
 import eu.siacs.conversations.services.EventReceiver;
 import eu.siacs.conversations.services.XmppConnectionService.XmppConnectionBinder;
@@ -179,10 +180,11 @@ public class ConnectionService extends android.telecom.ConnectionService {
 
 	@Override
 	public Connection onCreateIncomingConnection(PhoneAccountHandle handle, ConnectionRequest request) {
-		Bundle extras = request.getExtras();
-		String accountJid = extras.getString("account");
-		String withJid = extras.getString("with");
-		String sessionId = extras.getString("sessionId");
+		final var extras = request.getExtras();
+		final var extraExtras = extras.getBundle(TelecomManager.EXTRA_INCOMING_CALL_EXTRAS);
+		final var accountJid = extraExtras == null ? null : extraExtras.getString("account");
+		final var withJid = extraExtras == null ? null : extraExtras.getString("with");
+		final String sessionId = extraExtras == null ? null : extraExtras.getString(CallIntegrationConnectionService.EXTRA_SESSION_ID);
 
 		if (xmppConnectionService == null) {
 			return Connection.createFailedConnection(
