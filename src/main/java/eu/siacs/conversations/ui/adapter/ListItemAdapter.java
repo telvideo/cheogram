@@ -76,7 +76,7 @@ public class ListItemAdapter extends ArrayAdapter<ListItem> {
 			innerView = binding.inner;
 		} else {
 			viewHolder = (ViewHolder) view.getTag();
-			innerView = view;
+			innerView = viewHolder.inner;
 		}
 		if (view.isActivated()) {
 			Log.d(Config.LOGTAG,"item "+item.getDisplayName()+" is activated");
