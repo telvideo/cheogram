@@ -25,6 +25,12 @@
             android:icon="@drawable/ic_dark_mode_24dp"
             android:key="custom_theme_dark"
             android:title="Custom Theme is Dark" />
+        <SwitchPreferenceCompat
+            android:defaultValue="false"
+            android:icon="@drawable/ic_palette_24dp"
+            android:key="custom_theme_color_match"
+            android:title="Color Match"
+            android:summary="Stay true to my color inputs" />
         <com.rarepebble.colorpicker.ColorPreference
             android:icon="@drawable/ic_palette_24dp"
             android:key="custom_theme_primary"

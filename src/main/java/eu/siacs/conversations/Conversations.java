@@ -74,6 +74,7 @@ public class Conversations extends Application {
                 .putString(AppSettings.THEME, "custom")
                 .putBoolean("custom_theme_automatic", false)
                 .putBoolean("custom_theme_dark", true)
+                .putBoolean("custom_theme_color_match", true)
                 .putInt("custom_dark_theme_primary", context.getColor(R.color.white))
                 .putInt("custom_dark_theme_primary_dark", context.getColor(android.R.color.black))
                 .putInt("custom_dark_theme_accent", context.getColor(R.color.yeller))

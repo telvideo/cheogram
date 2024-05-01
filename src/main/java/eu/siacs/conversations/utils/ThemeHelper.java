@@ -62,25 +62,29 @@ public class ThemeHelper {
 		if (!Conversations.isCustomColorsDesired(context)) return colors;
 
 		final SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
+		final var colorMatch = sharedPreferences.getBoolean("custom_theme_color_match", false);
 		if (sharedPreferences.contains("custom_theme_primary")) {
-			final var roles = MaterialColors.getColorRoles(sharedPreferences.getInt("custom_theme_primary", 0), true);
-			colors.put(R.color.md_theme_light_primary, roles.getAccent());
+			final var base = sharedPreferences.getInt("custom_theme_primary", 0);
+			final var roles = MaterialColors.getColorRoles(base, true);
+			colors.put(R.color.md_theme_light_primary, colorMatch ? base : roles.getAccent());
 			colors.put(R.color.md_theme_light_onPrimary, roles.getOnAccent());
-			colors.put(R.color.md_theme_light_primaryContainer, roles.getAccentContainer());
+			colors.put(R.color.md_theme_light_primaryContainer, colorMatch ? base : roles.getAccentContainer());
 			colors.put(R.color.md_theme_light_onPrimaryContainer, roles.getOnAccentContainer());
 		}
 		if (sharedPreferences.contains("custom_theme_primary_dark")) {
-			final var roles = MaterialColors.getColorRoles(sharedPreferences.getInt("custom_theme_primary_dark", 0), true);
-			colors.put(R.color.md_theme_light_secondary, roles.getAccent());
+			final var base = sharedPreferences.getInt("custom_theme_primary_dark", 0);
+			final var roles = MaterialColors.getColorRoles(base, true);
+			colors.put(R.color.md_theme_light_secondary, colorMatch ? base : roles.getAccent());
 			colors.put(R.color.md_theme_light_onSecondary, roles.getOnAccent());
-			colors.put(R.color.md_theme_light_secondaryContainer, roles.getAccentContainer());
+			colors.put(R.color.md_theme_light_secondaryContainer, colorMatch ? base : roles.getAccentContainer());
 			colors.put(R.color.md_theme_light_onSecondaryContainer, roles.getOnAccentContainer());
 		}
 		if (sharedPreferences.contains("custom_theme_accent")) {
-			final var roles = MaterialColors.getColorRoles(sharedPreferences.getInt("custom_theme_accent", 0), true);
-			colors.put(R.color.md_theme_light_tertiary, roles.getAccent());
+			final var base = sharedPreferences.getInt("custom_theme_accent", 0);
+			final var roles = MaterialColors.getColorRoles(base, true);
+			colors.put(R.color.md_theme_light_tertiary, colorMatch ? base : roles.getAccent());
 			colors.put(R.color.md_theme_light_onTertiary, roles.getOnAccent());
-			colors.put(R.color.md_theme_light_tertiaryContainer, roles.getAccentContainer());
+			colors.put(R.color.md_theme_light_tertiaryContainer, colorMatch ? base : roles.getAccentContainer());
 			colors.put(R.color.md_theme_light_onTertiaryContainer, roles.getOnAccentContainer());
 		}
 		if (sharedPreferences.contains("custom_theme_background_primary")) {
@@ -96,30 +100,27 @@ public class ThemeHelper {
 		}
 		if (sharedPreferences.contains("custom_dark_theme_primary")) {
 			final var base = sharedPreferences.getInt("custom_dark_theme_primary", 0);
-			final var black = base == context.getColor(android.R.color.black);
 			final var roles = MaterialColors.getColorRoles(base, false);
-			colors.put(R.color.md_theme_dark_primary, black ? base : roles.getAccent());
-			colors.put(R.color.md_theme_dark_onPrimary, black ? context.getColor(R.color.white) : roles.getOnAccent());
-			colors.put(R.color.md_theme_dark_primaryContainer, black ? base : roles.getAccentContainer());
-			colors.put(R.color.md_theme_dark_onPrimaryContainer, black ? context.getColor(R.color.white) : roles.getOnAccentContainer());
+			colors.put(R.color.md_theme_dark_primary, colorMatch ? base : roles.getAccent());
+			colors.put(R.color.md_theme_dark_onPrimary, roles.getOnAccent());
+			colors.put(R.color.md_theme_dark_primaryContainer, colorMatch ? base : roles.getAccentContainer());
+			colors.put(R.color.md_theme_dark_onPrimaryContainer, roles.getOnAccentContainer());
 		}
 		if (sharedPreferences.contains("custom_dark_theme_primary_dark")) {
 			final var base = sharedPreferences.getInt("custom_dark_theme_primary_dark", 0);
-			final var black = base == context.getColor(android.R.color.black);
 			final var roles = MaterialColors.getColorRoles(base, false);
-			colors.put(R.color.md_theme_dark_secondary, black ? base : roles.getAccent());
-			colors.put(R.color.md_theme_dark_onSecondary, black ? context.getColor(R.color.white) : roles.getOnAccent());
-			colors.put(R.color.md_theme_dark_secondaryContainer, black ? base : roles.getAccentContainer());
-			colors.put(R.color.md_theme_dark_onSecondaryContainer, black ? context.getColor(R.color.white) : roles.getOnAccentContainer());
+			colors.put(R.color.md_theme_dark_secondary, colorMatch ? base : roles.getAccent());
+			colors.put(R.color.md_theme_dark_onSecondary, roles.getOnAccent());
+			colors.put(R.color.md_theme_dark_secondaryContainer, colorMatch ? base : roles.getAccentContainer());
+			colors.put(R.color.md_theme_dark_onSecondaryContainer, roles.getOnAccentContainer());
 		}
 		if (sharedPreferences.contains("custom_dark_theme_accent")) {
 			final var base = sharedPreferences.getInt("custom_dark_theme_accent", 0);
-			final var black = base == context.getColor(android.R.color.black);
 			final var roles = MaterialColors.getColorRoles(base, false);
-			colors.put(R.color.md_theme_dark_tertiary, black ? base : roles.getAccent());
-			colors.put(R.color.md_theme_dark_onTertiary, black ? context.getColor(R.color.white) : roles.getOnAccent());
-			colors.put(R.color.md_theme_dark_tertiaryContainer, black ? base : roles.getAccentContainer());
-			colors.put(R.color.md_theme_dark_onTertiaryContainer, black ? context.getColor(R.color.white) : roles.getOnAccentContainer());
+			colors.put(R.color.md_theme_dark_tertiary, colorMatch ? base : roles.getAccent());
+			colors.put(R.color.md_theme_dark_onTertiary, roles.getOnAccent());
+			colors.put(R.color.md_theme_dark_tertiaryContainer, colorMatch ? base : roles.getAccentContainer());
+			colors.put(R.color.md_theme_dark_onTertiaryContainer, roles.getOnAccentContainer());
 		}
 		if (sharedPreferences.contains("custom_dark_theme_background_primary")) {
 			int background_primary = sharedPreferences.getInt("custom_dark_theme_background_primary", 0);

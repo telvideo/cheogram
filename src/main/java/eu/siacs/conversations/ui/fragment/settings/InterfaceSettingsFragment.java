@@ -49,6 +49,7 @@ public class InterfaceSettingsFragment extends XmppPreferenceFragment {
         final var sharedPreferences = getPreferenceManager().getSharedPreferences();
         findPreference("custom_theme_automatic").setVisible(custom);
         findPreference("custom_theme_dark").setVisible(custom && !sharedPreferences.getBoolean("custom_theme_automatic", true));
+        findPreference("custom_theme_color_match").setVisible(custom);
 
         findPreference("custom_theme_primary").setVisible(custom && !dark);
         findPreference("custom_theme_primary_dark").setVisible(custom && !dark);
@@ -73,6 +74,7 @@ public class InterfaceSettingsFragment extends XmppPreferenceFragment {
         if (
             key.equals("custom_theme_automatic") ||
             key.equals("custom_theme_dark") ||
+            key.equals("custom_theme_color_match") ||
             key.equals("custom_theme_primary") ||
             key.equals("custom_theme_primary_dark") ||
             key.equals("custom_theme_accent") ||
