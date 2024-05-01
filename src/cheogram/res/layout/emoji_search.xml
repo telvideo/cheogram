@@ -10,6 +10,7 @@
       android:layout_alignParentLeft="true"
       android:layout_alignParentTop="true"
       android:divider="@android:color/transparent"
+	android:background="?colorSurfaceVariant">
       android:dividerHeight="0dp"></ListView>
 
 </layout>
