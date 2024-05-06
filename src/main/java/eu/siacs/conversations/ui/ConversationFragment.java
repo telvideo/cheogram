@@ -4425,7 +4425,8 @@ public class ConversationFragment extends XmppFragment
     }
 
     private Activity requireActivity() {
-        final Activity activity = getActivity();
+        Activity activity = getActivity();
+        if (activity == null) activity = this.activity;
         if (activity == null) {
             throw new IllegalStateException("Activity not attached");
         }
