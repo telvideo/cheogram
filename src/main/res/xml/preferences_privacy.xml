@@ -66,7 +66,7 @@
             android:summary="@string/pref_treat_vibrate_as_dnd_summary"
             android:title="@string/pref_treat_vibrate_as_silent" />
     </PreferenceCategory>
-    <PreferenceCategory android:title="@string/pref_category_application">
+    <PreferenceCategory android:key="category_application" android:title="@string/pref_category_application">
         <SwitchPreferenceCompat
             android:defaultValue="@bool/send_crash_reports"
             android:icon="@drawable/ic_report_24dp"

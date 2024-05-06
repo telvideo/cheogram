@@ -17,6 +17,8 @@ public class PrivacySettingsFragment extends XmppPreferenceFragment {
             Class.forName("io.sentry.Sentry");
             final var neverSend = findPreference("send_crash_reports");
             neverSend.setVisible(false);
+            final var appCat = findPreference("category_application");
+            appCat.setVisible(false);
         } catch (final ClassNotFoundException e) { }
     }
 
