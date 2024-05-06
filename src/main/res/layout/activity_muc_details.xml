@@ -226,23 +226,23 @@
 
                         </TableLayout>
 
-                        <com.google.android.material.button.MaterialButton
-                            style="@style/Widget.Material3.Button.ElevatedButton"
+                        <Button
                             android:id="@+id/relatedMucs"
+                            style="@style/Widget.Material3.Button.TextButton"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_gravity="end"
                             android:minWidth="0dp"
                             android:layout_marginTop="32dp"
-                            android:text="Related Chats"
-                            android:textColor="?attr/colorAccent" />
+                            android:layout_marginRight="-13dp"
+                            android:text="Related Chats" />
 
                         <TextView
                             android:id="@+id/jid"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_gravity="end"
-                            android:layout_marginTop="32dp"
+                            android:layout_marginTop="8dp"
                             android:textAppearance="?textAppearanceLabelMedium"
                             tools:text="foo@bar.tld" />
 
