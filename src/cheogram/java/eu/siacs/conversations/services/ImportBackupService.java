@@ -58,6 +58,7 @@ import eu.siacs.conversations.persistance.FileBackend;
 import eu.siacs.conversations.ui.ManageAccountActivity;
 import eu.siacs.conversations.utils.BackupFileHeader;
 import eu.siacs.conversations.utils.SerialSingleThreadExecutor;
+import eu.siacs.conversations.worker.ExportBackupWorker;
 import eu.siacs.conversations.xmpp.Jid;
 
 public class ImportBackupService extends Service {
@@ -239,7 +240,7 @@ public class ImportBackupService extends Service {
                 return false;
             }
 
-            final byte[] key = ExportBackupService.getKey(password, backupFileHeader.getSalt());
+            final byte[] key = ExportBackupWorker.getKey(password, backupFileHeader.getSalt());
 
             final AEADBlockCipher cipher = new GCMBlockCipher(new AESEngine());
             cipher.init(false, new AEADParameters(new KeyParameter(key), 128, backupFileHeader.getIv()));

@@ -2333,6 +2333,7 @@ public class JingleRtpConnection extends AbstractJingleConnection
         this.jingleConnectionManager.ensureConnectionIsRegistered(this);
         this.webRTCWrapper.setup(this.xmppConnectionService);
         this.webRTCWrapper.initializePeerConnection(media, iceServers, trickle);
+        this.webRTCWrapper.setMicrophoneEnabledOrThrow(callIntegration.isMicrophoneEnabled());
     }
 
     private void acceptCallFromProposed() {
@@ -2490,7 +2491,7 @@ public class JingleRtpConnection extends AbstractJingleConnection
         this.webRTCWrapper.execute(this::renegotiate);
     }
 
-    private void renegotiate() {
+    private synchronized void renegotiate() {
         final SessionDescription sessionDescription;
         try {
             sessionDescription = setLocalSessionDescription();
@@ -2539,10 +2540,11 @@ public class JingleRtpConnection extends AbstractJingleConnection
                             + this.webRTCWrapper.getSignalingState());
         }
 
-        if (diff.added.size() > 0) {
-            modifyLocalContentMap(rtpContentMap);
-            sendContentAdd(rtpContentMap, diff.added);
+        if (diff.added.isEmpty()) {
+            return;
         }
+        modifyLocalContentMap(rtpContentMap);
+        sendContentAdd(rtpContentMap, diff.added);
     }
 
     private void initiateIceRestart(final RtpContentMap rtpContentMap) {
@@ -2695,7 +2697,7 @@ public class JingleRtpConnection extends AbstractJingleConnection
     }
 
     public boolean setMicrophoneEnabled(final boolean enabled) {
-        return webRTCWrapper.setMicrophoneEnabled(enabled);
+        return webRTCWrapper.setMicrophoneEnabledOrThrow(enabled);
     }
 
     public boolean isVideoEnabled() {
@@ -2769,6 +2771,11 @@ public class JingleRtpConnection extends AbstractJingleConnection
     @Override
     public void onCallIntegrationSilence() {
         xmppConnectionService.getNotificationService().stopSoundAndVibration();
+    }
+
+    @Override
+    public void onCallIntegrationMicrophoneEnabled(final boolean enabled) {
+        this.webRTCWrapper.setMicrophoneEnabled(enabled);
     }
 
     @Override

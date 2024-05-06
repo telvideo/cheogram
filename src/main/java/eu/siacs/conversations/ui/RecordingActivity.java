@@ -113,6 +113,9 @@ public class RecordingActivity extends BaseActivity implements View.OnClickListe
         mRecorder = new MediaRecorder();
         mRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
         final String userChosenCodec = getPreferences().getString("voice_message_codec", "");
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            mRecorder.setPrivacySensitive(true);
+        }
         final int outputFormat;
         if (("opus".equals(userChosenCodec) || ("".equals(userChosenCodec) && Config.USE_OPUS_VOICE_MESSAGES)) && Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             outputFormat = MediaRecorder.OutputFormat.OGG;
@@ -122,14 +125,14 @@ public class RecordingActivity extends BaseActivity implements View.OnClickListe
         } else if ("mpeg4".equals(userChosenCodec) || !Config.USE_OPUS_VOICE_MESSAGES) {
             outputFormat = MediaRecorder.OutputFormat.MPEG_4;
             mRecorder.setOutputFormat(outputFormat);
-            if (AAC_SENSITIVE_DEVICES.contains(Build.MODEL)) {
-                // Changing these three settings for AAC sensitive devices might lead to sporadically truncated (cut-off) voice messages.
+            if (AAC_SENSITIVE_DEVICES.contains(Build.MODEL) && Build.VERSION.SDK_INT <= Build.VERSION_CODES.TIRAMISU) {
+                // Changing these three settings for AAC sensitive devices for Android<=13 might lead to sporadically truncated (cut-off) voice messages.
                 mRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.HE_AAC);
                 mRecorder.setAudioSamplingRate(24_000);
                 mRecorder.setAudioEncodingBitRate(28_000);
             } else {
                 mRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC);
-                mRecorder.setAudioSamplingRate(22_050);
+                mRecorder.setAudioSamplingRate(44_100);
                 mRecorder.setAudioEncodingBitRate(64_000);
             }
         } else {

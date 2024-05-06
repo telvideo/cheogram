@@ -45,10 +45,9 @@ import io.michaelrocks.libphonenumber.android.NumberParseException;
 import eu.siacs.conversations.R;
 import eu.siacs.conversations.entities.Account;
 import eu.siacs.conversations.persistance.FileBackend;
+import eu.siacs.conversations.services.AvatarService;
 import eu.siacs.conversations.services.CallIntegration;
 import eu.siacs.conversations.services.CallIntegrationConnectionService;
-import eu.siacs.conversations.services.AvatarService;
-import eu.siacs.conversations.services.EventReceiver;
 import eu.siacs.conversations.services.XmppConnectionService.XmppConnectionBinder;
 import eu.siacs.conversations.services.XmppConnectionService;
 import eu.siacs.conversations.ui.RtpSessionActivity;
@@ -57,6 +56,7 @@ import eu.siacs.conversations.xmpp.Jid;
 import eu.siacs.conversations.xmpp.jingle.JingleRtpConnection;
 import eu.siacs.conversations.xmpp.jingle.Media;
 import eu.siacs.conversations.xmpp.jingle.RtpEndUserState;
+import static eu.siacs.conversations.receiver.SystemEventReceiver.EXTRA_NEEDS_FOREGROUND_SERVICE;
 
 @RequiresApi(Build.VERSION_CODES.M)
 public class ConnectionService extends android.telecom.ConnectionService {
@@ -79,7 +79,7 @@ public class ConnectionService extends android.telecom.ConnectionService {
 		// From XmppActivity.connectToBackend
 		Intent intent = new Intent(this, XmppConnectionService.class);
 		intent.setAction(XmppConnectionService.ACTION_STARTING_CALL);
-		intent.putExtra(EventReceiver.EXTRA_NEEDS_FOREGROUND_SERVICE, true);
+		intent.putExtra(EXTRA_NEEDS_FOREGROUND_SERVICE, true);
 		try {
 			startService(intent);
 		} catch (IllegalStateException e) {

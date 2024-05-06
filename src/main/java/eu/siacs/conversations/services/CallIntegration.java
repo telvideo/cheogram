@@ -38,15 +38,8 @@ public class CallIntegration extends Connection {
 
     private static final List<String> BROKEN_DEVICE_MODELS =
             Arrays.asList(
-                    "OnePlus6", // OnePlus 6 (Android 8.1-11) Device is buggy and always starts the
-                                // operating system call screen even though we want to be self
-                                // managed
-                    "RMX1921", // Realme XT (Android 9-10) shows "Call not sent" dialog
-                    "RMX1971", // Realme 5 Pro (Android 9-11), show "Call not sent" dialog
-                    "RMX1973", // Realme 5 Pro (see above),
-                    "RMX2071", // Realme X50 Pro 5G (Call not sent)
-                    "RMX2075L1", // Realme X50 Pro 5G
-                    "RMX2076" // Realme X50 Pro 5G
+                    "OnePlus6" // OnePlus 6 (Android 8.1-11) Device is buggy and always starts the
+                    // OS call screen even though we want to be self managed
                     );
 
     public static final int DEFAULT_TONE_VOLUME = 60;
@@ -63,6 +56,7 @@ public class CallIntegration extends Connection {
     private final AtomicBoolean isDestroyed = new AtomicBoolean(false);
 
     private List<CallEndpoint> availableEndpoints = Collections.emptyList();
+    private boolean isMicrophoneEnabled = true;
 
     private Callback callback = null;
 
@@ -81,6 +75,7 @@ public class CallIntegration extends Connection {
             this.appRTCAudioManager.setAudioManagerEvents(this::onAudioDeviceChanged);
         }
         setRingbackRequested(true);
+        setConnectionCapabilities(CAPABILITY_MUTE | CAPABILITY_RESPOND_VIA_TEXT);
     }
 
     public void setCallback(final Callback callback) {
@@ -151,8 +146,24 @@ public class CallIntegration extends Connection {
             Log.d(Config.LOGTAG, "ignoring onCallAudioStateChange() on Upside Down Cake");
             return;
         }
+        setMicrophoneEnabled(!state.isMuted());
         Log.d(Config.LOGTAG, "onCallAudioStateChange(" + state + ")");
         this.onAudioDeviceChanged(getAudioDeviceOreo(state), getAudioDevicesOreo(state));
+    }
+
+    @Override
+    public void onMuteStateChanged(final boolean isMuted) {
+        Log.d(Config.LOGTAG, "onMuteStateChanged(" + isMuted + ")");
+        setMicrophoneEnabled(!isMuted);
+    }
+
+    private void setMicrophoneEnabled(final boolean enabled) {
+        this.isMicrophoneEnabled = enabled;
+        this.callback.onCallIntegrationMicrophoneEnabled(enabled);
+    }
+
+    public boolean isMicrophoneEnabled() {
+        return this.isMicrophoneEnabled;
     }
 
     public Set<AudioDevice> getAudioDevices() {
@@ -496,7 +507,7 @@ public class CallIntegration extends Connection {
     public static boolean selfManaged(final Context context) {
         return Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
                 && hasSystemFeature(context)
-                && !BROKEN_DEVICE_MODELS.contains(Build.DEVICE);
+                && isDeviceModelSupported();
     }
 
     public static boolean hasSystemFeature(final Context context) {
@@ -507,6 +518,18 @@ public class CallIntegration extends Connection {
             //noinspection deprecation
             return packageManager.hasSystemFeature(PackageManager.FEATURE_CONNECTION_SERVICE);
         }
+    }
+
+    private static boolean isDeviceModelSupported() {
+        if (BROKEN_DEVICE_MODELS.contains(Build.DEVICE)) {
+            return false;
+        }
+        // all Realme devices at least up to and including Android 11 are broken
+        if ("realme".equalsIgnoreCase(Build.MANUFACTURER)
+                && Build.VERSION.SDK_INT <= Build.VERSION_CODES.R) {
+            return false;
+        }
+        return true;
     }
 
     public static boolean notSelfManaged(final Context context) {
@@ -578,6 +601,8 @@ public class CallIntegration extends Connection {
         void onCallIntegrationAnswer();
 
         void onCallIntegrationSilence();
+
+        void onCallIntegrationMicrophoneEnabled(boolean enabled);
 
         boolean applyDtmfTone(final String dtmf);
     }
