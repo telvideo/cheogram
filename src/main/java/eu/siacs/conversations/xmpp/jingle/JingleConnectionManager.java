@@ -1224,5 +1224,10 @@ public class JingleConnectionManager extends AbstractConnectionManager {
 
         @Override
         public void onCallIntegrationSilence() {}
+
+        @Override
+        public boolean applyDtmfTone(final String dtmf) {
+            return false;
+        }
     }
 }

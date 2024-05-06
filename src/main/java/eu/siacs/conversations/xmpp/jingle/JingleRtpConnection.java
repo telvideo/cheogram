@@ -184,7 +184,7 @@ public class JingleRtpConnection extends AbstractJingleConnection
         }
     }
 
-    public boolean applyDtmfTone(String tone) {
+    public boolean applyDtmfTone(final String tone) {
         return webRTCWrapper.applyDtmfTone(tone);
     }
 

@@ -115,6 +115,11 @@ public class CallIntegration extends Connection {
         this.callback.onCallIntegrationReject();
     }
 
+    @Override
+    public void onPlayDtmfTone(char c) {
+        this.callback.applyDtmfTone("" + c);
+    }
+
     @RequiresApi(api = Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
     @Override
     public void onAvailableCallEndpointsChanged(@NonNull List<CallEndpoint> availableEndpoints) {
@@ -573,5 +578,7 @@ public class CallIntegration extends Connection {
         void onCallIntegrationAnswer();
 
         void onCallIntegrationSilence();
+
+        boolean applyDtmfTone(final String dtmf);
     }
 }
