@@ -363,22 +363,21 @@ public class CallIntegrationConnectionService extends ConnectionService {
             }
             try {
                 service.getSystemService(TelecomManager.class).placeCall(address, extras);
+                return;
             } catch (final SecurityException e) {
                 Log.e(Config.LOGTAG, "call integration not available", e);
-                Toast.makeText(service, R.string.call_integration_not_available, Toast.LENGTH_LONG)
-                        .show();
             }
-        } else {
-            final var connection = createOutgoingRtpConnection(service, account, with, media);
-            if (connection != null) {
-                Log.d(
-                        Config.LOGTAG,
-                        "not adding outgoing call to TelecomManager on Android "
-                                + Build.VERSION.RELEASE
-                                + " ("
-                                + Build.DEVICE
-                                + ")");
-            }
+        }
+
+        final var connection = createOutgoingRtpConnection(service, account, with, media);
+        if (connection != null) {
+            Log.d(
+                    Config.LOGTAG,
+                    "not adding outgoing call to TelecomManager on Android "
+                            + Build.VERSION.RELEASE
+                            + " ("
+                            + Build.DEVICE
+                            + ")");
         }
     }
 
