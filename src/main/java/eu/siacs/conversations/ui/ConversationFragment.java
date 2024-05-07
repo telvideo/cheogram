@@ -3063,16 +3063,25 @@ public class ConversationFragment extends XmppFragment
             return false;
         }
 
+        final var cursord = getResources().getDrawable(R.drawable.cursor_on_tertiary_container);
         if (activity.xmppConnectionService != null && activity.xmppConnectionService.getAccounts().size() > 1) {
             final var colors = MaterialColors.getColorRoles(activity, conversation.getAccount().getColor(activity.isDark()));
+            cursord.setTintList(ColorStateList.valueOf(colors.getOnAccentContainer()));
             binding.inputLayout.setBackgroundTintList(ColorStateList.valueOf(colors.getAccentContainer()));
             binding.textinputSubject.setTextColor(colors.getOnAccentContainer());
             binding.textinput.setTextColor(colors.getOnAccentContainer());
+            binding.textinputSubject.setHintTextColor(ColorStateList.valueOf(colors.getOnAccentContainer()).withAlpha(115));
+            binding.textinput.setHintTextColor(ColorStateList.valueOf(colors.getOnAccentContainer()).withAlpha(115));
         } else {
+            cursord.setTintList(ColorStateList.valueOf(MaterialColors.getColor(binding.textinput, com.google.android.material.R.attr.colorOnTertiaryContainer)));
             binding.inputLayout.setBackgroundTintList(ColorStateList.valueOf(MaterialColors.getColor(binding.inputLayout, com.google.android.material.R.attr.colorTertiaryContainer)));
             binding.textinputSubject.setTextColor(MaterialColors.getColor(binding.textinputSubject, com.google.android.material.R.attr.colorOnTertiaryContainer));
             binding.textinput.setTextColor(MaterialColors.getColor(binding.textinput, com.google.android.material.R.attr.colorOnTertiaryContainer));
+            binding.textinputSubject.setHintTextColor(R.color.hint_on_tertiary_container);
+            binding.textinput.setHintTextColor(R.color.hint_on_tertiary_container);
         }
+        binding.textinputSubject.setTextCursorDrawable(cursord);
+        binding.textinput.setTextCursorDrawable(cursord);
 
         setThread(conversation.getThread());
         setupReply(conversation.getReplyTo());

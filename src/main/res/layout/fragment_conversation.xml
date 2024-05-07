@@ -149,6 +149,7 @@
                             android:minHeight="32dp"
                             android:textColor="?colorOnTertiaryContainer"
                             android:textColorHint="@color/hint_on_tertiary_container"
+                            android:textCursorDrawable="@drawable/cursor_on_tertiary_container"
                             android:minLines="1">
 
                             <requestFocus />
