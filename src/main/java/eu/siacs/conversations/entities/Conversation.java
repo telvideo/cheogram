@@ -357,7 +357,7 @@ public class Conversation extends AbstractEntity implements Blockable, Comparabl
         final ArrayList<Message> results = new ArrayList<>();
         synchronized (this.messages) {
             for (Message message : this.messages) {
-                if (message.getStatus() == Message.STATUS_WAITING) {
+                if (message.getStatus() == Message.STATUS_WAITING || message.getTimeSent() > System.currentTimeMillis()) {
                     results.add(message);
                 }
             }

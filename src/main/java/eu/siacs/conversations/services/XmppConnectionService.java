@@ -1069,6 +1069,8 @@ public class XmppConnectionService extends Service {
         }
         final var extras =  intent == null ? null : intent.getExtras();
         try {
+            Log.d(Config.LOGTAG, "looking for and sending scheduled messages");
+            sendScheduledMessages();
             internalPingExecutor.execute(() -> manageAccountConnectionStates(action, extras));
         } catch (final RejectedExecutionException e) {
             Log.e(Config.LOGTAG, "can not schedule connection states manager");
@@ -1152,6 +1154,26 @@ public class XmppConnectionService extends Service {
             }
         }
         WakeLockHelper.release(wakeLock);
+    }
+
+    private void sendScheduledMessages() {
+        List<Conversation> conversations = getConversations();
+        for (Conversation conversation : conversations) {
+            final Account account = conversation.getAccount();
+            final boolean inProgressJoin;
+            synchronized (account.inProgressConferenceJoins) {
+                inProgressJoin = account.inProgressConferenceJoins.contains(conversation);
+            }
+            final boolean pendingJoin;
+            synchronized (account.pendingConferenceJoins) {
+                pendingJoin = account.pendingConferenceJoins.contains(conversation);
+            }
+            if (conversation.getAccount() == account
+                    && !pendingJoin
+                    && !inProgressJoin) {
+                sendUnsentMessages(conversation);
+            }
+        }
     }
 
     private void handleOrbotStartedEvent() {
@@ -1830,9 +1852,19 @@ public class XmppConnectionService extends Service {
         }
     }
 
-    @TargetApi(Build.VERSION_CODES.M)
     private void scheduleNextIdlePing() {
-        final long timeToWake = SystemClock.elapsedRealtime() + (Config.IDLE_PING_INTERVAL * 1000);
+        scheduleNextIdlePing(0);
+    }
+
+    @TargetApi(Build.VERSION_CODES.M)
+    private void scheduleNextIdlePing(long epochMillis) {
+        final long timeToWake;
+        if (epochMillis > 0) {
+            timeToWake = epochMillis;
+            Log.d(Config.LOGTAG, "scheduling next idle ping for " + timeToWake);
+        } else {
+            timeToWake = SystemClock.elapsedRealtime() + (Config.IDLE_PING_INTERVAL * 1000);
+        }
         final AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
         if (alarmManager == null) {
             return;
@@ -2027,7 +2059,8 @@ public class XmppConnectionService extends Service {
             }
         }
 
-        if (account.isOnlineAndConnected() && !inProgressJoin && !waitForPreview) {
+        // TODO: use timer to grab list of currently scheduled messages from in mem representation and sends them
+        if (account.isOnlineAndConnected() && !inProgressJoin && !waitForPreview && !(message.getTimeSent() > System.currentTimeMillis())) {
             switch (message.getEncryption()) {
                 case Message.ENCRYPTION_NONE:
                     if (message.needsUploading()) {
@@ -2119,6 +2152,10 @@ public class XmppConnectionService extends Service {
         boolean mucMessage = conversation.getMode() == Conversation.MODE_MULTI && !message.isPrivateMessage();
         if (mucMessage) {
             message.setCounterpart(conversation.getMucOptions().getSelf().getFullJid());
+        }
+
+        if (message.getTimeSent() > System.currentTimeMillis()) {
+            scheduleNextIdlePing(message.getTimeSent());
         }
 
         if (resend) {

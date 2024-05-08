@@ -66,6 +66,10 @@
                 android:id="@+id/attach_subject"
                 android:icon="@drawable/subject"
                 android:title="Add Subject" />
+            <item
+                android:id="@+id/attach_schedule"
+                android:icon="@drawable/schedule_message"
+                android:title="@string/schedule_message" />
         </menu>
     </item>
     <item
