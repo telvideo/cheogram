@@ -2023,18 +2023,31 @@ public class ConversationFragment extends XmppFragment
     }
 
     private void scheduleMessage() {
-        // TODO: upgrade to material you/3
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
-            final Calendar now = Calendar.getInstance();
-            new DatePickerDialog(activity, (view, year, month, day) -> {
-                new TimePickerDialog(activity, (view1, hour, minute) -> {
-                    final Calendar c = Calendar.getInstance();
-                    c.set(year, month, day, hour, minute);
-                    final long timestamp = c.getTimeInMillis();
-                    sendMessage(timestamp);
-                    Log.d(Config.LOGTAG, conversation.getAccount().getJid().asBareJid() + ": scheduled message for " + timestamp);
-                }, now.get(Calendar.HOUR_OF_DAY), now.get(Calendar.MINUTE), true).show();
-            }, now.get(Calendar.YEAR), now.get(Calendar.MONTH), now.get(Calendar.DAY_OF_MONTH)).show();
+            final var datePicker = com.google.android.material.datepicker.MaterialDatePicker.Builder.datePicker()
+                .setTitleText("Schedule Message")
+                .setSelection(com.google.android.material.datepicker.MaterialDatePicker.todayInUtcMilliseconds())
+                .setCalendarConstraints(
+                    new com.google.android.material.datepicker.CalendarConstraints.Builder()
+                        .setStart(com.google.android.material.datepicker.MaterialDatePicker.todayInUtcMilliseconds())
+                        .build()
+                 )
+                .build();
+            datePicker.addOnPositiveButtonClickListener((date) -> {
+                final Calendar now = Calendar.getInstance();
+                final var timePicker = new com.google.android.material.timepicker.MaterialTimePicker.Builder()
+                    .setTitleText("Schedule Message")
+                    .setHour(now.get(Calendar.HOUR))
+                    .setMinute(now.get(Calendar.MINUTE))
+                    .build();
+                timePicker.addOnPositiveButtonClickListener((v2) -> {
+                        final long timestamp = date + (timePicker.getHour() * 3600000) + (timePicker.getMinute() * 60000);
+                        sendMessage(timestamp);
+                        Log.d(Config.LOGTAG, conversation.getAccount().getJid().asBareJid() + ": scheduled message for " + timestamp);
+                    });
+                timePicker.show(activity.getSupportFragmentManager(), "schedulMessageTime");
+            });
+            datePicker.show(activity.getSupportFragmentManager(), "schedulMessageDate");
         }
     }
 
