@@ -1355,7 +1355,7 @@ public class ConversationFragment extends XmppFragment
             } else {
                 menuUnmute.setVisible(false);
             }
-            ConversationMenuConfigurator.configureAttachmentMenu(conversation, menu);
+            ConversationMenuConfigurator.configureAttachmentMenu(conversation, menu, TextUtils.isEmpty(binding.textinput.getText()));
             ConversationMenuConfigurator.configureEncryptionMenu(conversation, menu);
             if (conversation.getBooleanAttribute(Conversation.ATTRIBUTE_PINNED_ON_TOP, false)) {
                 menuTogglePinned.setTitle(R.string.remove_from_favorites);
@@ -1629,7 +1629,7 @@ public class ConversationFragment extends XmppFragment
                 MenuItem newItem = menu.add(item.getGroupId(), item.getItemId(), item.getOrder(), item.getTitle());
                 newItem.setIcon(item.getIcon());
             }
-            ConversationMenuConfigurator.configureAttachmentMenu(conversation, menu);
+            ConversationMenuConfigurator.configureAttachmentMenu(conversation, menu, TextUtils.isEmpty(binding.textinput.getText()));
             return;
         }
 
@@ -2023,7 +2023,6 @@ public class ConversationFragment extends XmppFragment
     }
 
     private void scheduleMessage() {
-        // TODO: also gate menu option in UI behind version check
         // TODO: upgrade to material you/3
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
             final Calendar now = Calendar.getInstance();
