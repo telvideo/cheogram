@@ -26,6 +26,7 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.ColorStateList;
 import android.icu.util.Calendar;
+import android.icu.util.TimeZone;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -935,6 +936,7 @@ public class ConversationFragment extends XmppFragment
     }
 
     private void sendMessage(Long sendAt) {
+        if (sendAt != null && sendAt < System.currentTimeMillis()) sendAt = null; // No sending in past plz
         if (mediaPreviewAdapter.hasAttachments()) {
             commitAttachments();
             return;
@@ -2037,11 +2039,16 @@ public class ConversationFragment extends XmppFragment
                 final Calendar now = Calendar.getInstance();
                 final var timePicker = new com.google.android.material.timepicker.MaterialTimePicker.Builder()
                     .setTitleText("Schedule Message")
-                    .setHour(now.get(Calendar.HOUR))
+                    .setHour(now.get(Calendar.HOUR_OF_DAY))
                     .setMinute(now.get(Calendar.MINUTE))
+                    .setTimeFormat(android.text.format.DateFormat.is24HourFormat(activity) ? com.google.android.material.timepicker.TimeFormat.CLOCK_24H : com.google.android.material.timepicker.TimeFormat.CLOCK_12H)
                     .build();
                 timePicker.addOnPositiveButtonClickListener((v2) -> {
-                        final long timestamp = date + (timePicker.getHour() * 3600000) + (timePicker.getMinute() * 60000);
+                        final var dateCal = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
+                        dateCal.setTimeInMillis(date);
+                        final var time = Calendar.getInstance();
+                        time.set(dateCal.get(Calendar.YEAR), dateCal.get(Calendar.MONTH), dateCal.get(Calendar.DAY_OF_MONTH), timePicker.getHour(), timePicker.getMinute(), 0);
+                        final long timestamp = time.getTimeInMillis();
                         sendMessage(timestamp);
                         Log.d(Config.LOGTAG, conversation.getAccount().getJid().asBareJid() + ": scheduled message for " + timestamp);
                     });
