@@ -12,9 +12,11 @@ import static eu.siacs.conversations.utils.PermissionUtils.writeGranted;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.app.DatePickerDialog;
 import android.app.Fragment;
 import android.app.FragmentManager;
 import android.app.PendingIntent;
+import android.app.TimePickerDialog;
 import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -23,6 +25,7 @@ import android.content.IntentSender.SendIntentException;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.ColorStateList;
+import android.icu.util.Calendar;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -928,6 +931,10 @@ public class ConversationFragment extends XmppFragment
     }
 
     private void sendMessage() {
+        sendMessage((Long) null);
+    }
+
+    private void sendMessage(Long sendAt) {
         if (mediaPreviewAdapter.hasAttachments()) {
             commitAttachments();
             return;
@@ -998,6 +1005,7 @@ public class ConversationFragment extends XmppFragment
             message.setServerMsgId(null);
             message.setUuid(UUID.randomUUID().toString());
         }
+        if (sendAt != null) message.setTime(sendAt);
         switch (conversation.getNextEncryption()) {
             case Message.ENCRYPTION_PGP:
                 sendPgpMessage(message);
@@ -1347,7 +1355,7 @@ public class ConversationFragment extends XmppFragment
             } else {
                 menuUnmute.setVisible(false);
             }
-            ConversationMenuConfigurator.configureAttachmentMenu(conversation, menu);
+            ConversationMenuConfigurator.configureAttachmentMenu(conversation, menu, TextUtils.isEmpty(binding.textinput.getText()));
             ConversationMenuConfigurator.configureEncryptionMenu(conversation, menu);
             if (conversation.getBooleanAttribute(Conversation.ATTRIBUTE_PINNED_ON_TOP, false)) {
                 menuTogglePinned.setTitle(R.string.remove_from_favorites);
@@ -1621,7 +1629,7 @@ public class ConversationFragment extends XmppFragment
                 MenuItem newItem = menu.add(item.getGroupId(), item.getItemId(), item.getOrder(), item.getTitle());
                 newItem.setIcon(item.getIcon());
             }
-            ConversationMenuConfigurator.configureAttachmentMenu(conversation, menu);
+            ConversationMenuConfigurator.configureAttachmentMenu(conversation, menu, TextUtils.isEmpty(binding.textinput.getText()));
             return;
         }
 
@@ -1934,6 +1942,9 @@ public class ConversationFragment extends XmppFragment
             case R.id.attach_subject:
                 binding.textinputSubject.setVisibility(binding.textinputSubject.getVisibility() == View.GONE ? View.VISIBLE : View.GONE);
                 break;
+            case R.id.attach_schedule:
+                scheduleMessage();
+                break;
             case R.id.action_search:
                 startSearch();
                 break;
@@ -2009,6 +2020,35 @@ public class ConversationFragment extends XmppFragment
         final Intent intent = new Intent(getActivity(), SearchActivity.class);
         intent.putExtra(SearchActivity.EXTRA_CONVERSATION_UUID, conversation.getUuid());
         startActivity(intent);
+    }
+
+    private void scheduleMessage() {
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
+            final var datePicker = com.google.android.material.datepicker.MaterialDatePicker.Builder.datePicker()
+                .setTitleText("Schedule Message")
+                .setSelection(com.google.android.material.datepicker.MaterialDatePicker.todayInUtcMilliseconds())
+                .setCalendarConstraints(
+                    new com.google.android.material.datepicker.CalendarConstraints.Builder()
+                        .setStart(com.google.android.material.datepicker.MaterialDatePicker.todayInUtcMilliseconds())
+                        .build()
+                 )
+                .build();
+            datePicker.addOnPositiveButtonClickListener((date) -> {
+                final Calendar now = Calendar.getInstance();
+                final var timePicker = new com.google.android.material.timepicker.MaterialTimePicker.Builder()
+                    .setTitleText("Schedule Message")
+                    .setHour(now.get(Calendar.HOUR))
+                    .setMinute(now.get(Calendar.MINUTE))
+                    .build();
+                timePicker.addOnPositiveButtonClickListener((v2) -> {
+                        final long timestamp = date + (timePicker.getHour() * 3600000) + (timePicker.getMinute() * 60000);
+                        sendMessage(timestamp);
+                        Log.d(Config.LOGTAG, conversation.getAccount().getJid().asBareJid() + ": scheduled message for " + timestamp);
+                    });
+                timePicker.show(activity.getSupportFragmentManager(), "schedulMessageTime");
+            });
+            datePicker.show(activity.getSupportFragmentManager(), "schedulMessageDate");
+        }
     }
 
     private void returnToOngoingCall() {

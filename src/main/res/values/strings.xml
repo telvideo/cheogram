@@ -1072,4 +1072,5 @@
     <string name="pref_fullscreen_notification">Full screen notifications</string>
     <string name="pref_fullscreen_notification_summary">Allow this app to show incoming call notifications that take up the full screen when the device is locked.</string>
     <string name="unsupported_operation">Unsupported operation</string>
+    <string name="schedule_message">Send later</string>
 </resources>

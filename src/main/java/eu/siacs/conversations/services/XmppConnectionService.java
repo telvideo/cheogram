@@ -91,6 +91,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.Iterator;
@@ -269,6 +270,7 @@ public class XmppConnectionService extends Service {
     private final ReplacingSerialSingleThreadExecutor mStickerScanExecutor = new ReplacingSerialSingleThreadExecutor("StickerScan");
     private long mLastActivity = 0;
     private long mLastMucPing = 0;
+    private Map<String, Message> mScheduledMessages = new HashMap<>();
     private long mLastStickerRescan = 0;
     private final FileBackend fileBackend = new FileBackend(this);
     private MemorizingTrustManager mMemorizingTrustManager;
@@ -1067,6 +1069,7 @@ public class XmppConnectionService extends Service {
                 }
                 return START_NOT_STICKY;
         }
+        sendScheduledMessages();
         final var extras =  intent == null ? null : intent.getExtras();
         try {
             internalPingExecutor.execute(() -> manageAccountConnectionStates(action, extras));
@@ -1152,6 +1155,30 @@ public class XmppConnectionService extends Service {
             }
         }
         WakeLockHelper.release(wakeLock);
+    }
+
+    private void sendScheduledMessages() {
+        Log.d(Config.LOGTAG, "looking for and sending scheduled messages");
+
+        for (final var message : new ArrayList<>(mScheduledMessages.values())) {
+            if (message.getTimeSent() > System.currentTimeMillis()) continue;
+
+            final var conversation = message.getConversation();
+            final var account = conversation.getAccount();
+            final boolean inProgressJoin;
+            synchronized (account.inProgressConferenceJoins) {
+                inProgressJoin = account.inProgressConferenceJoins.contains(conversation);
+            }
+            final boolean pendingJoin;
+            synchronized (account.pendingConferenceJoins) {
+                pendingJoin = account.pendingConferenceJoins.contains(conversation);
+            }
+            if (conversation.getAccount() == account
+                    && !pendingJoin
+                    && !inProgressJoin) {
+                resendMessage(message, false);
+            }
+        }
     }
 
     private void handleOrbotStartedEvent() {
@@ -1832,9 +1859,16 @@ public class XmppConnectionService extends Service {
 
     @TargetApi(Build.VERSION_CODES.M)
     private void scheduleNextIdlePing() {
-        final long timeToWake = SystemClock.elapsedRealtime() + (Config.IDLE_PING_INTERVAL * 1000);
+        long timeUntilWake = Config.IDLE_PING_INTERVAL * 1000;
+        final var now = System.currentTimeMillis();
+        for (final var message : mScheduledMessages.values()) {
+            if (message.getTimeSent() <= now) continue; // Just in case
+            if (message.getTimeSent() - now < timeUntilWake) timeUntilWake = message.getTimeSent() - now;
+        }
+        final var timeToWake = SystemClock.elapsedRealtime() + timeUntilWake;
         final AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
         if (alarmManager == null) {
+            Log.d(Config.LOGTAG, "no alarm manager?");
             return;
         }
         final Intent intent = new Intent(this, SystemEventReceiver.class);
@@ -2027,7 +2061,7 @@ public class XmppConnectionService extends Service {
             }
         }
 
-        if (account.isOnlineAndConnected() && !inProgressJoin && !waitForPreview) {
+        if (account.isOnlineAndConnected() && !inProgressJoin && !waitForPreview && message.getTimeSent() <= System.currentTimeMillis()) {
             switch (message.getEncryption()) {
                 case Message.ENCRYPTION_NONE:
                     if (message.needsUploading()) {
@@ -2115,6 +2149,14 @@ public class XmppConnectionService extends Service {
             }
         }
 
+        synchronized (mScheduledMessages) {
+            if (message.getTimeSent() > System.currentTimeMillis()) {
+                mScheduledMessages.put(message.getUuid(), message);
+                scheduleNextIdlePing();
+            } else {
+                mScheduledMessages.remove(message.getUuid());
+            }
+        }
 
         boolean mucMessage = conversation.getMode() == Conversation.MODE_MULTI && !message.isPrivateMessage();
         if (mucMessage) {
