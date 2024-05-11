@@ -3127,8 +3127,10 @@ public class ConversationFragment extends XmppFragment
             binding.textinputSubject.setHintTextColor(R.color.hint_on_tertiary_container);
             binding.textinput.setHintTextColor(R.color.hint_on_tertiary_container);
         }
-        binding.textinputSubject.setTextCursorDrawable(cursord);
-        binding.textinput.setTextCursorDrawable(cursord);
+        if (Build.VERSION.SDK_INT >= 29) {
+            binding.textinputSubject.setTextCursorDrawable(cursord);
+            binding.textinput.setTextCursorDrawable(cursord);
+        }
 
         setThread(conversation.getThread());
         setupReply(conversation.getReplyTo());
