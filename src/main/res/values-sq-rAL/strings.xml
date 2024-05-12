@@ -978,7 +978,6 @@
     <string name="jabber_network">jabber.network</string>
     <string name="search_group_chats">kërkoni në fjalosje grupesh</string>
     <string name="group_chats">Fjalosje në grup</string>
-    <string name="save_as_group_chat">Ruaje si fjalosjeje grupi</string>
     <string name="unverified_devices">Po përdorni pajisje të paverifikuara. Që të kryhet verifikimi dhe të pengohen sulme MITM, skanoni Kodin QR në pajisjet tuaja të tjera.</string>
     <string name="title_activity_block_list">Listë bllokimesh</string>
     <string name="account_state_logged_out">I dalë</string>
@@ -1078,4 +1077,8 @@
     <string name="pref_accept_invites_from_strangers_summary">Prano ftesa për fjalosje në grup nga të panjohur</string>
     <string name="pref_large_font">Shkronja të mëdha</string>
     <string name="pref_large_font_summary">Rrit madhësi shkronja në flluska mesazhesh</string>
+    <string name="pref_fullscreen_notification">Njoftime sa krejt ekrani</string>
+    <string name="pref_fullscreen_notification_summary">Lejojeni këtë aplikacion të shfaqë njoftime për thirrje ardhëse që zënë krejt ekranin, kur pajisja është e kyçur.</string>
+    <string name="unsupported_operation">Veprim i pambuluar</string>
+    <string name="pref_backup_recurring">Kopjeruajtje ripërsëritëse</string>
 </resources>

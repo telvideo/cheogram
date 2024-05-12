@@ -10,14 +10,14 @@
                 android:topRightRadius="@dimen/bubble_radius" />
             <padding
                 android:bottom="0dp"
-                android:left="5dp"
-                android:right="5dp"
+                android:left="0dp"
+                android:right="0dp"
                 android:top="0dp" />
             <size android:width="10dp" android:height="10dp" />
             <solid android:color="?colorSurfaceContainerHigh" />
         </shape>
     </item>
-    <item android:left="-5dp" android:gravity="top|left" android:width="7dp" android:height="7dp" android:top="0dp">
+    <item android:gravity="top|left" android:width="7dp" android:height="7dp" android:top="0dp">
         <vector
            android:width="24dp"
            android:height="24dp"

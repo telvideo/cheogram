@@ -16,7 +16,7 @@
             android:layout_height="wrap_content"
             android:layout_alignParentEnd="true"
             android:layout_alignParentBottom="true"
-            android:layout_marginStart="0dp"
+            android:layout_marginStart="8dp"
             android:orientation="vertical">
 
         <com.google.android.material.imageview.ShapeableImageView
@@ -37,17 +37,15 @@
             android:background="@drawable/message_bubble_sent"
             android:backgroundTint="?colorSecondaryContainer"
             android:longClickable="true"
-            android:minHeight="53dp"
-            android:paddingRight="12dp"
-            android:paddingVertical="5dp">
+            android:paddingRight="7dp"
+            android:minHeight="48dp">
 
             <LinearLayout
                 android:id="@+id/message_box_inner"
                 android:layout_width="wrap_content"
                 android:layout_height="fill_parent"
                 android:gravity="center_vertical"
-                android:orientation="vertical"
-                android:padding="2dp">
+                android:orientation="vertical">
 
                 <include
                     android:id="@+id/message_content"
@@ -58,7 +56,9 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="end"
-                    android:layout_marginVertical="1sp"
+                    android:gravity="end"
+                    android:layout_marginHorizontal="10dp"
+                    android:layout_marginVertical="4dp"
                     android:orientation="horizontal">
 
                     <TextView

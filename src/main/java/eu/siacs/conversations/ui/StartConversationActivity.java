@@ -481,13 +481,13 @@ public class StartConversationActivity extends XmppActivity implements XmppConne
         }
     }
 
-    protected void openConversationsForBookmark(Bookmark bookmark) {
+    protected void openConversationsForBookmark(final Bookmark bookmark) {
         final Jid jid = bookmark.getFullJid();
         if (jid == null) {
             Toast.makeText(this, R.string.invalid_jid, Toast.LENGTH_SHORT).show();
             return;
         }
-        Conversation conversation = xmppConnectionService.findOrCreateConversation(bookmark.getAccount(), jid, true, true, true);
+        final Conversation conversation = xmppConnectionService.findOrCreateConversation(bookmark.getAccount(), jid, true, true, true);
         bookmark.setConversation(conversation);
         if (!bookmark.autojoin()) {
             bookmark.setAutojoin(true);
@@ -1303,7 +1303,7 @@ public class StartConversationActivity extends XmppActivity implements XmppConne
     }
 
     @Override
-    public void onJoinDialogPositiveClick(Dialog dialog, AutoCompleteTextView spinner, TextInputLayout layout, AutoCompleteTextView jid, String password, boolean isBookmarkChecked) {
+    public void onJoinDialogPositiveClick(Dialog dialog, AutoCompleteTextView spinner, TextInputLayout layout, AutoCompleteTextView jid, String password) {
         if (!xmppConnectionServiceBound) {
             return;
         }
@@ -1327,33 +1327,24 @@ public class StartConversationActivity extends XmppActivity implements XmppConne
                 return;
             }
         }
-
-        if (isBookmarkChecked) {
-            Bookmark bookmark = account.getBookmark(conferenceJid);
-            if (bookmark != null) {
-                dialog.dismiss();
-                openConversationsForBookmark(bookmark);
-            } else {
-                bookmark = new Bookmark(account, conferenceJid.asBareJid());
-                if (password != null) bookmark.setPassword(password);
-                bookmark.setAutojoin(true);
-                final String nick = conferenceJid.getResource();
-                if (nick != null && !nick.isEmpty() && !nick.equals(MucOptions.defaultNick(account))) {
-                    bookmark.setNick(nick);
-                }
-                xmppConnectionService.createBookmark(account, bookmark);
-                final Conversation conversation = xmppConnectionService
-                        .findOrCreateConversation(account, conferenceJid, true, true, null, true, password);
-                bookmark.setConversation(conversation);
-                dialog.dismiss();
-                switchToConversation(conversation);
-            }
+        final var existingBookmark = account.getBookmark(conferenceJid);
+        if (existingBookmark != null) {
+            openConversationsForBookmark(existingBookmark);
         } else {
+            final var bookmark = new Bookmark(account, conferenceJid.asBareJid());
+            bookmark.setAutojoin(true);
+            final String nick = conferenceJid.getResource();
+            if (nick != null && !nick.isEmpty() && !nick.equals(MucOptions.defaultNick(account))) {
+                bookmark.setNick(nick);
+            }
+            xmppConnectionService.createBookmark(account, bookmark);
             final Conversation conversation = xmppConnectionService
                     .findOrCreateConversation(account, conferenceJid, true, true, null, true, password);
-            dialog.dismiss();
+
+            bookmark.setConversation(conversation);
             switchToConversation(conversation);
         }
+        dialog.dismiss();
     }
 
     @Override

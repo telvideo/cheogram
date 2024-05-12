@@ -69,9 +69,9 @@ public class JoinConferenceDialog extends DialogFragment implements OnBackendCon
 		builder.setNegativeButton(R.string.cancel, null);
 		AlertDialog dialog = builder.create();
 		dialog.show();
-		dialog.getButton(DialogInterface.BUTTON_POSITIVE).setOnClickListener(view -> mListener.onJoinDialogPositiveClick(dialog, binding.account, binding.accountJidLayout, binding.jid, binding.jid.getText().toString().equals(getArguments().getString(PREFILLED_JID_KEY)) ? getArguments().getString(PREFILLED_PASSWORD_KEY) : null, binding.bookmark.isChecked()));
+		dialog.getButton(DialogInterface.BUTTON_POSITIVE).setOnClickListener(view -> mListener.onJoinDialogPositiveClick(dialog, binding.account, binding.accountJidLayout, binding.jid, binding.jid.getText().toString().equals(getArguments().getString(PREFILLED_JID_KEY)) ? getArguments().getString(PREFILLED_PASSWORD_KEY) : null));
 		binding.jid.setOnEditorActionListener((v, actionId, event) -> {
-			mListener.onJoinDialogPositiveClick(dialog, binding.account, binding.accountJidLayout, binding.jid, binding.jid.getText().toString().equals(getArguments().getString(PREFILLED_JID_KEY)) ? getArguments().getString(PREFILLED_PASSWORD_KEY) : null, binding.bookmark.isChecked());
+			mListener.onJoinDialogPositiveClick(dialog, binding.account, binding.accountJidLayout, binding.jid, binding.jid.getText().toString().equals(getArguments().getString(PREFILLED_JID_KEY)) ? getArguments().getString(PREFILLED_PASSWORD_KEY) : null);
 			return true;
 		});
 		return dialog;
@@ -91,7 +91,7 @@ public class JoinConferenceDialog extends DialogFragment implements OnBackendCon
 	}
 
 	@Override
-	public void onAttach(Context context) {
+	public void onAttach(@NonNull final Context context) {
 		super.onAttach(context);
 		try {
 			mListener = (JoinConferenceDialogListener) context;
@@ -120,6 +120,6 @@ public class JoinConferenceDialog extends DialogFragment implements OnBackendCon
 	}
 
 	public interface JoinConferenceDialogListener {
-		void onJoinDialogPositiveClick(Dialog dialog, AutoCompleteTextView spinner, TextInputLayout jidLayout, AutoCompleteTextView jid, String password, boolean isBookmarkChecked);
+		void onJoinDialogPositiveClick(Dialog dialog, AutoCompleteTextView spinner, TextInputLayout jidLayout, AutoCompleteTextView jid, String password);
 	}
 }

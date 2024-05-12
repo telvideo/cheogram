@@ -7,6 +7,8 @@ import android.util.Pair;
 import com.cheogram.android.BobTransfer;
 import com.cheogram.android.WebxdcUpdate;
 
+import com.google.common.collect.ImmutableSet;
+
 import java.io.File;
 import java.net.URISyntaxException;
 import java.text.SimpleDateFormat;
@@ -254,14 +256,27 @@ public class MessageParser extends AbstractParser implements OnMessagePacketRece
             final AxolotlService axolotlService = account.getAxolotlService();
             axolotlService.registerDevices(from, deviceIds);
         } else if (Namespace.BOOKMARKS.equals(node) && account.getJid().asBareJid().equals(from)) {
-            if (account.getXmppConnection().getFeatures().bookmarksConversion()) {
+            final var connection = account.getXmppConnection();
+            if (connection.getFeatures().bookmarksConversion()) {
+                if (connection.getFeatures().bookmarks2()) {
+                    Log.w(
+                            Config.LOGTAG,
+                            account.getJid().asBareJid()
+                                    + ": received storage:bookmark notification even though we opted into bookmarks:1");
+                }
                 final Element i = items.findChild("item");
-                final Element storage = i == null ? null : i.findChild("storage", Namespace.BOOKMARKS);
-                Map<Jid, Bookmark> bookmarks = Bookmark.parseFromStorage(storage, account);
+                final Element storage =
+                        i == null ? null : i.findChild("storage", Namespace.BOOKMARKS);
+                final Map<Jid, Bookmark> bookmarks = Bookmark.parseFromStorage(storage, account);
                 mXmppConnectionService.processBookmarksInitial(account, bookmarks, true);
-                Log.d(Config.LOGTAG, account.getJid().asBareJid() + ": processing bookmark PEP event");
+                Log.d(
+                        Config.LOGTAG,
+                        account.getJid().asBareJid() + ": processing bookmark PEP event");
             } else {
-                Log.d(Config.LOGTAG, account.getJid().asBareJid() + ": ignoring bookmark PEP event because bookmark conversion was not detected");
+                Log.d(
+                        Config.LOGTAG,
+                        account.getJid().asBareJid()
+                                + ": ignoring bookmark PEP event because bookmark conversion was not detected");
             }
         } else if (Namespace.BOOKMARKS2.equals(node) && account.getJid().asBareJid().equals(from)) {
             final Element item = items.findChild("item");
@@ -304,8 +319,8 @@ public class MessageParser extends AbstractParser implements OnMessagePacketRece
             Log.d(Config.LOGTAG, "parsing nick delete event from " + from);
             setNick(account, from, null);
         } else if (Namespace.BOOKMARKS2.equals(node) && account.getJid().asBareJid().equals(from)) {
-            account.setBookmarks(Collections.emptyMap());
             Log.d(Config.LOGTAG, account.getJid().asBareJid() + ": deleted bookmarks node");
+            deleteAllBookmarks(account);
         } else if (Namespace.AVATAR_METADATA.equals(node) && account.getJid().asBareJid().equals(from)) {
             Log.d(Config.LOGTAG,account.getJid().asBareJid()+": deleted avatar metadata node");
         }
@@ -315,9 +330,15 @@ public class MessageParser extends AbstractParser implements OnMessagePacketRece
         final Element purge = event.findChild("purge");
         final String node = purge == null ? null : purge.getAttribute("node");
         if (Namespace.BOOKMARKS2.equals(node) && account.getJid().asBareJid().equals(from)) {
-            account.setBookmarks(Collections.emptyMap());
             Log.d(Config.LOGTAG, account.getJid().asBareJid() + ": purged bookmarks");
+            deleteAllBookmarks(account);
         }
+    }
+
+    private void deleteAllBookmarks(final Account account) {
+        final var previous = account.getBookmarkedJids();
+        account.setBookmarks(Collections.emptyMap());
+        mXmppConnectionService.processDeletedBookmarks(account, previous);
     }
 
     private void setNick(Account account, Jid user, String nick) {
@@ -1207,6 +1228,16 @@ public class MessageParser extends AbstractParser implements OnMessagePacketRece
                     } else if (!counterpart.isBareJid() && trueJid != null) {
                         final ReadByMarker readByMarker = ReadByMarker.from(counterpart, trueJid);
                         if (message.addReadByMarker(readByMarker)) {
+                            final var mucOptions = conversation.getMucOptions();
+                            final var everyone = ImmutableSet.copyOf(mucOptions.getMembers(false));
+                            final var readyBy = message.getReadyByTrue();
+                            final var mStatus = message.getStatus();
+                            if (mucOptions.isPrivateAndNonAnonymous()
+                                    && (mStatus == Message.STATUS_SEND_RECEIVED
+                                            || mStatus == Message.STATUS_SEND)
+                                    && readyBy.containsAll(everyone)) {
+                                message.setStatus(Message.STATUS_SEND_DISPLAYED);
+                            }
                             mXmppConnectionService.updateMessage(message, false);
                         }
                     }

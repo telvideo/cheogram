@@ -47,13 +47,17 @@ import androidx.annotation.Nullable;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.core.content.res.ResourcesCompat;
+import androidx.core.widget.ImageViewCompat;
+
+import com.google.android.material.imageview.ShapeableImageView;
+import com.google.android.material.shape.CornerFamily;
+import com.google.android.material.shape.ShapeAppearanceModel;
 
 import com.cheogram.android.BobTransfer;
 import com.cheogram.android.MessageTextActionModeCallback;
 import com.cheogram.android.SwipeDetector;
 import com.cheogram.android.WebxdcPage;
 import com.cheogram.android.WebxdcUpdate;
-import androidx.core.widget.ImageViewCompat;
 
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.color.MaterialColors;
@@ -579,6 +583,10 @@ public class MessageAdapter extends ArrayAdapter<Message> {
         setTextColor(viewHolder.messageBody, bubbleColor);
         setTextSize(viewHolder.messageBody, this.bubbleDesign.largeFont);
 
+        final ViewGroup.LayoutParams layoutParams = viewHolder.messageBody.getLayoutParams();
+        layoutParams.width = ViewGroup.LayoutParams.WRAP_CONTENT;
+        viewHolder.messageBody.setLayoutParams(layoutParams);
+
         viewHolder.messageBody.setTypeface(null, Typeface.NORMAL);
 
         if (message.getBody() != null && !message.getBody().equals("")) {
@@ -739,7 +747,6 @@ public class MessageAdapter extends ArrayAdapter<Message> {
             String text,
             final BubbleColor bubbleColor, final int type) {
         displayTextMessage(viewHolder, message, bubbleColor, type);
-        toggleWhisperInfo(viewHolder, message, bubbleColor);
         viewHolder.image.setVisibility(View.GONE);
         List<Element> thumbs = message.getFileParams() != null ? message.getFileParams().getThumbnails() : null;
         if (thumbs != null && !thumbs.isEmpty()) {
@@ -774,7 +781,7 @@ public class MessageAdapter extends ArrayAdapter<Message> {
                 if (height < 1) height = 1080;
 
                 viewHolder.image.setVisibility(View.VISIBLE);
-                imagePreviewLayout(width, height, viewHolder.image, message.getBody() != null && message.getBody().length() > 0);
+                imagePreviewLayout(width, height, viewHolder.image, true, type, viewHolder);
                 activity.loadBitmap(message, viewHolder.image);
                 viewHolder.image.setOnClickListener(v -> ConversationFragment.downloadFile(activity, message));
 
@@ -845,7 +852,6 @@ public class MessageAdapter extends ArrayAdapter<Message> {
     private void displayOpenableMessage(
             ViewHolder viewHolder, final Message message, final BubbleColor bubbleColor, final int type) {
         displayTextMessage(viewHolder, message, bubbleColor, type);
-        toggleWhisperInfo(viewHolder, message, bubbleColor);
         viewHolder.image.setVisibility(View.GONE);
         viewHolder.audioPlayer.setVisibility(View.GONE);
         viewHolder.download_button.setVisibility(View.VISIBLE);
@@ -862,7 +868,6 @@ public class MessageAdapter extends ArrayAdapter<Message> {
     private void displayLocationMessage(
             ViewHolder viewHolder, final Message message, final BubbleColor bubbleColor, final int type) {
         displayTextMessage(viewHolder, message, bubbleColor, type);
-        toggleWhisperInfo(viewHolder, message, bubbleColor);
         viewHolder.image.setVisibility(View.GONE);
         viewHolder.audioPlayer.setVisibility(View.GONE);
         viewHolder.download_button.setVisibility(View.VISIBLE);
@@ -876,7 +881,6 @@ public class MessageAdapter extends ArrayAdapter<Message> {
     private void displayAudioMessage(
             ViewHolder viewHolder, Message message, final BubbleColor bubbleColor, final int type) {
         displayTextMessage(viewHolder, message, bubbleColor, type);
-        toggleWhisperInfo(viewHolder, message, bubbleColor);
         viewHolder.image.setVisibility(View.GONE);
         viewHolder.download_button.setVisibility(View.GONE);
         final RelativeLayout audioPlayer = viewHolder.audioPlayer;
@@ -888,17 +892,16 @@ public class MessageAdapter extends ArrayAdapter<Message> {
     private void displayMediaPreviewMessage(
             ViewHolder viewHolder, final Message message, final BubbleColor bubbleColor, final int type) {
         displayTextMessage(viewHolder, message, bubbleColor, type);
-        toggleWhisperInfo(viewHolder, message, bubbleColor);
         viewHolder.download_button.setVisibility(View.GONE);
         viewHolder.audioPlayer.setVisibility(View.GONE);
         viewHolder.image.setVisibility(View.VISIBLE);
         final FileParams params = message.getFileParams();
-        imagePreviewLayout(params.width, params.height, viewHolder.image, message.getBody() != null && message.getBody().length() > 0);
+        imagePreviewLayout(params.width, params.height, viewHolder.image, viewHolder.messageBody.getVisibility() != View.GONE, type, viewHolder);
         activity.loadBitmap(message, viewHolder.image);
         viewHolder.image.setOnClickListener(v -> openDownloadable(message));
     }
 
-    private void imagePreviewLayout(int w, int h, ImageView image, boolean topMargin) {
+    private void imagePreviewLayout(int w, int h, ShapeableImageView image, boolean withOther, int type, ViewHolder viewHolder) {
         final float target = activity.getResources().getDimension(R.dimen.image_preview_width);
         final int scaledW;
         final int scaledH;
@@ -915,11 +918,30 @@ public class MessageAdapter extends ArrayAdapter<Message> {
             scaledW = (int) target;
             scaledH = (int) (h / ((double) w / target));
         }
+        final var small = withOther ? scaledW < target : scaledW < 110 * metrics.density;
         final LinearLayout.LayoutParams layoutParams =
                 new LinearLayout.LayoutParams(scaledW, scaledH);
-        layoutParams.setMargins(0, topMargin ? (int) (metrics.density * 4) : 0, 0, (int) (metrics.density * 4));
-        layoutParams.gravity = Gravity.CENTER;
         image.setLayoutParams(layoutParams);
+
+        final var bubbleRadius = activity.getResources().getDimension(R.dimen.bubble_radius);
+        var shape = new ShapeAppearanceModel.Builder().setTopRightCorner(CornerFamily.ROUNDED, bubbleRadius);
+        if (type == SENT) {
+            shape = shape.setTopLeftCorner(CornerFamily.ROUNDED, bubbleRadius);
+        }
+        if (small) {
+            final var imageRadius = activity.getResources().getDimension(R.dimen.image_radius);
+            shape = shape.setAllCorners(CornerFamily.ROUNDED, imageRadius);
+            image.setPadding(0, (int)(8 * metrics.density), 0, 0);
+        } else {
+            image.setPadding(0, 0, 0, 0);
+        }
+        image.setShapeAppearanceModel(shape.build());
+
+        if (!small) {
+            final ViewGroup.LayoutParams blayoutParams = viewHolder.messageBody.getLayoutParams();
+            blayoutParams.width = (int) (target - (22 * metrics.density));
+            viewHolder.messageBody.setLayoutParams(blayoutParams);
+        }
     }
 
     private void toggleWhisperInfo(
@@ -1203,6 +1225,7 @@ public class MessageAdapter extends ArrayAdapter<Message> {
             }
             return view;
         } else {
+            viewHolder.message_box.setClipToOutline(true);
             AvatarWorkerTask.loadAvatar(message, viewHolder.contact_picture, R.dimen.avatar);
         }
 
@@ -1619,7 +1642,7 @@ public class MessageAdapter extends ArrayAdapter<Message> {
         protected LinearLayout message_box;
         protected View message_box_inner;
         protected MaterialButton download_button;
-        protected ImageView image;
+        protected ShapeableImageView image;
         protected ImageView indicator;
         protected ImageView indicatorReceived;
         protected TextView time;
