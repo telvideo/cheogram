@@ -3471,11 +3471,14 @@ public class ConversationFragment extends XmppFragment
 
     private boolean showBlockSubmenu(View view) {
         final Jid jid = conversation.getJid();
-        final boolean showReject = conversation.getContact().getOption(Contact.Options.PENDING_SUBSCRIPTION_REQUEST);
+        final int mode = conversation.getMode();
+        final var contact = mode == Conversation.MODE_SINGLE ? conversation.getContact() : null;
+        final boolean showReject = contact.getOption(Contact.Options.PENDING_SUBSCRIPTION_REQUEST);
         PopupMenu popupMenu = new PopupMenu(getActivity(), view);
         popupMenu.inflate(R.menu.block);
         popupMenu.getMenu().findItem(R.id.block_contact).setVisible(jid.getLocal() != null);
         popupMenu.getMenu().findItem(R.id.reject).setVisible(showReject);
+        popupMenu.getMenu().findItem(R.id.add_contact).setVisible(!contact.showInRoster());
         popupMenu.setOnMenuItemClickListener(
                 menuItem -> {
                     Blockable blockable;
@@ -3484,6 +3487,9 @@ public class ConversationFragment extends XmppFragment
                             activity.xmppConnectionService.stopPresenceUpdatesTo(
                                     conversation.getContact());
                             updateSnackBar(conversation);
+                            return true;
+                        case R.id.add_contact:
+                            mAddBackClickListener.onClick(view);
                             return true;
                         case R.id.block_domain:
                             blockable =
@@ -3524,8 +3530,8 @@ public class ConversationFragment extends XmppFragment
                 && contact.getOption(Contact.Options.PENDING_SUBSCRIPTION_REQUEST)) {
             showSnackbar(
                     R.string.contact_added_you,
-                    R.string.add_back,
-                    this.mAddBackClickListener,
+                    R.string.options,
+                    this.mBlockClickListener,
                     this.mLongPressBlockListener);
         } else if (contact != null
                 && contact.getOption(Contact.Options.PENDING_SUBSCRIPTION_REQUEST)) {
@@ -3609,7 +3615,10 @@ public class ConversationFragment extends XmppFragment
                 && !conversation.isBlocked()
                 && conversation.isWithStranger()) {
             showSnackbar(
-                    R.string.received_message_from_stranger, R.string.block, mBlockClickListener);
+                    R.string.received_message_from_stranger,
+                    R.string.options,
+                    this.mBlockClickListener,
+                    this.mLongPressBlockListener);
         } else {
             hideSnackbar();
         }
