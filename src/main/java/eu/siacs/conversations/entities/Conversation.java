@@ -1365,6 +1365,13 @@ public class Conversation extends AbstractEntity implements Blockable, Comparabl
                 && sentMessagesCount() == 0;
     }
 
+    public boolean strangerInvited() {
+        final var inviterS = getAttribute("inviter");
+        if (inviterS == null) return false;
+        final var inviter = account.getRoster().getContact(Jid.of(inviterS));
+        return getBookmark() == null && !inviter.showInContactList() && !inviter.isSelf() && sentMessagesCount() == 0;
+    }
+
     public int getReceivedMessagesCountSinceUuid(String uuid) {
         if (uuid == null) {
             return 0;

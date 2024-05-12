@@ -45,4 +45,7 @@
     <string name="pref_message_autocomplete_summary">For example, complete emoji starting with :</string>
     <string name="notify_only_when_highlighted_or_replied">Notify for mentions and replies</string>
     <string name="moderate_recent">Moderate messages?</string>
+    <string name="block_inviter">Block inviter</string>
+    <string name="add_bookmark">Add Chat</string>
+    <string name="received_invite_from_stranger">Received invite from stranger</string>
 </resources>

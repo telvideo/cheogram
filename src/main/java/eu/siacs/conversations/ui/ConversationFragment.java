@@ -3508,6 +3508,41 @@ public class ConversationFragment extends XmppFragment
         return true;
     }
 
+    private boolean showBlockMucSubmenu(View view) {
+        final var jid = conversation.getJid();
+        final var popupMenu = new PopupMenu(getActivity(), view);
+        popupMenu.inflate(R.menu.block_muc);
+        popupMenu.getMenu().findItem(R.id.block_contact).setVisible(jid.getLocal() != null);
+        popupMenu.setOnMenuItemClickListener(
+                menuItem -> {
+                    Blockable blockable;
+                    switch (menuItem.getItemId()) {
+                        case R.id.reject:
+                            activity.xmppConnectionService.clearConversationHistory(conversation);
+                            activity.xmppConnectionService.archiveConversation(conversation);
+                            return true;
+                        case R.id.add_bookmark:
+                            activity.xmppConnectionService.saveConversationAsBookmark(conversation, "");
+                            updateSnackBar(conversation);
+                            return true;
+                        case R.id.block_contact:
+                            blockable =
+                                    conversation
+                                            .getAccount()
+                                            .getRoster()
+                                            .getContact(Jid.of(conversation.getAttribute("inviter")));
+                            break;
+                        default:
+                            blockable = conversation;
+                    }
+                    BlockContactDialog.show(activity, blockable);
+                    activity.xmppConnectionService.archiveConversation(conversation);
+                    return true;
+                });
+        popupMenu.show();
+        return true;
+    }
+
     private void updateSnackBar(final Conversation conversation) {
         final Account account = conversation.getAccount();
         final XmppConnection connection = account.getXmppConnection();
@@ -3609,6 +3644,14 @@ public class ConversationFragment extends XmppFragment
             }
         } else if (account.hasPendingPgpIntent(conversation)) {
             showSnackbar(R.string.openpgp_messages_found, R.string.decrypt, clickToDecryptListener);
+        } else if (connection != null
+                && connection.getFeatures().blocking()
+                && conversation.strangerInvited()) {
+            showSnackbar(
+                    R.string.received_invite_from_stranger,
+                    R.string.options,
+                    (v) -> showBlockMucSubmenu(v),
+                    (v) -> showBlockMucSubmenu(v));
         } else if (connection != null
                 && connection.getFeatures().blocking()
                 && conversation.countMessages() != 0

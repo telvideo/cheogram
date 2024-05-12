@@ -1348,6 +1348,7 @@ public class MessageParser extends AbstractParser implements OnMessagePacketRece
                 return false;
             }
             final Conversation conversation = mXmppConnectionService.findOrCreateConversation(account, jid, true, false);
+            conversation.setAttribute("inviter", inviter.toEscapedString());
             if (conversation.getMucOptions().online()) {
                 Log.d(Config.LOGTAG, account.getJid().asBareJid() + ": received invite to " + jid + " but muc is considered to be online");
                 mXmppConnectionService.mucSelfPingAndRejoin(conversation);
