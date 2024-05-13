@@ -2754,7 +2754,7 @@ public class XmppConnectionService extends Service {
     }
 
     public void loadMoreMessages(final Conversation conversation, final long timestamp, final OnMoreMessagesLoaded callback) {
-        if (XmppConnectionService.this.getMessageArchiveService().queryInProgress(conversation, callback)) {
+        if (XmppConnectionService.this.getMessageArchiveService().queryInProgress(conversation, callback) || conversation.getStatus() == Conversation.STATUS_ARCHIVED) {
             return;
         } else if (timestamp == 0) {
             return;
