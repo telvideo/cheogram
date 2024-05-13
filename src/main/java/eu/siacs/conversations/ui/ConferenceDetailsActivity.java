@@ -20,6 +20,7 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
+import android.widget.PopupMenu;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -230,6 +231,30 @@ public class ConferenceDetailsActivity extends XmppActivity implements OnConvers
             final Intent intent = new Intent(this, PublishGroupChatProfilePictureActivity.class);
             intent.putExtra("uuid", mConversation.getUuid());
             startActivity(intent);
+        });
+        this.binding.yourPhoto.setOnLongClickListener(v -> {
+            PopupMenu popupMenu = new PopupMenu(this, v);
+            popupMenu.inflate(R.menu.conference_photo);
+            popupMenu.setOnMenuItemClickListener(menuItem -> {
+                switch (menuItem.getItemId()) {
+                    case R.id.action_block_avatar:
+                        new AlertDialog.Builder(this)
+                            .setTitle(R.string.block_media)
+                            .setMessage("Do you really want to block this avatar?")
+                            .setPositiveButton(R.string.yes, (dialog, whichButton) -> {
+                                    xmppConnectionService.blockMedia(xmppConnectionService.getFileBackend().getAvatarFile(mConversation.getContact().getAvatarFilename()));
+                                    xmppConnectionService.getFileBackend().getAvatarFile(mConversation.getContact().getAvatarFilename()).delete();
+                                    avatarService().clear(mConversation);
+                                    mConversation.getContact().setAvatar(null);
+                                    xmppConnectionService.updateConversationUi();
+                            })
+                            .setNegativeButton(R.string.no, null).show();
+                        return true;
+                }
+                return true;
+            });
+            popupMenu.show();
+            return true;
         });
         this.binding.editMucNameButton.setOnClickListener(this::onMucEditButtonClicked);
         this.binding.mucEditTitle.addTextChangedListener(this);
