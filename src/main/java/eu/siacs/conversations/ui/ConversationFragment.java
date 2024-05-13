@@ -1731,6 +1731,10 @@ public class ConversationFragment extends XmppFragment
                 correctMessage.setVisible(true);
                 if (!relevantForCorrection.getBody().equals("") && !relevantForCorrection.getBody().equals(" ")) retractMessage.setVisible(true);
             }
+            if (relevantForCorrection.getStatus() == Message.STATUS_WAITING) {
+                correctMessage.setVisible(true);
+                retractMessage.setVisible(true);
+            }
             if (relevantForCorrection.getReactions() != null) {
                 correctMessage.setVisible(false);
                 retractMessage.setVisible(true);
