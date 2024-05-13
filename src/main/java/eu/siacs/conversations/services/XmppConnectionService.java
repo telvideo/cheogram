@@ -4349,6 +4349,13 @@ public class XmppConnectionService extends Service {
         return mBinder;
     }
 
+    public void deleteMessage(Message message) {
+        mScheduledMessages.remove(message.getUuid());
+        databaseBackend.deleteMessage(message.getUuid());
+        ((Conversation) message.getConversation()).remove(message);
+        updateConversationUi();
+    }
+
     public void updateMessage(Message message) {
         updateMessage(message, true);
     }

@@ -1256,6 +1256,12 @@ public class Conversation extends AbstractEntity implements Blockable, Comparabl
         }
     }
 
+    public void remove(Message message) {
+        synchronized (this.messages) {
+            this.messages.remove(message);
+        }
+    }
+
     public void add(Message message) {
         synchronized (this.messages) {
             this.messages.add(message);

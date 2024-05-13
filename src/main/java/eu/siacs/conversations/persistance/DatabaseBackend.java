@@ -1351,6 +1351,14 @@ public class DatabaseBackend extends SQLiteOpenHelper {
                db.update("cheogram." + Message.TABLENAME, message.getCheogramContentValues(), Message.UUID + "=?", args) == 1;
     }
 
+
+    public boolean deleteMessage(String uuid) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        String[] args = {uuid};
+        return db.delete(Message.TABLENAME, Message.UUID + "=?", args) == 1 &&
+               db.delete("cheogram." + Message.TABLENAME, Message.UUID + "=?", args) == 1;
+    }
+
     public void readRoster(Roster roster) {
         final SQLiteDatabase db = this.getReadableDatabase();
         final String[] args = {roster.getAccount().getUuid()};

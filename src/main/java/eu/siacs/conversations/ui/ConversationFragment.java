@@ -1003,9 +1003,17 @@ public class ConversationFragment extends XmppFragment
             message.setBody(hasSubject && body.length() == 0 ? null : body);
             if (hasSubject) message.setSubject(binding.textinputSubject.getText().toString());
             message.setThread(conversation.getThread());
-            message.putEdited(message.getUuid(), message.getServerMsgId());
-            message.setServerMsgId(null);
-            message.setUuid(UUID.randomUUID().toString());
+            if (message.getStatus() == Message.STATUS_WAITING) {
+                if (sendAt != null) message.setTime(sendAt);
+                activity.xmppConnectionService.updateMessage(message);
+                setupReply(null);
+                messageSent();
+                return;
+            } else {
+                message.putEdited(message.getUuid(), message.getServerMsgId());
+                message.setServerMsgId(null);
+                message.setUuid(UUID.randomUUID().toString());
+            }
         }
         if (sendAt != null) message.setTime(sendAt);
         switch (conversation.getNextEncryption()) {
@@ -1809,6 +1817,10 @@ public class ConversationFragment extends XmppFragment
                         Message message = selectedMessage;
                         while (message.mergeable(message.next())) {
                             message = message.next();
+                        }
+                        if (message.getStatus() == Message.STATUS_WAITING || message.getStatus() == Message.STATUS_OFFERED) {
+                            activity.xmppConnectionService.deleteMessage(message);
+                            return;
                         }
                         Element reactions = message.getReactions();
                         if (reactions != null) {
