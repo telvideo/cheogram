@@ -1929,7 +1929,7 @@ public class NotificationService {
         }
         mBuilder.setWhen(0)
                 .setPriority(Notification.PRIORITY_MIN)
-                .setSmallIcon(connected > 0 ? R.drawable.ic_link_24dp : R.drawable.ic_link_off_24dp)
+                .setSmallIcon(connected >= enabled ? R.drawable.ic_link_24dp : R.drawable.ic_link_off_24dp)
                 .setLocalOnly(true);
 
         if (Compatibility.runsTwentySix()) {
