@@ -1975,10 +1975,7 @@ public class ConversationFragment extends XmppFragment
                 break;
             case R.id.action_block:
             case R.id.action_unblock:
-                final Activity activity = getActivity();
-                if (activity instanceof XmppActivity) {
-                    BlockContactDialog.show((XmppActivity) activity, conversation);
-                }
+                BlockContactDialog.show(activity, conversation);
                 break;
             case R.id.action_audio_call:
                 checkPermissionAndTriggerAudioCall();
@@ -1995,6 +1992,18 @@ public class ConversationFragment extends XmppFragment
             case R.id.action_add_shortcut:
                 addShortcut();
                 break;
+            case R.id.action_block_avatar:
+                new AlertDialog.Builder(activity)
+                    .setTitle(R.string.block_media)
+                    .setMessage("Do you really want to block this avatar?")
+                    .setPositiveButton(R.string.yes, (dialog, whichButton) -> {
+                            activity.xmppConnectionService.blockMedia(activity.xmppConnectionService.getFileBackend().getAvatarFile(conversation.getContact().getAvatarFilename()));
+                            activity.xmppConnectionService.getFileBackend().getAvatarFile(conversation.getContact().getAvatarFilename()).delete();
+                            activity.avatarService().clear(conversation);
+                            conversation.getContact().setAvatar(null);
+                            activity.xmppConnectionService.updateConversationUi();
+                    })
+                    .setNegativeButton(R.string.no, null).show();
             case R.id.action_refresh_feature_discovery:
                 refreshFeatureDiscovery();
                 break;
