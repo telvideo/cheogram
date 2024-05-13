@@ -767,7 +767,7 @@ public class ConversationFragment extends XmppFragment
                 return i;
             } else {
                 Message next = messages.get(i);
-                while (next != null && next.wasMergedIntoPrevious(activity.xmppConnectionService)) {
+                while (next != null && next.wasMergedIntoPrevious(activity == null ? null : activity.xmppConnectionService)) {
                     if (uuid.equals(next.getUuid())) {
                         return i;
                     }
