@@ -3398,7 +3398,7 @@ public class ConversationFragment extends XmppFragment
                     final Jid discoJid = conversation.getContact().resourceWhichSupport(Namespace.COMMANDS);
                     if (discoJid != null) commandJid = discoJid;
                 }
-                if (node != null && commandJid != null) {
+                if (node != null && commandJid != null && activity != null) {
                     conversation.startCommand(commandFor(commandJid, node), activity.xmppConnectionService);
                 }
             });
