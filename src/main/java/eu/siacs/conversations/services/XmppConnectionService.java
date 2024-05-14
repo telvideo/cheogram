@@ -806,6 +806,7 @@ public class XmppConnectionService extends Service {
 
         mLastStickerRescan = SystemClock.elapsedRealtime();
         mStickerScanExecutor.execute(() -> {
+            Thread.currentThread().setPriority(Thread.MIN_PRIORITY);
             try {
                 for (File file : Files.fileTraverser().breadthFirst(stickerDir())) {
                     try {
