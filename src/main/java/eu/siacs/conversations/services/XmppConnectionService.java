@@ -1242,6 +1242,7 @@ public class XmppConnectionService extends Service {
                 long secondsSinceLastDisco = (SystemClock.elapsedRealtime() - account.getXmppConnection().getLastDiscoStarted()) / 1000;
                 long discoTimeout = Config.CONNECT_DISCO_TIMEOUT - secondsSinceLastDisco;
                 long timeout = Config.CONNECT_TIMEOUT - secondsSinceLastConnect;
+                if (!areMessagesInitialized()) return false; // No point in thrashing a reconnect while still loading
                 if (timeout < 0) {
                     Log.d(Config.LOGTAG, account.getJid() + ": time out during connect reconnecting (secondsSinceLast=" + secondsSinceLastConnect + ")");
                     account.getXmppConnection().resetAttemptCount(false);
