@@ -193,6 +193,7 @@ public class DatabaseBackend extends SQLiteOpenHelper {
     private DatabaseBackend(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
         this.context = context;
+        setWriteAheadLoggingEnabled(true);
     }
 
     private static ContentValues createFingerprintStatusContentValues(FingerprintStatus.Trust trust, boolean active) {
