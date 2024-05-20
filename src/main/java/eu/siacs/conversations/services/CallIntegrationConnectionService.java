@@ -420,7 +420,7 @@ public class CallIntegrationConnectionService extends ConnectionService {
 
     public static boolean addNewIncomingCall(
             final Context context, final AbstractJingleConnection.Id id) {
-        if (NotificationService.isQuietHours(context, id.getContact().getAccount())) return false;
+        if (NotificationService.isQuietHours(context, id.getContact().getAccount())) return true;
         if (CallIntegration.notSelfManaged(context)) {
             Log.d(
                     Config.LOGTAG,
