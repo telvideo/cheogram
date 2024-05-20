@@ -271,8 +271,12 @@ public class Message extends AbstractEntity implements AvatarService.Avatarable 
             final XmlReader xmlReader = new XmlReader();
             xmlReader.setInputStream(ByteSource.wrap(payloadsStr.getBytes()).openStream());
             Tag tag;
-            while ((tag = xmlReader.readTag()) != null) {
-                payloads.add(xmlReader.readElement(tag));
+            try {
+                while ((tag = xmlReader.readTag()) != null) {
+                    payloads.add(xmlReader.readElement(tag));
+                }
+            } catch (IOException e) {
+                Log.e(Config.LOGTAG, "Failed to parse: " + payloadsStr, e);
             }
         }
 
