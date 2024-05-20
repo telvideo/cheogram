@@ -37,6 +37,7 @@ import eu.siacs.conversations.entities.Conversational;
 import eu.siacs.conversations.entities.Message;
 import eu.siacs.conversations.entities.RtpSessionStatus;
 import eu.siacs.conversations.services.CallIntegration;
+import eu.siacs.conversations.services.CallIntegrationConnectionService;
 import eu.siacs.conversations.ui.RtpSessionActivity;
 import eu.siacs.conversations.xml.Element;
 import eu.siacs.conversations.xml.Namespace;
@@ -1702,7 +1703,9 @@ public class JingleRtpConnection extends AbstractJingleConnection
                 jingleConnectionManager.schedule(
                         this::ringingTimeout, BUSY_TIME_OUT, TimeUnit.SECONDS);
         if (CallIntegration.selfManaged(xmppConnectionService)) {
-            return;
+            if (CallIntegrationConnectionService.addNewIncomingCall(xmppConnectionService, getId())) {
+                return;
+            }
         }
         xmppConnectionService.getNotificationService().startRinging(id, getMedia());
     }

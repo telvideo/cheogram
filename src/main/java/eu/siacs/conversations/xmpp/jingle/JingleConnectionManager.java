@@ -147,6 +147,9 @@ public class JingleConnectionManager extends AbstractConnectionManager {
     }
 
     private void addNewIncomingCall(final JingleRtpConnection rtpConnection) {
+        if (true) {
+            return; // We do this inside the startRinging in the rtpConnection now so that fallback is possible
+        }
         if (rtpConnection.isTerminated()) {
             Log.d(
                     Config.LOGTAG,
