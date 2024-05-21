@@ -4,6 +4,7 @@ import androidx.annotation.NonNull;
 
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.primitives.Ints;
 
 import java.util.ArrayList;
@@ -179,22 +180,48 @@ public class Element implements Node {
 	}
 
 	public String toString() {
+		return toString(ImmutableMap.of());
+	}
+
+	public String toString(final ImmutableMap<String, String> parentNS) {
+		final var mutns = new Hashtable<>(parentNS);
+		final var attr = getSerializableAttributes(mutns);
 		final StringBuilder elementOutput = new StringBuilder();
 		if (childNodes.size() == 0) {
 			Tag emptyTag = Tag.empty(name);
-			emptyTag.setAttributes(this.attributes);
+			emptyTag.setAttributes(attr);
 			elementOutput.append(emptyTag.toString());
 		} else {
+			final var ns = ImmutableMap.copyOf(mutns);
 			Tag startTag = Tag.start(name);
-			startTag.setAttributes(this.attributes);
+			startTag.setAttributes(attr);
 			elementOutput.append(startTag);
 			for (Node child : ImmutableList.copyOf(childNodes)) {
-				elementOutput.append(child.toString());
+				elementOutput.append(child.toString(ns));
 			}
 			Tag endTag = Tag.end(name);
 			elementOutput.append(endTag);
 		}
 		return elementOutput.toString();
+	}
+
+	protected Hashtable<String, String> getSerializableAttributes(Hashtable<String, String> ns) {
+		final var result = new Hashtable<String, String>();
+		for (final var attr : attributes.entrySet()) {
+			if (attr.getKey().charAt(0) == '{') {
+				final var uriIdx = attr.getKey().indexOf('}');
+				final var uri = attr.getKey().substring(1, uriIdx - 1);
+				if (!ns.containsKey(uri)) {
+					result.put("ns" + ns.size() + ":xmlns", uri);
+					ns.put(uri, "ns" + ns.size());
+				}
+				result.put(ns.get(uri) + ":" + attr.getKey().substring(uriIdx + 1), attr.getValue());
+			} else {
+				result.put(attr.getKey(), attr.getValue());
+			}
+		}
+
+		return result;
 	}
 
 	public Element removeAttribute(String name) {

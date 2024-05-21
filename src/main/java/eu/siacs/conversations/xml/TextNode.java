@@ -1,5 +1,7 @@
 package eu.siacs.conversations.xml;
 
+import com.google.common.collect.ImmutableMap;
+
 import eu.siacs.conversations.utils.XmlHelper;
 
 public class TextNode implements Node {
@@ -16,5 +18,9 @@ public class TextNode implements Node {
 
 	public String toString() {
 		return XmlHelper.encodeEntities(content);
+	}
+
+	public String toString(final ImmutableMap<String, String> ns) {
+		return toString();
 	}
 }

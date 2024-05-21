@@ -61,20 +61,17 @@ public class XmlReader implements Closeable {
 					Tag tag = Tag.start(parser.getName());
 					final String xmlns = parser.getNamespace();
 					for (int i = 0; i < parser.getAttributeCount(); ++i) {
-						final String prefix = parser.getAttributePrefix(i);
+						final var prefix = parser.getAttributePrefix(i);
+						final var ns = parser.getAttributeNamespace(i);
 						String name;
-						if (prefix != null && !prefix.isEmpty()) {
-							name = prefix+":"+parser.getAttributeName(i);
+						if ("xml".equals(prefix)) {
+							name = "xml:" + parser.getAttributeName(i);
+						} else if (ns != null && !ns.isEmpty()) {
+							name = "{" + ns + "}" + parser.getAttributeName(i);
 						} else {
 							name = parser.getAttributeName(i);
 						}
 						tag.setAttribute(name,parser.getAttributeValue(i));
-					}
-					int nsStart = parser.getNamespaceCount(parser.getDepth()-1);
-					int nsEnd = parser.getNamespaceCount(parser.getDepth());
-					for (int i = nsStart; i < nsEnd; i++) {
-						final var prefix = parser.getNamespacePrefix(i);
-						tag.setAttribute("xmlns" + (prefix == null ? "" : ":" + prefix), parser.getNamespaceUri(i));
 					}
 					if (xmlns != null) {
 						tag.setAttribute("xmlns", xmlns);
