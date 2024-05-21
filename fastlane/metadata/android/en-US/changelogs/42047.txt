@@ -1,1 +1,9 @@
-* Fix crash in UnifiedPush Distributor
+* Verify DNSSEC and DANE and show status
+* Shorter tab bar in conversation view
+* Hint circle for thread selector
+* Fix audio for dialler integration with Android 14
+* Fix sticker download service on Android 14
+* Fix backup format version number in exported header
+* Fix opening WebXDC from home screen
+* Spam reporting UI merged from upstream
+* Many bugfixes
