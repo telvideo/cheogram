@@ -70,6 +70,12 @@ public class XmlReader implements Closeable {
 						}
 						tag.setAttribute(name,parser.getAttributeValue(i));
 					}
+					int nsStart = parser.getNamespaceCount(parser.getDepth()-1);
+					int nsEnd = parser.getNamespaceCount(parser.getDepth());
+					for (int i = nsStart; i < nsEnd; i++) {
+						final var prefix = parser.getNamespacePrefix(i);
+						tag.setAttribute("xmlns" + (prefix == null ? "" : ":" + prefix), parser.getNamespaceUri(i));
+					}
 					if (xmlns != null) {
 						tag.setAttribute("xmlns", xmlns);
 					}
