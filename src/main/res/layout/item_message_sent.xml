@@ -89,6 +89,7 @@
 
                     <com.lelloman.identicon.view.GithubIdenticonView
                         android:id="@+id/thread_identicon"
+                        android:background="@drawable/ic_thread"
                         android:visibility="gone"
                         android:layout_width="9dp"
                         android:layout_height="9dp"
