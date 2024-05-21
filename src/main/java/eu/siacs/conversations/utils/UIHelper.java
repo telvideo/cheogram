@@ -250,7 +250,7 @@ public class UIHelper {
                 fallbackImg.setBounds(0, 0, fallbackImg.getIntrinsicWidth(), fallbackImg.getIntrinsicHeight());
                 SpannableStringBuilder styledBody = message.getSpannableBody(null, fallbackImg);
                 if (textColor != 0) {
-                    StylingHelper.format(styledBody, 0, styledBody.length() - 1, textColor);
+                    StylingHelper.format(styledBody, 0, styledBody.length() - 1, textColor, false);
                 }
                 MyLinkify.addLinks(styledBody, message.getConversation().getAccount(), message.getConversation().getJid());
                 SpannableStringBuilder builder = new SpannableStringBuilder();

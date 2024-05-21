@@ -4,6 +4,7 @@ import android.app.Application;
 import android.graphics.Typeface;
 import android.text.Spanned;
 import android.text.SpannableStringBuilder;
+import android.text.ParcelableSpan;
 import android.text.style.AbsoluteSizeSpan;
 import android.text.style.AlignmentSpan;
 import android.text.style.BackgroundColorSpan;
@@ -32,9 +33,10 @@ import eu.siacs.conversations.xml.TextNode;
 public class SpannedToXHTML {
 	private static SpannableStringBuilder cleanSpans(Spanned text) {
 		SpannableStringBuilder newText = new SpannableStringBuilder(text);
-		SuggestionSpan[] spans = newText.getSpans(0, newText.length(), SuggestionSpan.class);
-		for (SuggestionSpan span : spans) {
-			newText.removeSpan(span);
+		ParcelableSpan[] spans = newText.getSpans(0, newText.length(), ParcelableSpan.class);
+		for (final var span : spans) {
+			final var userFlags = (text.getSpanFlags(span) & Spanned.SPAN_USER) >> Spanned.SPAN_USER_SHIFT;
+			if (span instanceof SuggestionSpan || userFlags == 1) newText.removeSpan(span);
 		}
 		BaseInputConnection.removeComposingSpans(newText);
 		return newText;
