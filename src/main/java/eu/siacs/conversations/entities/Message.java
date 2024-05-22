@@ -406,39 +406,63 @@ public class Message extends AbstractEntity implements AvatarService.Avatarable 
     }
 
     public Message reply() {
-        Message m = new Message(conversation, QuoteHelper.quote(MessageUtils.prepareQuote(this)) + "\n", ENCRYPTION_NONE);
+        Message m = new Message(conversation, "", ENCRYPTION_NONE);
         m.setThread(getThread());
-        final String replyId = replyId();
-        if (replyId == null) return m;
 
-        m.addPayload(
+        m.updateReplyTo(this, null);
+        return m;
+    }
+
+    public void clearReplyReact() {
+        this.payloads.remove(getReactions());
+        this.payloads.remove(getReply());
+        clearFallbacks("urn:xmpp:reply:0", "urn:xmpp:reactions:0");
+    }
+
+    public void updateReplyTo(final Message replyTo, Spanned body) {
+        clearReplyReact();
+
+        if (body == null) body = new SpannableStringBuilder(getBody(true));
+        setBody(QuoteHelper.quote(MessageUtils.prepareQuote(replyTo)) + "\n");
+
+        final String replyId = replyTo.replyId();
+        if (replyId == null) return;
+
+        addPayload(
             new Element("reply", "urn:xmpp:reply:0")
-                .setAttribute("to", getCounterpart())
-                .setAttribute("id", replyId())
+                .setAttribute("to", replyTo.getCounterpart())
+                .setAttribute("id", replyId)
         );
         final Element fallback = new Element("fallback", "urn:xmpp:fallback:0").setAttribute("for", "urn:xmpp:reply:0");
         fallback.addChild("body", "urn:xmpp:fallback:0")
                 .setAttribute("start", "0")
-                .setAttribute("end", "" + m.body.codePointCount(0, m.body.length()));
-        m.addPayload(fallback);
-        return m;
+                .setAttribute("end", "" + this.body.codePointCount(0, this.body.length()));
+        addPayload(fallback);
+
+        appendBody(body);
     }
 
     public Message react(String emoji) {
-        Set<String> emojis = new HashSet<>();
-        if (conversation instanceof Conversation) emojis = ((Conversation) conversation).findReactionsTo(replyId(), null);
+        final var m = reply();
+        m.updateReaction(this, emoji);
+        return m;
+    }
+
+    public void updateReaction(final Message reactTo, String emoji) {
+         Set<String> emojis = new HashSet<>();
+        if (conversation instanceof Conversation) emojis = ((Conversation) conversation).findReactionsTo(reactTo.replyId(), null);
+        emojis.remove(getBody(true));
         emojis.add(emoji);
-        final Message m = reply();
-        m.appendBody(emoji);
+
+        updateReplyTo(reactTo, new SpannableStringBuilder(emoji));
         final Element fallback = new Element("fallback", "urn:xmpp:fallback:0").setAttribute("for", "urn:xmpp:reactions:0");
         fallback.addChild("body", "urn:xmpp:fallback:0");
-        m.addPayload(fallback);
+        addPayload(fallback);
         final Element reactions = new Element("reactions", "urn:xmpp:reactions:0").setAttribute("id", replyId());
         for (String oneEmoji : emojis) {
             reactions.addChild("reaction", "urn:xmpp:reactions:0").setContent(oneEmoji);
         }
-        m.addPayload(reactions);
-        return m;
+        addPayload(reactions);
     }
 
     public void setReactions(Element reactions) {
@@ -553,9 +577,16 @@ public class Message extends AbstractEntity implements AvatarService.Avatarable 
     }
 
     public String getBody() {
+        return getBody(false);
+    }
+
+    public String getBody(final boolean removeQuoteFallbacks) {
         if (body == null) return "";
 
-        Pair<StringBuilder, Boolean> result = bodyMinusFallbacks("http://jabber.org/protocol/address", Namespace.OOB);
+        Pair<StringBuilder, Boolean> result =
+            removeQuoteFallbacks
+            ? bodyMinusFallbacks("http://jabber.org/protocol/address", Namespace.OOB, "urn:xmpp:reply:0")
+            : bodyMinusFallbacks("http://jabber.org/protocol/address", Namespace.OOB);
         StringBuilder body = result.first;
 
         final String aesgcm = MessageUtils.aesgcmDownloadable(body.toString());
@@ -579,7 +610,7 @@ public class Message extends AbstractEntity implements AvatarService.Avatarable 
         if (html != null) return html;
         html = new Element("html", "http://jabber.org/protocol/xhtml-im");
         Element body = html.addChild("body", "http://www.w3.org/1999/xhtml");
-        SpannedToXHTML.append(body, new SpannableStringBuilder(getBody()));
+        SpannedToXHTML.append(body, new SpannableStringBuilder(getBody(true)));
         addPayload(html);
         return body;
     }

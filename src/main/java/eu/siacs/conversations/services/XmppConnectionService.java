@@ -671,6 +671,10 @@ public class XmppConnectionService extends Service {
         return this.databaseBackend.getMessage(conversation, uuid);
     }
 
+    public Message getMessageFuzzyId(Conversation conversation, String id) {
+        return this.databaseBackend.getMessageFuzzyId(conversation, id);
+    }
+
     public void insertWebxdcUpdate(final WebxdcUpdate update) {
         this.databaseBackend.insertWebxdcUpdate(update);
     }

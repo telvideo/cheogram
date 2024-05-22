@@ -1097,6 +1097,28 @@ public class DatabaseBackend extends SQLiteOpenHelper {
         return getMessages(conversations, limit, -1);
     }
 
+    public Message getMessageFuzzyId(Conversation conversation, String id) {
+        ArrayList<Message> list = new ArrayList<>();
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor;
+        cursor = db.rawQuery(
+            "SELECT * FROM " + Message.TABLENAME + " " +
+            "LEFT JOIN cheogram." + Message.TABLENAME +
+            "  USING (" + Message.UUID + ")" +
+            "WHERE " + Message.UUID + "=? OR " + Message.SERVER_MSG_ID + " =? OR " + Message.REMOTE_MSG_ID + " =?",
+            new String[]{id,id,id}
+        );
+        while (cursor.moveToNext()) {
+            try {
+                return Message.fromCursor(cursor, conversation);
+            } catch (Exception e) {
+                Log.e(Config.LOGTAG, "unable to restore message");
+            }
+        }
+        cursor.close();
+        return null;
+    }
+
     public ArrayList<Message> getMessages(Conversation conversation, int limit, long timestamp) {
         ArrayList<Message> list = new ArrayList<>();
         SQLiteDatabase db = this.getReadableDatabase();

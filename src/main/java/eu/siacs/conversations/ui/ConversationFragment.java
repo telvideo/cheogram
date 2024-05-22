@@ -1000,9 +1000,18 @@ public class ConversationFragment extends XmppFragment
             Message.configurePrivateMessage(message);
         } else {
             message = conversation.getCorrectingMessage();
-            message.setBody(hasSubject && body.length() == 0 ? null : body);
             if (hasSubject) message.setSubject(binding.textinputSubject.getText().toString());
             message.setThread(conversation.getThread());
+            if (conversation.getReplyTo() != null) {
+                if (Emoticons.isEmoji(body.toString().replaceAll("\\s", ""))) {
+                    message.updateReaction(conversation.getReplyTo(), body.toString().replaceAll("\\s", ""));
+                } else {
+                    message.updateReplyTo(conversation.getReplyTo(), body);
+                }
+            } else {
+                message.clearReplyReact();
+                message.setBody(hasSubject && body.length() == 0 ? null : body);
+            }
             if (message.getStatus() == Message.STATUS_WAITING) {
                 if (sendAt != null) message.setTime(sendAt);
                 activity.xmppConnectionService.updateMessage(message);
@@ -2933,10 +2942,14 @@ public class ConversationFragment extends XmppFragment
         final Editable editable = binding.textinput.getText();
         this.conversation.setDraftMessage(editable.toString());
         this.binding.textinput.setText("");
-        this.binding.textinput.append(message.getBody());
+        this.binding.textinput.append(message.getBody(true));
         if (message.getSubject() != null && message.getSubject().length() > 0) {
             this.binding.textinputSubject.setText(message.getSubject());
             this.binding.textinputSubject.setVisibility(View.VISIBLE);
+        }
+        final var reply = message.getReply();
+        if (reply != null) {
+            setupReply(activity.xmppConnectionService.getMessageFuzzyId(conversation, reply.getAttribute("id")));
         }
     }
 
