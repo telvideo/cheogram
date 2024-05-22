@@ -1383,9 +1383,6 @@ public class ConversationFragment extends XmppFragment
                 DataBindingUtil.inflate(inflater, R.layout.fragment_conversation, container, false);
         binding.getRoot().setOnClickListener(null); // TODO why the fuck did we do this?
 
-        binding.textinput.addTextChangedListener(
-                new StylingHelper.MessageEditorStyler(binding.textinput));
-
         binding.textinput.setOnEditorActionListener(mEditorActionListener);
         binding.textinput.setRichContentListener(new String[] {"image/*"}, mEditorContentListener);
         DisplayMetrics displayMetrics = new DisplayMetrics();
@@ -1415,6 +1412,9 @@ public class ConversationFragment extends XmppFragment
         messageListAdapter.setOnInlineImageLongClicked(this);
         messageListAdapter.setConversationFragment(this);
         binding.messagesView.setAdapter(messageListAdapter);
+
+        binding.textinput.addTextChangedListener(
+                new StylingHelper.MessageEditorStyler(binding.textinput, messageListAdapter));
 
         registerForContextMenu(binding.messagesView);
         registerForContextMenu(binding.textSendButton);

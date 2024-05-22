@@ -1,5 +1,8 @@
 package eu.siacs.conversations.ui.util;
 
+import android.text.Spanned;
+import android.text.style.RelativeSizeSpan;
+
 import eu.siacs.conversations.Config;
 import eu.siacs.conversations.utils.UIHelper;
 
@@ -10,6 +13,14 @@ public class QuoteHelper {
     public static final char QUOTE_END_CHAR = '<'; // used for one check, not for actual quoting
     public static final char QUOTE_ALT_CHAR = '»';
     public static final char QUOTE_ALT_END_CHAR = '«';
+
+    public static boolean isRelativeSizeSpanned(Spanned body, int pos) {
+       for (final var span : body.getSpans(pos, pos, RelativeSizeSpan.class)) {
+           if (body.getSpanEnd(span) != pos) return true;
+       }
+
+       return false;
+    }
 
     public static boolean isPositionQuoteCharacter(CharSequence body, int pos) {
         // second part of logical check actually goes against the logic indicated in the method name, since it also checks for context
@@ -43,6 +54,9 @@ public class QuoteHelper {
      *  'Prequote' means anything we require or can accept in front of a QuoteChar.
      */
     public static boolean isPositionPrecededByPreQuote(CharSequence body, int pos) {
+        if (body instanceof Spanned) {
+            if (isRelativeSizeSpanned((Spanned) body, pos - 1)) return true;
+        }
         return UIHelper.isPositionPrecededByLineStart(body, pos);
     }
 
@@ -55,6 +69,9 @@ public class QuoteHelper {
 
     public static boolean bodyContainsQuoteStart(CharSequence body) {
         for (int i = 0; i < body.length(); i++) {
+            if (body instanceof Spanned) {
+                if (isRelativeSizeSpanned((Spanned) body, i)) continue;
+            }
             if (isPositionQuoteStart(body, i)) {
                 return true;
             }

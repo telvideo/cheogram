@@ -12,6 +12,8 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.preference.PreferenceManager;
+import android.text.Editable;
+import android.text.Spanned;
 import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.SpannableStringBuilder;
@@ -458,17 +460,18 @@ public class MessageAdapter extends ArrayAdapter<Message> {
 
     private void applyQuoteSpan(
             final TextView textView,
-            SpannableStringBuilder body,
+            Editable body,
             int start,
             int end,
-            final BubbleColor bubbleColor) {
-        if (start > 1 && !"\n\n".equals(body.subSequence(start - 2, start).toString())) {
+            final BubbleColor bubbleColor,
+            final boolean makeEdits) {
+        if (makeEdits && start > 1 && !"\n\n".equals(body.subSequence(start - 2, start).toString())) {
             body.insert(start++, "\n");
             body.setSpan(
                     new DividerSpan(false), start - 2, start, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
             end++;
         }
-        if (end < body.length() - 1 && !"\n\n".equals(body.subSequence(end, end + 2).toString())) {
+        if (makeEdits && end < body.length() - 1 && !"\n\n".equals(body.subSequence(end, end + 2).toString())) {
             body.insert(end, "\n");
             body.setSpan(
                 new DividerSpan(false),
@@ -485,10 +488,14 @@ public class MessageAdapter extends ArrayAdapter<Message> {
                 Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
     }
 
-    public boolean handleTextQuotes(final TextView textView, final SpannableStringBuilder body) {
+    public boolean handleTextQuotes(final TextView textView, final Editable body) {
+        return handleTextQuotes(textView, body, true);
+    }
+
+    public boolean handleTextQuotes(final TextView textView, final Editable body, final boolean deleteMarkers) {
         final boolean colorfulBackground = this.bubbleDesign.colorfulChatBubbles;
         final BubbleColor bubbleColor = colorfulBackground ? BubbleColor.SECONDARY : BubbleColor.SURFACE;
-        return handleTextQuotes(textView, body, bubbleColor);
+        return handleTextQuotes(textView, body, bubbleColor, deleteMarkers);
     }
 
     /**
@@ -497,8 +504,9 @@ public class MessageAdapter extends ArrayAdapter<Message> {
      */
     public boolean handleTextQuotes(
             final TextView textView,
-            final SpannableStringBuilder body,
-            final BubbleColor bubbleColor) {
+            final Editable body,
+            final BubbleColor bubbleColor,
+            final boolean deleteMarkers) {
         boolean startsWithQuote = false;
         int quoteDepth = 1;
         while (QuoteHelper.bodyContainsQuoteStart(body) && quoteDepth <= Config.QUOTE_MAX_DEPTH) {
@@ -506,18 +514,23 @@ public class MessageAdapter extends ArrayAdapter<Message> {
             int lineStart = -1;
             int lineTextStart = -1;
             int quoteStart = -1;
+            int skipped = 0;
             for (int i = 0; i <= body.length(); i++) {
+                if (!deleteMarkers && QuoteHelper.isRelativeSizeSpanned(body, i)) {
+                    skipped++;
+                    continue;
+                }
                 char current = body.length() > i ? body.charAt(i) : '\n';
                 if (lineStart == -1) {
                     if (previous == '\n') {
                         if (i < body.length() && QuoteHelper.isPositionQuoteStart(body, i)) {
                             // Line start with quote
                             lineStart = i;
-                            if (quoteStart == -1) quoteStart = i;
+                            if (quoteStart == -1) quoteStart = i - skipped;
                             if (i == 0) startsWithQuote = true;
                         } else if (quoteStart >= 0) {
                             // Line start without quote, apply spans there
-                            applyQuoteSpan(textView, body, quoteStart, i - 1, bubbleColor);
+                            applyQuoteSpan(textView, body, quoteStart, i - 1, bubbleColor, deleteMarkers);
                             quoteStart = -1;
                         }
                     }
@@ -528,21 +541,26 @@ public class MessageAdapter extends ArrayAdapter<Message> {
                         lineTextStart = i;
                     }
                     if (current == '\n') {
-                        body.delete(lineStart, lineTextStart);
-                        i -= lineTextStart - lineStart;
-                        if (i == lineStart) {
-                            // Avoid empty lines because span over empty line can be hidden
-                            body.insert(i++, " ");
+                        if (deleteMarkers) {
+                            i -= lineTextStart - lineStart;
+                            body.delete(lineStart, lineTextStart);
+                            if (i == lineStart) {
+                                // Avoid empty lines because span over empty line can be hidden
+                                body.insert(i++, " ");
+                            }
+                        } else {
+                            body.setSpan(new RelativeSizeSpan(i - (lineTextStart - lineStart) == lineStart ? 1 : 0), lineStart, lineTextStart, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE | StylingHelper.XHTML_REMOVE << Spanned.SPAN_USER_SHIFT);
                         }
                         lineStart = -1;
                         lineTextStart = -1;
                     }
                 }
                 previous = current;
+                skipped = 0;
             }
             if (quoteStart >= 0) {
                 // Apply spans to finishing open quote
-                applyQuoteSpan(textView, body, quoteStart, body.length(), bubbleColor);
+                applyQuoteSpan(textView, body, quoteStart, body.length(), bubbleColor, deleteMarkers);
             }
             quoteDepth++;
         }
@@ -613,9 +631,9 @@ public class MessageAdapter extends ArrayAdapter<Message> {
                 int start = body.getSpanStart(quote);
                 int end = body.getSpanEnd(quote);
                 body.removeSpan(quote);
-                applyQuoteSpan(viewHolder.messageBody, body, start, end, bubbleColor);
+                applyQuoteSpan(viewHolder.messageBody, body, start, end, bubbleColor, true);
             }
-            boolean startsWithQuote = handleTextQuotes(viewHolder.messageBody, body, bubbleColor);
+            boolean startsWithQuote = handleTextQuotes(viewHolder.messageBody, body, bubbleColor, true);
             if (!message.isPrivateMessage()) {
                 if (hasMeCommand) {
                     body.setSpan(

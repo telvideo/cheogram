@@ -40,6 +40,7 @@ import android.text.Spanned;
 import android.text.TextWatcher;
 import android.text.style.BackgroundColorSpan;
 import android.text.style.ForegroundColorSpan;
+import android.text.style.RelativeSizeSpan;
 import android.text.style.StrikethroughSpan;
 import android.text.style.StyleSpan;
 import android.text.style.TypefaceSpan;
@@ -57,9 +58,14 @@ import java.util.List;
 
 import eu.siacs.conversations.R;
 import eu.siacs.conversations.entities.Message;
+import eu.siacs.conversations.ui.adapter.MessageAdapter;
 import eu.siacs.conversations.ui.text.QuoteSpan;
 
 public class StylingHelper {
+
+	public static final int XHTML_IGNORE = 1;
+	public static final int XHTML_REMOVE = 2;
+	public static final int XHTML_EMPHASIS = 3;
 
 	private static final List<? extends Class<? extends ParcelableSpan>> SPAN_CLASSES = Arrays.asList(
 			StyleSpan.class,
@@ -80,8 +86,8 @@ public class StylingHelper {
 	public static void format(final Editable editable, int start, int end, @ColorInt int textColor, final boolean composing) {
 		for (ImStyleParser.Style style : ImStyleParser.parse(editable, start, end)) {
 			final int keywordLength = style.getKeyword().length();
-			editable.setSpan(createSpanForStyle(style), style.getStart() + keywordLength, style.getEnd() - keywordLength + 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE | (composing ? 1 << Spanned.SPAN_USER_SHIFT : 0));
-			makeKeywordOpaque(editable, style.getStart(), style.getStart() + keywordLength, textColor, composing);
+			editable.setSpan(createSpanForStyle(style), style.getStart() + keywordLength, style.getEnd() - keywordLength + 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE | ("*".equals(style.getKeyword()) || "_".equals(style.getKeyword()) ? XHTML_EMPHASIS << Spanned.SPAN_USER_SHIFT : 0));
+			makeKeywordOpaque(editable, style.getStart(), style.getStart() + keywordLength + ("```".equals(style.getKeyword()) ? 1 : 0), textColor, composing);
 			makeKeywordOpaque(editable, style.getEnd() - keywordLength + 1, style.getEnd() + 1, textColor, composing);
 		}
 	}
@@ -194,7 +200,7 @@ public class StylingHelper {
 		QuoteSpan[] quoteSpans = editable.getSpans(start, end, QuoteSpan.class);
 		@ColorInt int textColor = quoteSpans.length > 0 ? quoteSpans[0].getColor() : fallbackTextColor;
 		@ColorInt int keywordColor = transformColor(textColor);
-		editable.setSpan(new ForegroundColorSpan(keywordColor), start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE | (composing ? 1 << Spanned.SPAN_USER_SHIFT : 0));
+		editable.setSpan(new ForegroundColorSpan(keywordColor), start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE | (composing ? XHTML_REMOVE << Spanned.SPAN_USER_SHIFT : 0));
 	}
 
 	private static
@@ -225,9 +231,11 @@ public class StylingHelper {
 	public static class MessageEditorStyler implements TextWatcher {
 
 		private final EditText mEditText;
+		private final MessageAdapter mAdapter;
 
-		public MessageEditorStyler(EditText editText) {
+		public MessageEditorStyler(EditText editText, MessageAdapter adapter) {
 			this.mEditText = editText;
+			this.mAdapter = adapter;
 		}
 
 		@Override
@@ -243,7 +251,14 @@ public class StylingHelper {
 		@Override
 		public void afterTextChanged(Editable editable) {
 			clear(editable);
+			for (final var span : editable.getSpans(0, editable.length() - 1, QuoteSpan.class)) {
+				editable.removeSpan(span);
+			}
+			for (final var span : editable.getSpans(0, editable.length() - 1, RelativeSizeSpan.class)) {
+				editable.removeSpan(span);
+			}
 			format(editable, mEditText.getCurrentTextColor(), true);
+			mAdapter.handleTextQuotes(mEditText, editable, false);
 		}
 	}
 }

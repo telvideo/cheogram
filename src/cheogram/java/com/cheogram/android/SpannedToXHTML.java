@@ -39,7 +39,7 @@ public class SpannedToXHTML {
 		ParcelableSpan[] spans = newText.getSpans(0, newText.length(), ParcelableSpan.class);
 		for (final var span : spans) {
 			final var userFlags = (text.getSpanFlags(span) & Spanned.SPAN_USER) >> Spanned.SPAN_USER_SHIFT;
-			if (span instanceof SuggestionSpan || userFlags == 1) newText.removeSpan(span);
+			if (span instanceof SuggestionSpan || userFlags == StylingHelper.XHTML_IGNORE) newText.removeSpan(span);
 		}
 		BaseInputConnection.removeComposingSpans(newText);
 		return newText;
@@ -85,13 +85,26 @@ public class SpannedToXHTML {
 			next = text.nextSpanTransition(i, end, CharacterStyle.class);
 			CharacterStyle[] style = text.getSpans(i, next, CharacterStyle.class);
 			for (int j = 0; j < style.length; j++) {
+				final var userFlags = (text.getSpanFlags(style[j]) & Spanned.SPAN_USER) >> Spanned.SPAN_USER_SHIFT;
+				if (userFlags == StylingHelper.XHTML_REMOVE) {
+					continue outer;
+				}
+
 				if (style[j] instanceof StyleSpan) {
 					int s = ((StyleSpan) style[j]).getStyle();
 					if ((s & Typeface.BOLD) != 0) {
-						out = out.addChild("b");
+						if (userFlags == StylingHelper.XHTML_EMPHASIS) {
+							out = out.addChild("strong");
+						} else {
+							out = out.addChild("b");
+						}
 					}
 					if ((s & Typeface.ITALIC) != 0) {
-						out = out.addChild("i");
+						if (userFlags == StylingHelper.XHTML_EMPHASIS) {
+							out = out.addChild("em");
+						} else {
+							out = out.addChild("i");
+						}
 					}
 				}
 				if (style[j] instanceof TypefaceSpan) {
