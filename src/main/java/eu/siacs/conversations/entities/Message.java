@@ -122,6 +122,7 @@ public class Message extends AbstractEntity implements AvatarService.Avatarable 
 
     public static final String ERROR_MESSAGE_CANCELLED = "eu.siacs.conversations.cancelled";
 
+    public static final Object PLAIN_TEXT_SPAN = new PlainTextSpan();
 
     public boolean markable = false;
     protected String conversationUuid;
