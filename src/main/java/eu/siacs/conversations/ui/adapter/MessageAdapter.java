@@ -1594,7 +1594,7 @@ public class MessageAdapter extends ArrayAdapter<Message> {
         if (largeFont) {
             textView.setTextAppearance(
                     com.google.android.material.R.style.TextAppearance_Material3_BodyLarge);
-            textView.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 22);
+            textView.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 18);
         } else {
             textView.setTextAppearance(
                     com.google.android.material.R.style.TextAppearance_Material3_BodyMedium);
