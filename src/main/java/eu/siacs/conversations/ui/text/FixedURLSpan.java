@@ -42,6 +42,8 @@ import android.view.SoundEffectConstants;
 import android.view.View;
 import android.widget.Toast;
 
+import com.cheogram.android.BrowserHelper;
+
 import java.util.Arrays;
 
 import eu.siacs.conversations.R;
@@ -95,11 +97,17 @@ public class FixedURLSpan extends URLSpan {
 			}
 		}
 
+		if (uri.getScheme().equals("http") || uri.getScheme().equals("https")) {
+			widget.playSoundEffect(SoundEffectConstants.CLICK);
+			BrowserHelper.launchUri(context, uri);
+			return;
+		}
+
 		final Intent intent = new Intent(Intent.ACTION_VIEW, uri);
-      if ("geo".equalsIgnoreCase(uri.getScheme())) {
-          intent.setClass(context, ShowLocationActivity.class);
-      } else {
-          intent.setFlags(Intent.FLAG_ACTIVITY_NEW_DOCUMENT);
+		if ("geo".equalsIgnoreCase(uri.getScheme())) {
+			intent.setClass(context, ShowLocationActivity.class);
+		} else {
+			intent.setFlags(Intent.FLAG_ACTIVITY_NEW_DOCUMENT);
 		}
 		try {
 			context.startActivity(intent);

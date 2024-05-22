@@ -107,6 +107,7 @@ dependencies {
     implementation 'io.github.nishkarsh:android-permissions:2.1.6'
     implementation 'androidx.recyclerview:recyclerview:1.1.0'
     implementation 'androidx.documentfile:documentfile:1.0.1'
+    implementation 'androidx.browser:browser:1.8.0'
     implementation 'com.github.martin-stone:hsv-alpha-color-picker-android:3.1.0'
     implementation 'com.github.ipld:java-cid:v1.3.1'
     //implementation 'com.splitwise:tokenautocomplete:3.0.2'
