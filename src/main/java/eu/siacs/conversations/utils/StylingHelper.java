@@ -32,6 +32,7 @@ package eu.siacs.conversations.utils;
 import android.content.Context;
 import android.graphics.Color;
 import android.graphics.Typeface;
+import android.preference.PreferenceManager;
 import android.text.Editable;
 import android.text.ParcelableSpan;
 import android.text.Spannable;
@@ -251,6 +252,8 @@ public class StylingHelper {
 		@Override
 		public void afterTextChanged(Editable editable) {
 			clear(editable);
+			final var p = PreferenceManager.getDefaultSharedPreferences(mEditText.getContext());
+			if (!p.getBoolean("compose_rich_text", mEditText.getContext().getResources().getBoolean(R.bool.compose_rich_text))) return;
 			for (final var span : editable.getSpans(0, editable.length() - 1, QuoteSpan.class)) {
 				editable.removeSpan(span);
 			}

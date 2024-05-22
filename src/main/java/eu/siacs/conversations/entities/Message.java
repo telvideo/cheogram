@@ -1016,6 +1016,7 @@ public class Message extends AbstractEntity implements AvatarService.Avatarable 
         final Element html = getHtml();
         if (html == null || Build.VERSION.SDK_INT < 24) {
             spannableBody = new SpannableStringBuilder(MessageUtils.filterLtrRtl(getBody()).trim());
+            spannableBody.setSpan(PLAIN_TEXT_SPAN, 0, spannableBody.length(), 0); // Let adapter know it can do more formatting
         } else {
             boolean[] anyfallbackimg = new boolean[]{ false };
 
@@ -1743,4 +1744,6 @@ public class Message extends AbstractEntity implements AvatarService.Avatarable 
         message.setType(isFile ? Message.TYPE_PRIVATE_FILE : Message.TYPE_PRIVATE);
         return true;
     }
+
+    public static class PlainTextSpan {}
 }

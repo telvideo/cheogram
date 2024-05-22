@@ -612,6 +612,7 @@ public class MessageAdapter extends ArrayAdapter<Message> {
             viewHolder.messageBody.setVisibility(View.VISIBLE);
             final String nick = UIHelper.getMessageDisplayName(message);
             SpannableStringBuilder body = getSpannableBody(message);
+            final var processMarkup = body.getSpans(0, body.length(), Message.PlainTextSpan.class).length > 0;
             boolean hasMeCommand = message.hasMeCommand();
             if (hasMeCommand) {
                 body = body.replace(0, Message.ME_COMMAND.length(), nick + " ");
@@ -633,7 +634,7 @@ public class MessageAdapter extends ArrayAdapter<Message> {
                 body.removeSpan(quote);
                 applyQuoteSpan(viewHolder.messageBody, body, start, end, bubbleColor, true);
             }
-            boolean startsWithQuote = handleTextQuotes(viewHolder.messageBody, body, bubbleColor, true);
+            boolean startsWithQuote = processMarkup ? handleTextQuotes(viewHolder.messageBody, body, bubbleColor, true) : false;
             if (!message.isPrivateMessage()) {
                 if (hasMeCommand) {
                     body.setSpan(
@@ -717,7 +718,7 @@ public class MessageAdapter extends ArrayAdapter<Message> {
                 }
             }
 
-            StylingHelper.format(body, viewHolder.messageBody.getCurrentTextColor());
+            if (processMarkup) StylingHelper.format(body, viewHolder.messageBody.getCurrentTextColor());
             MyLinkify.addLinks(body, message.getConversation().getAccount(), message.getConversation().getJid());
             if (highlightedTerm != null) {
                 StylingHelper.highlight(viewHolder.messageBody, body, highlightedTerm);
@@ -1593,6 +1594,7 @@ public class MessageAdapter extends ArrayAdapter<Message> {
         if (largeFont) {
             textView.setTextAppearance(
                     com.google.android.material.R.style.TextAppearance_Material3_BodyLarge);
+            textView.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 22);
         } else {
             textView.setTextAppearance(
                     com.google.android.material.R.style.TextAppearance_Material3_BodyMedium);
