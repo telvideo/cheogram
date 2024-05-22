@@ -2947,9 +2947,9 @@ public class ConversationFragment extends XmppFragment
             this.binding.textinputSubject.setText(message.getSubject());
             this.binding.textinputSubject.setVisibility(View.VISIBLE);
         }
-        final var reply = message.getReply();
-        if (reply != null) {
-            setupReply(activity.xmppConnectionService.getMessageFuzzyId(conversation, reply.getAttribute("id")));
+        final var replyTo = message.getInReplyTo();
+        if (replyTo != null) {
+            setupReply(replyTo);
         }
     }
 

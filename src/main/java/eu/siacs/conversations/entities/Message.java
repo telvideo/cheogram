@@ -155,6 +155,7 @@ public class Message extends AbstractEntity implements AvatarService.Avatarable 
     private String axolotlFingerprint = null;
     private String errorMessage = null;
     private Set<ReadByMarker> readByMarkers = new CopyOnWriteArraySet<>();
+    protected Message mInReplyTo = null;
 
     private Boolean isGeoUri = null;
     private Boolean isEmojisOnly = null;
@@ -440,6 +441,7 @@ public class Message extends AbstractEntity implements AvatarService.Avatarable 
         addPayload(fallback);
 
         appendBody(body);
+        setInReplyTo(replyTo);
     }
 
     public Message react(String emoji) {
@@ -903,6 +905,14 @@ public class Message extends AbstractEntity implements AvatarService.Avatarable 
                 Collections2.transform(
                         Collections2.filter(this.readByMarkers, m -> m.getRealJid() != null),
                         ReadByMarker::getRealJid));
+    }
+
+    public void setInReplyTo(final Message m) {
+        mInReplyTo = m;
+    }
+
+    public Message getInReplyTo() {
+        return mInReplyTo;
     }
 
     boolean similar(Message message) {
