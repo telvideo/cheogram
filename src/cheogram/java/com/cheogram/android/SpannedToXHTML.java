@@ -13,7 +13,6 @@ import android.text.style.CharacterStyle;
 import android.text.style.ForegroundColorSpan;
 import android.text.style.ImageSpan;
 import android.text.style.ParagraphStyle;
-import android.text.style.QuoteSpan;
 import android.text.style.RelativeSizeSpan;
 import android.text.style.StrikethroughSpan;
 import android.text.style.StyleSpan;
@@ -27,6 +26,10 @@ import android.view.inputmethod.BaseInputConnection;
 
 import io.ipfs.cid.Cid;
 
+import java.util.ArrayList;
+
+import eu.siacs.conversations.ui.text.QuoteSpan;
+import eu.siacs.conversations.utils.StylingHelper;
 import eu.siacs.conversations.xml.Element;
 import eu.siacs.conversations.xml.TextNode;
 
@@ -50,8 +53,28 @@ public class SpannedToXHTML {
 
 	public static Element append(Element out, Spanned text) {
 		SpannableStringBuilder newText = cleanSpans(text);
-		withinParagraph(out, newText, 0, newText.length());
+		doBlock(out, new ArrayList<>(), newText, 0, newText.length());
 		return out;
+	}
+
+	private static void doBlock(Element out, ArrayList<Object> parents, Spanned text, int start, int end) {
+		int next;
+		outer:
+		for (int i = start; i < end; i = next) {
+			next = text.nextSpanTransition(i, end, QuoteSpan.class);
+			QuoteSpan[] quotes = text.getSpans(i, next, QuoteSpan.class);
+			for (final var quote : quotes) {
+				if (!parents.contains(quote)) {
+					final var us = new ArrayList<>(parents);
+					us.add(quote);
+					next = text.getSpanEnd(quote);
+					doBlock(out.addChild("blockquote"), us, text, i, next);
+					if (next < text.length() && text.charAt(next) == '\n') next++;
+					continue outer;
+				}
+			}
+			withinParagraph(out, text, i, (next == end && text.charAt(end-1) == '\n') ? next - 1 : next);
+		}
 	}
 
 	private static void withinParagraph(Element outer, Spanned text, int start, int end) {
