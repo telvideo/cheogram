@@ -817,11 +817,6 @@ public class XmppConnectionService extends Service {
                         if (file.isFile() && file.canRead()) {
                             DownloadableFile df = new DownloadableFile(file.getAbsolutePath());
                             Drawable icon = fileBackend.getThumbnail(df, getResources(), (int) (getResources().getDisplayMetrics().density * 288), false);
-                            if (Build.VERSION.SDK_INT >= 28 && icon instanceof AnimatedImageDrawable) {
-                                // Animated drawable not working in spans for me yet
-                                // https://stackoverflow.com/questions/76870075/using-animatedimagedrawable-inside-imagespan-renders-wrong-size
-                                continue;
-                            }
                             final String filename = Files.getNameWithoutExtension(df.getName());
                             Cid[] cids = fileBackend.calculateCids(new FileInputStream(df));
                             for (Cid cid : cids) {

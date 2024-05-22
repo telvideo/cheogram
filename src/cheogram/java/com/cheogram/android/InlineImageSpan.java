@@ -1,5 +1,6 @@
 package com.cheogram.android;
 
+import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.drawable.AnimatedImageDrawable;
 import android.graphics.drawable.Drawable;
@@ -25,9 +26,8 @@ public class InlineImageSpan extends ImageSpan {
 		paint.getFontMetricsInt(mTmpFontMetrics);
 		final int fontHeight = Math.abs(mTmpFontMetrics.descent - mTmpFontMetrics.ascent);
 		float mRatio = fontHeight * 1.0f / dHeight;
-		int mHeight = (short) (dHeight * mRatio);
-		int mWidth = (short) (dWidth * mRatio);
-		getDrawable().setBounds(0, 0, mWidth, mHeight);
+		int mWidth = (int) (dWidth * mRatio);
+		getDrawable().setBounds(0, 0, (int) dWidth, (int) dHeight);
 		if (fm != null) {
 			fm.ascent = mTmpFontMetrics.ascent;
 			fm.descent = mTmpFontMetrics.descent;
@@ -35,5 +35,25 @@ public class InlineImageSpan extends ImageSpan {
 			fm.bottom = mTmpFontMetrics.bottom;
 		}
 		return mWidth;
+	}
+
+	@Override
+	public void draw(Canvas canvas, CharSequence text, int start, int end, float x, int top, int y, int bottom, Paint paint) {
+		paint.getFontMetricsInt(mTmpFontMetrics);
+		final int fontHeight = Math.abs(mTmpFontMetrics.descent - mTmpFontMetrics.ascent);
+		float mRatio = fontHeight * 1.0f / dHeight;
+
+		Drawable b = getDrawable();
+		canvas.save();
+
+		int transY = 0;
+		if (mVerticalAlignment == ALIGN_BASELINE) {
+			transY -= paint.getFontMetricsInt().descent;
+		}
+
+		canvas.translate(x, transY);
+		canvas.scale(mRatio, mRatio);
+		b.draw(canvas);
+		canvas.restore();
 	}
 }
