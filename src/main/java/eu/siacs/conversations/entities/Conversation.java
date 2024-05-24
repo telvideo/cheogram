@@ -2858,7 +2858,7 @@ public class Conversation extends AbstractEntity implements Blockable, Comparabl
             protected List<Field> reported = null;
             protected SparseArray<Item> items = new SparseArray<>();
             protected XmppConnectionService xmppConnectionService;
-            protected ActionsAdapter actionsAdapter;
+            protected ActionsAdapter actionsAdapter = null;
             protected GridLayoutManager layoutManager;
             protected WebView actionToWebview = null;
             protected int fillableFieldCount = 0;
@@ -3438,18 +3438,21 @@ public class Conversation extends AbstractEntity implements Blockable, Comparabl
                 mBinding.form.setLayoutManager(setupLayoutManager());
                 mBinding.form.setAdapter(this);
 
-                actionsAdapter = new ActionsAdapter(mBinding.getRoot().getContext());
-                actionsAdapter.registerDataSetObserver(new DataSetObserver() {
-                    @Override
-                    public void onChanged() {
-                        if (mBinding == null) return;
+                if (actionsAdapter == null) {
+                    actionsAdapter = new ActionsAdapter(mBinding.getRoot().getContext());
+                    actionsAdapter.registerDataSetObserver(new DataSetObserver() {
+                        @Override
+                        public void onChanged() {
+                            if (mBinding == null) return;
 
-                        mBinding.actions.setNumColumns(actionsAdapter.getCount() > 1 ? 2 : 1);
-                    }
+                            mBinding.actions.setNumColumns(actionsAdapter.getCount() > 1 ? 2 : 1);
+                        }
 
-                    @Override
-                    public void onInvalidated() {}
-                });
+                        @Override
+                        public void onInvalidated() {}
+                    });
+                }
+
                 mBinding.actions.setAdapter(actionsAdapter);
                 mBinding.actions.setOnItemClickListener((parent, v, pos, id) -> {
                     if (execute(pos)) {
