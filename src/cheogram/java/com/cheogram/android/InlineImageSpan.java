@@ -46,7 +46,7 @@ public class InlineImageSpan extends ImageSpan {
 		Drawable b = getDrawable();
 		canvas.save();
 
-		int transY = 0;
+		int transY = bottom - ((int) (dHeight * mRatio));
 		if (mVerticalAlignment == ALIGN_BASELINE) {
 			transY -= paint.getFontMetricsInt().descent;
 		}
