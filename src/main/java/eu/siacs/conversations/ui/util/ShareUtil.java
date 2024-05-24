@@ -87,7 +87,7 @@ public class ShareUtil {
 	}
 
 	public static void copyToClipboard(XmppActivity activity, Message message) {
-		if (activity.copyTextToClipboard(message.getMergedBody().toString(), R.string.message)) {
+		if (activity.copyTextToClipboard(message.getQuoteableBody(), R.string.message)) {
 			Toast.makeText(activity, R.string.message_copied_to_clipboard, Toast.LENGTH_SHORT).show();
 		}
 	}
