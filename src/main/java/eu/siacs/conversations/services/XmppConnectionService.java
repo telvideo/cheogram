@@ -2577,7 +2577,7 @@ public class XmppConnectionService extends Service {
                     conversation.setAccount(account);
                 } else {
                     Log.e(Config.LOGTAG, "unable to restore Conversations with " + conversation.getJid());
-                    iterator.remove();
+                    conversations.remove(conversation);
                 }
             }
             long diffConversationsRestore = SystemClock.elapsedRealtime() - startTimeConversationsRestore;
