@@ -166,9 +166,9 @@ public final class MucDetailsContextMenuHelper {
                 }
             }
             managePermissions.setVisible(managePermissionsVisible);
-            sendPrivateMessage.setVisible(user.getFullJid() != null && !isGroupChat && mucOptions.allowPm() && user.getRole().ranks(MucOptions.Role.VISITOR));
+            sendPrivateMessage.setVisible(user.isOnline() && !isGroupChat && mucOptions.allowPm() && user.getRole().ranks(MucOptions.Role.VISITOR));
         } else {
-            sendPrivateMessage.setVisible(user != null && user.getFullJid() != null);
+            sendPrivateMessage.setVisible(user != null && user.isOnline());
             sendPrivateMessage.setEnabled(user != null && mucOptions.allowPm() && user.getRole().ranks(MucOptions.Role.VISITOR));
         }
     }

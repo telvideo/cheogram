@@ -342,7 +342,7 @@ public class MucOptions {
         return null;
     }
 
-    public User findUserByOccupantId(final String id) {
+    public User findUserByOccupantId(final String id, final Jid counterpart) {
         if (id == null) {
             return null;
         }
@@ -353,21 +353,24 @@ public class MucOptions {
                 }
             }
         }
-        return new User(this, null, id, null, new HashSet<>());
+        final var user = new User(this, counterpart, id, null, new HashSet<>());
+        user.setOnline(false);
+        return user;
     }
 
-    public User findOrCreateUserByRealJid(Jid jid, Jid fullJid) {
+    public User findOrCreateUserByRealJid(Jid jid, Jid fullJid, final String occupantId) {
         User user = findUserByRealJid(jid);
         if (user == null) {
-            user = new User(this, fullJid, null, null, new HashSet<>());
+            user = new User(this, fullJid, occupantId, null, new HashSet<>());
             user.setRealJid(jid);
+            user.setOnline(false);
         }
         return user;
     }
 
     public User findUser(ReadByMarker readByMarker) {
         if (readByMarker.getRealJid() != null) {
-            return findOrCreateUserByRealJid(readByMarker.getRealJid().asBareJid(), readByMarker.getFullJid());
+            return findOrCreateUserByRealJid(readByMarker.getRealJid().asBareJid(), readByMarker.getFullJid(), null);
         } else if (readByMarker.getFullJid() != null) {
             return findUserByFullJid(readByMarker.getFullJid());
         } else {
@@ -376,11 +379,15 @@ public class MucOptions {
     }
 
     public boolean isContactInRoom(Contact contact) {
-        return contact != null && findUserByRealJid(contact.getJid().asBareJid()) != null;
+        return contact != null && isUserInRoom(findUserByRealJid(contact.getJid().asBareJid()));
     }
 
     public boolean isUserInRoom(Jid jid) {
-        return findUserByFullJid(jid) != null;
+        return isUserInRoom(findUserByFullJid(jid));
+    }
+
+    public boolean isUserInRoom(User user) {
+        return user != null && user.isOnline();
     }
 
     public boolean setOnline() {
@@ -847,6 +854,7 @@ public class MucOptions {
         private ChatState chatState = Config.DEFAULT_CHAT_STATE;
         protected Set<Hat> hats;
         protected String occupantId;
+        protected boolean online = true;
 
         public User(MucOptions options, Jid fullJid, final String occupantId, final String nick, final Set<Hat> hats) {
             this.options = options;
@@ -870,6 +878,14 @@ public class MucOptions {
 
         public String getNick() {
             return nick == null ? getName() : nick;
+        }
+
+        public void setOnline(final boolean o) {
+            online = o;
+        }
+
+        public boolean isOnline() {
+            return fullJid != null && online;
         }
 
         public Role getRole() {

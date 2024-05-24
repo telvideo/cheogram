@@ -4453,14 +4453,14 @@ public class ConversationFragment extends XmppFragment
                     return;
                 }
                 final Jid tcp = message.getTrueCounterpart();
+                final String occupantId = message.getOccupantId();
                 final User userByRealJid =
                         tcp != null
-                                ? conversation.getMucOptions().findOrCreateUserByRealJid(tcp, cp)
+                                ? conversation.getMucOptions().findOrCreateUserByRealJid(tcp, cp, occupantId)
                                 : null;
-                final String occupantId = message.getOccupantId();
                 final User userByOccupantId =
                         occupantId != null
-                                ? conversation.getMucOptions().findUserByOccupantId(occupantId)
+                                ? conversation.getMucOptions().findUserByOccupantId(occupantId, cp)
                                 : null;
                 final User user =
                         userByRealJid != null

@@ -493,7 +493,7 @@ public class AvatarService implements OnAdvancedStreamFeaturesLoaded {
 				final MucOptions mucOptions = ((Conversation) conversation).getMucOptions();
 				MucOptions.User user;
 				if (trueCounterpart != null) {
-					user = mucOptions.findOrCreateUserByRealJid(trueCounterpart, message.getCounterpart());
+					user = mucOptions.findOrCreateUserByRealJid(trueCounterpart, message.getCounterpart(), null);
 				} else {
 					user = mucOptions.findUserByFullJid(message.getCounterpart());
 				}
