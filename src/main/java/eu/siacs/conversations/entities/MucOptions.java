@@ -862,6 +862,23 @@ public class MucOptions {
             this.occupantId = occupantId;
             this.nick = nick;
             this.hats = hats;
+
+            if (occupantId != null && options != null) {
+                final var sha1sum = options.getConversation().getAttribute("occupantAvatar/" + occupantId);
+                if (sha1sum != null) {
+                    avatar = new Avatar();
+                    avatar.sha1sum = sha1sum;
+                    avatar.owner = fullJid;
+                }
+
+                if (nick == null) {
+                    this.nick = options.getConversation().getAttribute("occupantNick/" + occupantId);
+                } else if (!getNick().equals(getName())) {
+                    options.getConversation().setAttribute("occupantNick/" + occupantId, nick);
+                } else {
+                    options.getConversation().setAttribute("occupantNick/" + occupantId, (String) null);
+                }
+            }
         }
 
         public String getName() {
@@ -933,6 +950,9 @@ public class MucOptions {
         }
 
         public boolean setAvatar(Avatar avatar) {
+            if (occupantId != null) {
+                options.getConversation().setAttribute("occupantAvatar/" + occupantId, getContact() == null ? avatar.sha1sum : null);
+            }
             if (this.avatar != null && this.avatar.equals(avatar)) {
                 return false;
             } else {

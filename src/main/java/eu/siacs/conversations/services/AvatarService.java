@@ -270,7 +270,9 @@ public class AvatarService implements OnAdvancedStreamFeaturesLoaded {
 				'\0' +
 				user.getAccount().getJid().asBareJid() +
 				'\0' +
-				emptyOnNull(user.getFullJid()) +
+				user.getMuc() +
+				'\0' +
+				user.getOccupantId() == null ? emptyOnNull(user.getFullJid()) : user.getOccupantId() +
 				'\0' +
 				emptyOnNull(user.getRealJid()) +
 				'\0' +
@@ -493,7 +495,9 @@ public class AvatarService implements OnAdvancedStreamFeaturesLoaded {
 				final MucOptions mucOptions = ((Conversation) conversation).getMucOptions();
 				MucOptions.User user;
 				if (trueCounterpart != null) {
-					user = mucOptions.findOrCreateUserByRealJid(trueCounterpart, message.getCounterpart(), null);
+					user = mucOptions.findOrCreateUserByRealJid(trueCounterpart, message.getCounterpart(), message.getOccupantId());
+				} else if(message.getOccupantId() != null) {
+					user = mucOptions.findUserByOccupantId(message.getOccupantId(), message.getCounterpart());
 				} else {
 					user = mucOptions.findUserByFullJid(message.getCounterpart());
 				}

@@ -211,7 +211,7 @@ public class PresenceParser extends AbstractParser implements OnPresencePacketRe
 						mucOptions.updateUser(parseItem(conversation, item, from, occupantId, nick == null ? null : nick.getContent(), hats));
                     }
                     MucOptions.User user = mucOptions.deleteUser(from);
-                    if (user != null) {
+                    if (user != null && occupantId == null) {
                         mXmppConnectionService.getAvatarService().clear(user);
                     }
                 }
