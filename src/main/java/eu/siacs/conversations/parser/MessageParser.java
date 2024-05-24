@@ -796,7 +796,7 @@ public class MessageParser extends AbstractParser implements OnMessagePacketRece
                     final boolean trueCountersMatch = replacedMessage.getTrueCounterpart() != null
                             && message.getTrueCounterpart() != null
                             && replacedMessage.getTrueCounterpart().asBareJid().equals(message.getTrueCounterpart().asBareJid());
-                    final boolean mucUserMatches = query == null && replacedMessage.sameMucUser(message); //can not be checked when using mam
+                    final boolean mucUserMatches = query == null && replacedMessage.sameMucUser(message);
                     final boolean duplicate = conversation.hasDuplicateMessage(message);
                     if (fingerprintsMatch && (trueCountersMatch || !conversationMultiMode || mucUserMatches || counterpart.isBareJid()) && !duplicate) {
                         Log.d(Config.LOGTAG, "replaced message '" + replacedMessage.getBody() + "' with '" + message.getBody() + "'");

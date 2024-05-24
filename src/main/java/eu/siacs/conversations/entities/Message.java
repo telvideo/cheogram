@@ -696,7 +696,9 @@ public class Message extends AbstractEntity implements AvatarService.Avatarable 
     public boolean sameMucUser(Message otherMessage) {
         final MucOptions.User thisUser = this.user == null ? null : this.user.get();
         final MucOptions.User otherUser = otherMessage.user == null ? null : otherMessage.user.get();
-        return thisUser != null && thisUser == otherUser;
+        return
+            (thisUser != null && thisUser == otherUser) ||
+            (getOccupantId() != null && getOccupantId().equals(otherMessage.getOccupantId()));
     }
 
     public String getErrorMessage() {
