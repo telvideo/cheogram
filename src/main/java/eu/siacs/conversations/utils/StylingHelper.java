@@ -72,7 +72,8 @@ public class StylingHelper {
 			StyleSpan.class,
 			StrikethroughSpan.class,
 			TypefaceSpan.class,
-			ForegroundColorSpan.class
+			ForegroundColorSpan.class,
+			RelativeSizeSpan.class
 	);
 
 	public static void clear(final Editable editable) {
@@ -201,7 +202,15 @@ public class StylingHelper {
 		QuoteSpan[] quoteSpans = editable.getSpans(start, end, QuoteSpan.class);
 		@ColorInt int textColor = quoteSpans.length > 0 ? quoteSpans[0].getColor() : fallbackTextColor;
 		@ColorInt int keywordColor = transformColor(textColor);
-		editable.setSpan(new ForegroundColorSpan(keywordColor), start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE | (composing ? XHTML_REMOVE << Spanned.SPAN_USER_SHIFT : 0));
+		if (composing) {
+			if (end-start > 1) {
+				editable.setSpan(new ForegroundColorSpan(keywordColor), start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE | XHTML_REMOVE << Spanned.SPAN_USER_SHIFT);
+			} else {
+				editable.setSpan(new RelativeSizeSpan(0), start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE | XHTML_REMOVE << Spanned.SPAN_USER_SHIFT);
+			}
+		} else {
+			editable.setSpan(new ForegroundColorSpan(keywordColor), start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+		}
 	}
 
 	private static
@@ -255,9 +264,6 @@ public class StylingHelper {
 			final var p = PreferenceManager.getDefaultSharedPreferences(mEditText.getContext());
 			if (!p.getBoolean("compose_rich_text", mEditText.getContext().getResources().getBoolean(R.bool.compose_rich_text))) return;
 			for (final var span : editable.getSpans(0, editable.length() - 1, QuoteSpan.class)) {
-				editable.removeSpan(span);
-			}
-			for (final var span : editable.getSpans(0, editable.length() - 1, RelativeSizeSpan.class)) {
 				editable.removeSpan(span);
 			}
 			format(editable, mEditText.getCurrentTextColor(), true);
