@@ -1,6 +1,7 @@
 package eu.siacs.conversations.services;
 
 import android.content.Context;
+import android.net.ConnectivityManager;
 import android.os.PowerManager;
 import android.os.SystemClock;
 import android.util.Log;
@@ -120,6 +121,11 @@ public class AbstractConnectionManager {
     }
 
     public long getAutoAcceptFileSize() {
+        final ConnectivityManager connectivityManager = mXmppConnectionService.getSystemService(ConnectivityManager.class);
+        final var autoAcceptUnmetered = mXmppConnectionService.getBooleanPreference("auto_accept_unmetered", R.bool.auto_accept_unmetered);
+        if (autoAcceptUnmetered && !Compatibility.isActiveNetworkMetered(connectivityManager)) {
+            return 20000000; // 20 MB
+        }
         final long autoAcceptFileSize = this.mXmppConnectionService.getLongPreference("auto_accept_file_size", R.integer.auto_accept_filesize);
         return autoAcceptFileSize <= 0 ? -1 : autoAcceptFileSize;
     }

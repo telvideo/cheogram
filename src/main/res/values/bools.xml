@@ -1,6 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <bool name="show_avatar_incoming_call">true</bool>
-    <bool name="send_link_previews">true</bool>
-    <bool name="compose_rich_text">true</bool>
 </resources>

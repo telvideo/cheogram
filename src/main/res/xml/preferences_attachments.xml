@@ -28,6 +28,12 @@
             android:key="auto_accept_file_size"
             android:title="@string/pref_automatic_download"
             app:useSimpleSummaryProvider="true" />
+        <SwitchPreferenceCompat
+            android:defaultValue="@bool/auto_accept_unmetered"
+            android:icon="@drawable/ic_wifi_24dp"
+            android:key="auto_accept_unmetered"
+            android:title="Always Accept When Unmetered"
+            android:summary="Don't use the above size limit on unmetered networks" />
     </PreferenceCategory>
     <PreferenceCategory android:title="Advanced">
         <Preference

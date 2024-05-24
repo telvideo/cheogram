@@ -51,4 +51,7 @@
     <bool name="require_channel_binding">false</bool>
     <bool name="enable_quiet_hours">false</bool>
     <bool name="autojoin">true</bool>
+    <bool name="send_link_previews">true</bool>
+    <bool name="compose_rich_text">true</bool>
+    <bool name="auto_accept_unmetered">true</bool>
 </resources>
