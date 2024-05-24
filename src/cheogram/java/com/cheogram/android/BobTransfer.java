@@ -79,6 +79,8 @@ public class BobTransfer implements Transferable {
 
 	@Override
 	public boolean start() {
+		if (!xmppConnectionService.isDataSaverDisabled()) return false;
+
 		if (status == Transferable.STATUS_DOWNLOADING) return true;
 		File f = xmppConnectionService.getFileForCid(cid(uri));
 
