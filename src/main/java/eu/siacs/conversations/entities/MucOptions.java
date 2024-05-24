@@ -353,7 +353,7 @@ public class MucOptions {
                 }
             }
         }
-        return null;
+        return new User(this, null, id, null, new HashSet<>());
     }
 
     public User findOrCreateUserByRealJid(Jid jid, Jid fullJid) {
@@ -861,7 +861,7 @@ public class MucOptions {
         }
 
         public Jid getMuc() {
-            return fullJid == null ? null : fullJid.asBareJid();
+            return fullJid == null ? (options.getConversation().getJid().asBareJid()) : fullJid.asBareJid();
         }
 
         public String getOccupantId() {

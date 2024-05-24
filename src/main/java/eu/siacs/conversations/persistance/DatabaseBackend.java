@@ -343,6 +343,14 @@ public class DatabaseBackend extends SQLiteOpenHelper {
                 db.execSQL("PRAGMA cheogram.user_version = 10");
             }
 
+            if(cheogramVersion < 11) {
+                db.execSQL(
+                    "ALTER TABLE cheogram.muted_participants " +
+                    "DROP COLUMN nick"
+                );
+                db.execSQL("PRAGMA cheogram.user_version = 11");
+            }
+
             db.setTransactionSuccessful();
         } finally {
             db.endTransaction();
@@ -904,7 +912,6 @@ public class DatabaseBackend extends SQLiteOpenHelper {
         ContentValues cv = new ContentValues();
         cv.put("muc_jid", user.getMuc().toString());
         cv.put("occupant_id", user.getOccupantId());
-        cv.put("nick", user.getNick());
         db.insertWithOnConflict("cheogram.muted_participants", null, cv, SQLiteDatabase.CONFLICT_REPLACE);
 
         return true;
