@@ -1148,7 +1148,7 @@ public class XmppConnectionService extends Service {
                 Log.d(Config.LOGTAG, "ping MUCs");
                 mLastMucPing = SystemClock.elapsedRealtime();
                 for (Conversation c : getConversations()) {
-                    if (c.getMode() == Conversation.MODE_MULTI && c.getMucOptions().online()) {
+                    if (c.getMode() == Conversation.MODE_MULTI && (c.getMucOptions().online() || c.getMucOptions().getError() == MucOptions.Error.SHUTDOWN)) {
                         mucSelfPingAndRejoin(c);
                     }
                 }
