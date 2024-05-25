@@ -7,6 +7,7 @@ import android.database.DatabaseUtils;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.text.TextUtils;
+import android.os.Build;
 import android.os.Environment;
 import android.os.SystemClock;
 import android.util.Base64;
@@ -344,10 +345,21 @@ public class DatabaseBackend extends SQLiteOpenHelper {
             }
 
             if(cheogramVersion < 11) {
-                db.execSQL(
-                    "ALTER TABLE cheogram.muted_participants " +
-                    "DROP COLUMN nick"
-                );
+                if (Build.VERSION.SDK_INT >= 34) {
+                    db.execSQL(
+                        "ALTER TABLE cheogram.muted_participants " +
+                        "DROP COLUMN nick"
+                    );
+                } else {
+                    db.execSQL("DROP TABLE cheogram.muted_participants");
+                    db.execSQL(
+                        "CREATE TABLE cheogram.muted_participants (" +
+                        "muc_jid TEXT NOT NULL, " +
+                        "occupant_id TEXT NOT NULL, " +
+                        "PRIMARY KEY (muc_jid, occupant_id)" +
+                        ")"
+                    );
+                }
                 db.execSQL("PRAGMA cheogram.user_version = 11");
             }
 
