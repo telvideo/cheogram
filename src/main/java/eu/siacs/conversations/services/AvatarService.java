@@ -272,7 +272,7 @@ public class AvatarService implements OnAdvancedStreamFeaturesLoaded {
 				'\0' +
 				user.getMuc() +
 				'\0' +
-				user.getOccupantId() == null ? emptyOnNull(user.getFullJid()) : user.getOccupantId() +
+				(user.getOccupantId() == null ? emptyOnNull(user.getFullJid()) : user.getOccupantId()) +
 				'\0' +
 				emptyOnNull(user.getRealJid()) +
 				'\0' +
