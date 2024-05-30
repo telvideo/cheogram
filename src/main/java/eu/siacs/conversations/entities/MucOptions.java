@@ -951,7 +951,7 @@ public class MucOptions {
 
         public boolean setAvatar(Avatar avatar) {
             if (occupantId != null) {
-                options.getConversation().setAttribute("occupantAvatar/" + occupantId, getContact() == null ? avatar.sha1sum : null);
+                options.getConversation().setAttribute("occupantAvatar/" + occupantId, getContact() == null && avatar != null ? avatar.sha1sum : null);
             }
             if (this.avatar != null && this.avatar.equals(avatar)) {
                 return false;
