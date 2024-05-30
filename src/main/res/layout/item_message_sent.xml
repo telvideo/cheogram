@@ -23,7 +23,7 @@
                 android:id="@+id/message_photo"
                 android:layout_width="48dp"
                 android:layout_height="48dp"
-                android:scaleType="fitXY"
+                android:scaleType="centerCrop"
                 app:shapeAppearance="@style/ShapeAppearanceOverlay.Photo" />
         </LinearLayout>
 
