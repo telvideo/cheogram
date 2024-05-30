@@ -1849,6 +1849,9 @@ public class ConversationFragment extends XmppFragment
                                 previousReaction.setReactions(reactions);
                                 activity.xmppConnectionService.updateMessage(previousReaction);
                             }
+                        } else {
+                            message.setInReplyTo(null);
+                            message.clearPayloads();
                         }
                         message.setBody(" ");
                         message.setSubject(null);
