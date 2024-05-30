@@ -494,7 +494,7 @@ public class MessageAdapter extends ArrayAdapter<Message> {
 
     public boolean handleTextQuotes(final TextView textView, final Editable body, final boolean deleteMarkers) {
         final boolean colorfulBackground = this.bubbleDesign.colorfulChatBubbles;
-        final BubbleColor bubbleColor = colorfulBackground ? BubbleColor.SECONDARY : BubbleColor.SURFACE;
+        final BubbleColor bubbleColor = colorfulBackground ? (deleteMarkers ? BubbleColor.SECONDARY : BubbleColor.TERTIARY) : BubbleColor.SURFACE;
         return handleTextQuotes(textView, body, bubbleColor, deleteMarkers);
     }
 
