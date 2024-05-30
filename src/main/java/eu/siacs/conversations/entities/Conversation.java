@@ -2952,12 +2952,14 @@ public class Conversation extends AbstractEntity implements Blockable, Comparabl
                             eu.siacs.conversations.xmpp.forms.Field fillableField = null;
                             for (eu.siacs.conversations.xmpp.forms.Field field : form.getFields()) {
                                 if ((field.getType() == null || (!field.getType().equals("hidden") && !field.getType().equals("fixed"))) && field.getFieldName() != null && !field.getFieldName().equals("http://jabber.org/protocol/commands#actions")) {
-                                    fillableField = field;
+                                   final var validate = field.findChild("validate", "http://jabber.org/protocol/xdata-validate");
+                                   final var range = validate == null ? null : validate.findChild("range", "http://jabber.org/protocol/xdata-validate");
+                                    fillableField = range == null ? field : null;
                                     fillableFieldCount++;
                                 }
                             }
 
-                            if (fillableFieldCount == 1 && actionsAdapter.countProceed() < 2 && (("list-single".equals(fillableField.getType()) && Option.forField(fillableField).size() < 50) || ("boolean".equals(fillableField.getType()) && fillableField.getValue() == null))) {
+                            if (fillableFieldCount == 1 && fillableField != null && actionsAdapter.countProceed() < 2 && (("list-single".equals(fillableField.getType()) && Option.forField(fillableField).size() < 50) || ("boolean".equals(fillableField.getType()) && fillableField.getValue() == null))) {
                                 actionsCleared = true;
                                 actionsAdapter.clearProceed();
                             }
