@@ -3671,9 +3671,8 @@ public class XmppConnectionService extends Service {
                     if (mucOptions.mamSupport()) {
                         getMessageArchiveService().catchupMUC(conversation);
                     }
+                    fetchConferenceMembers(conversation);
                     if (mucOptions.isPrivateAndNonAnonymous()) {
-                        fetchConferenceMembers(conversation);
-
                         if (followedInvite) {
                             final Bookmark bookmark = conversation.getBookmark();
                             if (bookmark != null) {
@@ -3733,7 +3732,9 @@ public class XmppConnectionService extends Service {
     private void fetchConferenceMembers(final Conversation conversation) {
         final Account account = conversation.getAccount();
         final AxolotlService axolotlService = account.getAxolotlService();
-        final String[] affiliations = {"member", "admin", "owner"};
+        final var affiliations = new ArrayList<String>();
+        affiliations.add("outcast");
+        if (conversation.getMucOptions().isPrivateAndNonAnonymous()) affiliations.addAll(List.of("member", "admin", "owner"));
         OnIqPacketReceived callback = new OnIqPacketReceived() {
 
             private int i = 0;
@@ -3747,6 +3748,7 @@ public class XmppConnectionService extends Service {
                     for (Element child : query.getChildren()) {
                         if ("item".equals(child.getName())) {
                             MucOptions.User user = AbstractParser.parseItem(conversation, child);
+                            user.setOnline(false);
                             if (!user.realJidMatchesAccount()) {
                                 boolean isNew = conversation.getMucOptions().updateUser(user);
                                 Contact contact = user.getContact();
@@ -3762,10 +3764,10 @@ public class XmppConnectionService extends Service {
                     }
                 } else {
                     success = false;
-                    Log.d(Config.LOGTAG, account.getJid().asBareJid() + ": could not request affiliation " + affiliations[i] + " in " + conversation.getJid().asBareJid());
+                    Log.d(Config.LOGTAG, account.getJid().asBareJid() + ": could not request affiliation " + affiliations.get(i) + " in " + conversation.getJid().asBareJid());
                 }
                 ++i;
-                if (i >= affiliations.length) {
+                if (i >= affiliations.size()) {
                     List<Jid> members = conversation.getMucOptions().getMembers(true);
                     if (success) {
                         List<Jid> cryptoTargets = conversation.getAcceptedCryptoTargets();
@@ -3790,7 +3792,8 @@ public class XmppConnectionService extends Service {
             }
         };
         for (String affiliation : affiliations) {
-            sendIqPacket(account, mIqGenerator.queryAffiliation(conversation, affiliation), callback);
+            final var x = mIqGenerator.queryAffiliation(conversation, affiliation);
+            sendIqPacket(account, x, callback);
         }
         Log.d(Config.LOGTAG, account.getJid().asBareJid() + ": fetching members for " + conversation.getName());
     }

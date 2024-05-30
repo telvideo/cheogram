@@ -77,6 +77,9 @@ public final class MucDetailsContextMenuHelper {
             if (!Config.DISABLE_BAN && user.getAffiliation() != MucOptions.Affiliation.OUTCAST) {
                 items.add(activity.getString(isGroupChat ? R.string.ban_from_conference : R.string.ban_from_channel));
                 actions.add(ACTION_BAN);
+            } else if (!Config.DISABLE_BAN) {
+                items.add(isGroupChat ? "Unban from group chat" : "Unban from channel");
+                actions.add(ACTION_REMOVE_MEMBERSHIP);
             }
             if (!user.getAffiliation().ranks(MucOptions.Affiliation.MEMBER)) {
                 items.add(activity.getString(R.string.grant_membership));

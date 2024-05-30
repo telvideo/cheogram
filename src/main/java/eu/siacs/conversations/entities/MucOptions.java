@@ -76,13 +76,13 @@ public class MucOptions {
     public void changeAffiliation(Jid jid, Affiliation affiliation) {
         User user = findUserByRealJid(jid);
         synchronized (users) {
-            if (user != null && user.getRole() == Role.NONE) {
-                users.remove(user);
-                if (affiliation.ranks(Affiliation.MEMBER)) {
-                    user.affiliation = affiliation;
-                    users.add(user);
-                }
+            if (user == null) {
+                user = new User(this, null, null, null, new HashSet<>());
+                user.setRealJid(jid);
+                user.setOnline(false);
+                users.add(user);
             }
+            user.affiliation = affiliation;
         }
     }
 
@@ -290,9 +290,7 @@ public class MucOptions {
                 if (old.avatar != null && user.avatar == null) user.avatar = old.avatar;
             }
             boolean fullJidIsSelf = isOnline && user.getFullJid() != null && user.getFullJid().equals(self.getFullJid());
-            if ((!membersOnly() || user.getAffiliation().ranks(Affiliation.MEMBER))
-                    && user.getAffiliation().outranks(Affiliation.OUTCAST)
-                    && !fullJidIsSelf) {
+            if (!fullJidIsSelf) {
                 this.users.add(user);
                 return !realJidFound && user.realJid != null;
             }
@@ -404,7 +402,7 @@ public class MucOptions {
         synchronized (users) {
             ArrayList<User> users = new ArrayList<>();
             for (User user : this.users) {
-                if (!user.isDomain() && (includeOffline || user.getRole().ranks(Role.PARTICIPANT))) {
+                if (!user.isDomain() && (includeOffline ? user.getAffiliation().ranks(Affiliation.NONE) : user.getRole().ranks(Role.PARTICIPANT))) {
                     users.add(user);
                 }
             }
