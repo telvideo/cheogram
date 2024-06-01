@@ -459,7 +459,7 @@ public class Message extends AbstractEntity implements AvatarService.Avatarable 
         final Element fallback = new Element("fallback", "urn:xmpp:fallback:0").setAttribute("for", "urn:xmpp:reactions:0");
         fallback.addChild("body", "urn:xmpp:fallback:0");
         addPayload(fallback);
-        final Element reactions = new Element("reactions", "urn:xmpp:reactions:0").setAttribute("id", replyId());
+        final Element reactions = new Element("reactions", "urn:xmpp:reactions:0").setAttribute("id", reactTo.replyId());
         for (String oneEmoji : emojis) {
             reactions.addChild("reaction", "urn:xmpp:reactions:0").setContent(oneEmoji);
         }
