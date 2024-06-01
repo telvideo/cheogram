@@ -25,6 +25,7 @@ import android.content.IntentSender.SendIntentException;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.ColorStateList;
+import android.graphics.Color;
 import android.icu.util.Calendar;
 import android.icu.util.TimeZone;
 import android.net.Uri;
@@ -77,6 +78,7 @@ import androidx.annotation.StringRes;
 import androidx.appcompat.app.AlertDialog;
 import androidx.core.content.pm.ShortcutInfoCompat;
 import androidx.core.content.pm.ShortcutManagerCompat;
+import androidx.core.graphics.ColorUtils;
 import androidx.core.view.inputmethod.InputConnectionCompat;
 import androidx.core.view.inputmethod.InputContentInfoCompat;
 import androidx.databinding.DataBindingUtil;
@@ -3153,9 +3155,12 @@ public class ConversationFragment extends XmppFragment
 
         final var cursord = getResources().getDrawable(R.drawable.cursor_on_tertiary_container);
         if (activity.xmppConnectionService != null && activity.xmppConnectionService.getAccounts().size() > 1) {
-            final var colors = MaterialColors.getColorRoles(activity, conversation.getAccount().getColor(activity.isDark()));
+            final var bg = MaterialColors.getColor(binding.textinput, com.google.android.material.R.attr.colorSurface);
+            final var accountColor = conversation.getAccount().getColor(activity.isDark());
+            final var colors = MaterialColors.getColorRoles(activity, accountColor);
+            final var accent = activity.isDark() ? ColorUtils.blendARGB(colors.getAccentContainer(), bg, 1.0f - Math.max(0.25f, Color.alpha(accountColor) / 255.0f)) : colors.getAccentContainer();
             cursord.setTintList(ColorStateList.valueOf(colors.getOnAccentContainer()));
-            binding.inputLayout.setBackgroundTintList(ColorStateList.valueOf(colors.getAccentContainer()));
+            binding.inputLayout.setBackgroundTintList(ColorStateList.valueOf(accent));
             binding.textinputSubject.setTextColor(colors.getOnAccentContainer());
             binding.textinput.setTextColor(colors.getOnAccentContainer());
             binding.textinputSubject.setHintTextColor(ColorStateList.valueOf(colors.getOnAccentContainer()).withAlpha(115));
