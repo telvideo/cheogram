@@ -834,6 +834,26 @@ public class XmppConnectionService extends Service {
         });
     }
 
+    protected void cleanupCache() {
+         mStickerScanExecutor.execute(() -> {
+            Thread.currentThread().setPriority(Thread.MIN_PRIORITY);
+            final var now = System.currentTimeMillis();
+            try {
+                for (File file : Files.fileTraverser().breadthFirst(getCacheDir())) {
+                    if (file.isFile() && file.canRead() && file.canWrite()) {
+                        final var attrs = java.nio.file.Files.readAttributes(file.toPath(), java.nio.file.attribute.BasicFileAttributes.class);
+                        if ((now - attrs.lastAccessTime().toMillis()) > 1000 * 60 * 60 * 24 * 30) {
+                            Log.d(Config.LOGTAG, "cleanupCache removing file not used in one week: " + file);
+                            file.delete();
+                        }
+                    }
+                }
+            } catch (final Exception e) {
+                Log.w(Config.LOGTAG, "cleanupCache " + e);
+            }
+        });
+    }
+
     public EmojiSearch emojiSearch() {
         return emojiSearch;
     }
@@ -1595,6 +1615,7 @@ public class XmppConnectionService extends Service {
         mForceDuringOnCreate.set(false);
         toggleForegroundService();
         rescanStickers();
+        cleanupCache();
         internalPingExecutor.scheduleAtFixedRate(this::manageAccountConnectionStatesInternal,10,10,TimeUnit.SECONDS);
         final SharedPreferences sharedPreferences =
                 androidx.preference.PreferenceManager.getDefaultSharedPreferences(this);
