@@ -827,16 +827,16 @@ public class MucOptions {
         }
 
         public String toString() {
-            return title;
+            return title == null ? "" : title;
         }
 
         public int getColor() {
-            return UIHelper.getColorForName(uri == null ? title : uri.toString());
+            return UIHelper.getColorForName(uri == null ? toString() : uri.toString());
         }
 
         @Override
         public int compareTo(@NonNull Hat another) {
-            return title.compareTo(another.title);
+            return toString().compareTo(another.toString());
         }
     }
 
