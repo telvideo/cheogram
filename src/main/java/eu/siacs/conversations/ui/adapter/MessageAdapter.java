@@ -447,12 +447,14 @@ public class MessageAdapter extends ArrayAdapter<Message> {
     }
 
     private void displayEmojiMessage(
-            final ViewHolder viewHolder, final SpannableStringBuilder body, final BubbleColor bubbleColor) {
+            final ViewHolder viewHolder, final Message message, final BubbleColor bubbleColor, int type) {
+        displayTextMessage(viewHolder, message, bubbleColor, type);
         viewHolder.download_button.setVisibility(View.GONE);
         viewHolder.audioPlayer.setVisibility(View.GONE);
         viewHolder.image.setVisibility(View.GONE);
         viewHolder.messageBody.setVisibility(View.VISIBLE);
         setTextColor(viewHolder.messageBody, bubbleColor);
+        final var body = getSpannableBody(message);
         ImageSpan[] imageSpans = body.getSpans(0, body.length(), ImageSpan.class);
         float size = imageSpans.length == 1 || Emoticons.isEmoji(body.toString()) ? 3.0f : 2.0f;
         body.setSpan(
@@ -1386,7 +1388,7 @@ public class MessageAdapter extends ArrayAdapter<Message> {
                             bubbleColor, type);
                 }
             } else if (message.bodyIsOnlyEmojis() && message.getType() != Message.TYPE_PRIVATE) {
-                displayEmojiMessage(viewHolder, getSpannableBody(message), bubbleColor);
+                displayEmojiMessage(viewHolder, message, bubbleColor, type);
             } else {
                 displayTextMessage(viewHolder, message, bubbleColor, message.getType());
             }
