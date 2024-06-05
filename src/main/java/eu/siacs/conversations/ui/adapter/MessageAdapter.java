@@ -69,6 +69,8 @@ import com.google.common.collect.ImmutableList;
 
 import com.lelloman.identicon.view.GithubIdenticonView;
 
+import io.ipfs.cid.Cid;
+
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -80,9 +82,9 @@ import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import io.ipfs.cid.Cid;
-
 import me.saket.bettermovementmethod.BetterLinkMovementMethod;
+
+import net.fellbaum.jemoji.EmojiManager;
 
 import eu.siacs.conversations.AppSettings;
 import eu.siacs.conversations.Config;
@@ -707,15 +709,12 @@ public class MessageAdapter extends ArrayAdapter<Message> {
                     }
                 }
             }
-            Matcher matcher = Emoticons.getEmojiPattern(body).matcher(body);
-            while (matcher.find()) {
-                if (matcher.start() < matcher.end()) {
+            for (final var emoji : EmojiManager.extractEmojisInOrderWithIndex(body.toString())) {
                     body.setSpan(
                             new RelativeSizeSpan(1.2f),
-                            matcher.start(),
-                            matcher.end(),
+                            emoji.getCharIndex(),
+                            emoji.getCharIndex() + emoji.getEmoji().getEmoji().length(),
                             Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-                }
             }
 
             if (processMarkup) StylingHelper.format(body, viewHolder.messageBody.getCurrentTextColor());
