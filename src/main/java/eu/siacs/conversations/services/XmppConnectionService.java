@@ -1497,6 +1497,8 @@ public class XmppConnectionService extends Service {
     @SuppressLint("TrulyRandom")
     @Override
     public void onCreate() {
+        com.cheogram.android.AndroidLoggingHandler.reset(new com.cheogram.android.AndroidLoggingHandler());
+        java.util.logging.Logger.getLogger("").setLevel(java.util.logging.Level.FINEST);
         LibIdnXmppStringprep.setup();
         emojiSearch = new EmojiSearch(this);
         setTheme(R.style.Theme_Conversations3);
