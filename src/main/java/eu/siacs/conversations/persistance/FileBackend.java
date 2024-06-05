@@ -1814,7 +1814,13 @@ public class FileBackend {
     }
 
     public File getAvatarFile(String avatar) {
-        return new File(mXmppConnectionService.getCacheDir(), "/avatars/" + avatar);
+        final var f = new File(mXmppConnectionService.getCacheDir(), "/avatars/" + avatar);
+        try {
+            if (f.exists()) java.nio.file.Files.setAttribute(f.toPath(), "lastAccessTime", java.nio.file.attribute.FileTime.fromMillis(System.currentTimeMillis()));
+        } catch (final IOException e) {
+            Log.w(Config.LOGTAG, "unable to set lastAccessTime for " + f);
+        }
+        return f;
     }
 
     public Uri getAvatarUri(String avatar) {
