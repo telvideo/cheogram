@@ -238,7 +238,7 @@ public class FileBackend {
     }
 
     public static Uri getUriForFile(Context context, File file) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N || Config.ONLY_INTERNAL_STORAGE) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N || Config.ONLY_INTERNAL_STORAGE || file.toString().startsWith(context.getCacheDir().toString())) {
             try {
                 return FileProvider.getUriForFile(context, getAuthority(context), file);
             } catch (IllegalArgumentException e) {

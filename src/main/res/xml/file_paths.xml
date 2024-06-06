@@ -21,4 +21,10 @@
     <cache-path
         name="camera"
         path="Camera/"/>
+    <cache-path
+        name="cache_media"
+        path="media/"/>
+    <cache-path
+        name="avatars"
+        path="avatars/"/>
 </paths>
