@@ -1148,6 +1148,17 @@ public class Conversation extends AbstractEntity implements Blockable, Comparabl
         return alwaysNotify() || getBooleanAttribute(ATTRIBUTE_NOTIFY_REPLIES, false);
     }
 
+    public void setStoreInCache(final boolean cache) {
+        setAttribute("storeMedia", cache ? "cache" : "shared");
+    }
+
+    public boolean storeInCache() {
+        if ("cache".equals(getAttribute("storeMedia"))) return true;
+        if ("shared".equals(getAttribute("storeMedia"))) return false;
+        if (mode == Conversation.MODE_MULTI && !mucOptions.isPrivateAndNonAnonymous()) return true;
+        return false;
+    }
+
     public boolean setAttribute(String key, boolean value) {
         return setAttribute(key, String.valueOf(value));
     }

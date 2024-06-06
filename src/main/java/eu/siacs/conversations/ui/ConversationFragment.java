@@ -1787,12 +1787,11 @@ public class ConversationFragment extends XmppFragment
             }
             if (m.isFileOrImage() && !deleted && !cancelable) {
                 final String path = m.getRelativeFilePath();
-                if (path == null
-                        || !path.startsWith("/")
-                        || FileBackend.inConversationsDirectory(requireActivity(), path)) {
-                    saveAsSticker.setVisible(true);
+                if (path != null) {
+                    final var file = new File(path);
+                    if (file.canRead()) saveAsSticker.setVisible(true);
                     blockMedia.setVisible(true);
-                    deleteFile.setVisible(true);
+                    if (file.canWrite()) deleteFile.setVisible(true);
                     deleteFile.setTitle(
                             activity.getString(
                                     R.string.delete_x_file,

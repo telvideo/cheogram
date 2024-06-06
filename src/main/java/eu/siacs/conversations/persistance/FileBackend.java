@@ -82,6 +82,7 @@ import io.ipfs.cid.Cid;
 
 import eu.siacs.conversations.Config;
 import eu.siacs.conversations.R;
+import eu.siacs.conversations.entities.Conversation;
 import eu.siacs.conversations.entities.DownloadableFile;
 import eu.siacs.conversations.entities.Message;
 import eu.siacs.conversations.services.AttachFileToConversationRunnable;
@@ -1083,7 +1084,7 @@ public class FileBackend {
         }
         final File appDirectory =
                 new File(parentDirectory, mXmppConnectionService.getString(R.string.app_name));
-        if (message == null || message.getStatus() == Message.STATUS_DUMMY) {
+        if (message == null || message.getStatus() == Message.STATUS_DUMMY || (message.getConversation() instanceof Conversation && ((Conversation) message.getConversation()).storeInCache())) {
             final var mediaCache = new File(mXmppConnectionService.getCacheDir(), "/media");
             return new File(mediaCache, filename);
         } else {

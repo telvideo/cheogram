@@ -518,6 +518,13 @@ public class ConferenceDetailsActivity extends XmppActivity implements OnConvers
                     xmppConnectionService.getAttachments(this.mConversation, limit, this);
                     this.binding.showMedia.setOnClickListener((v) -> MediaBrowserActivity.launch(this, mConversation));
                 }
+
+                binding.storeInCache.setChecked(mConversation.storeInCache());
+                binding.storeInCache.setOnCheckedChangeListener((v, checked) -> {
+                    mConversation.setStoreInCache(checked);
+                    xmppConnectionService.updateConversation(mConversation);
+                });
+
                 updateView();
             }
         }

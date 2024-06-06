@@ -735,6 +735,13 @@ public class ContactDetailsActivity extends OmemoActivity implements OnAccountUp
                 });
             });
 
+            final var conversation = xmppConnectionService.findOrCreateConversation(account, contact.getJid(), false, true);
+            binding.storeInCache.setChecked(conversation.storeInCache());
+            binding.storeInCache.setOnCheckedChangeListener((v, checked) -> {
+                conversation.setStoreInCache(checked);
+                xmppConnectionService.updateConversation(conversation);
+            });
+
             populateView();
         }
     }
