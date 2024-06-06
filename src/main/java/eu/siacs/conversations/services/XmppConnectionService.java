@@ -842,8 +842,8 @@ public class XmppConnectionService extends Service {
                 for (File file : Files.fileTraverser().breadthFirst(getCacheDir())) {
                     if (file.isFile() && file.canRead() && file.canWrite()) {
                         final var attrs = java.nio.file.Files.readAttributes(file.toPath(), java.nio.file.attribute.BasicFileAttributes.class);
-                        if ((now - attrs.lastAccessTime().toMillis()) > 1000 * 60 * 60 * 24 * 30) {
-                            Log.d(Config.LOGTAG, "cleanupCache removing file not used in one week: " + file);
+                        if ((now - attrs.lastAccessTime().toMillis()) > 1000L * 60 * 60 * 24 * 30) {
+                            Log.d(Config.LOGTAG, "cleanupCache removing file not used recently: " + file);
                             file.delete();
                         }
                     }
