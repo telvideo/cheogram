@@ -178,11 +178,11 @@
                     android:layout_margin="16dp"
                     android:src="@drawable/ic_call_end_24dp"
                     android:visibility="gone"
-                    app:backgroundTint="?colorError"
+                    app:backgroundTint="@color/red_300"
                     app:elevation="4dp"
                     app:fabCustomSize="72dp"
                     app:maxImageSize="36dp"
-                    app:tint="?colorOnError"
+                    app:tint="@color/white"
                     tools:visibility="visible" />
 
                 <com.google.android.material.floatingactionbutton.FloatingActionButton
@@ -194,11 +194,11 @@
                     android:layout_margin="16dp"
                     android:src="@drawable/ic_call_24dp"
                     android:visibility="gone"
-                    app:backgroundTint="?colorPrimary"
+                    app:backgroundTint="@color/green_300"
                     app:elevation="4dp"
                     app:fabCustomSize="72dp"
                     app:maxImageSize="36dp"
-                    app:tint="?colorOnPrimary"
+                    app:tint="@color/white"
                     tools:visibility="visible" />
 
             </RelativeLayout>
