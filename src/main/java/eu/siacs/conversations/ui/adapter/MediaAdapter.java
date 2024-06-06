@@ -28,6 +28,7 @@ import eu.siacs.conversations.ui.util.Attachment;
 import eu.siacs.conversations.ui.util.ViewUtil;
 import eu.siacs.conversations.worker.ExportBackupWorker;
 
+import java.io.File;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -174,6 +175,21 @@ public class MediaAdapter extends RecyclerView.Adapter<MediaAdapter.MediaViewHol
             renderPreview(attachment, holder.binding.media);
         }
         holder.binding.getRoot().setOnClickListener(v -> ViewUtil.view(activity, attachment));
+        holder.binding.getRoot().setOnCreateContextMenuListener((menu, v, menuInfo) -> {
+            final var path = activity.xmppConnectionService.getFileBackend().getOriginalPath(attachment.getUri());
+            if (path == null) return;
+            final var file = new File(path);
+            if (!file.canWrite()) return;
+
+            menu.add("Delete File").setOnMenuItemClickListener((x) -> {
+                if (file.delete()) {
+                    activity.xmppConnectionService.evictPreview(file);
+                    attachments.remove(attachment);
+                    notifyDataSetChanged();
+                }
+                return true;
+            });
+        });
     }
 
     public void setAttachments(final List<Attachment> attachments) {
