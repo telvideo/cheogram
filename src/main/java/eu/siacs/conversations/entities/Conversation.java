@@ -3490,6 +3490,7 @@ public class Conversation extends AbstractEntity implements Blockable, Comparabl
                     }
                     int size = (int)(xmppConnectionService.getResources().getDisplayMetrics().density * 288);
                     Message dummy = new Message(Conversation.this, url, Message.ENCRYPTION_NONE);
+                    dummy.setStatus(Message.STATUS_DUMMY);
                     dummy.setFileParams(new Message.FileParams(url));
                     httpManager.createNewDownloadConnection(dummy, true, (file) -> {
                         if (file == null) {

@@ -590,14 +590,26 @@ public class FileBackend {
         if (path == null) {
             path = message.getUuid();
         }
-        final DownloadableFile file = getFileForPath(path, message.getMimeType());
+        final var msgFile = getFileForPath(path, message.getMimeType());
+
+        final DownloadableFile file;
         if (encrypted) {
-            return new DownloadableFile(
+            file = new DownloadableFile(
                     mXmppConnectionService.getCacheDir(),
-                    String.format("%s.%s", file.getName(), "pgp"));
+                    String.format("%s.%s", msgFile.getName(), "pgp"));
         } else {
-            return file;
+            file = msgFile;
         }
+
+        try {
+            if (file.exists() && file.toString().startsWith(mXmppConnectionService.getCacheDir().toString())) {
+                java.nio.file.Files.setAttribute(file.toPath(), "lastAccessTime", java.nio.file.attribute.FileTime.fromMillis(System.currentTimeMillis()));
+            }
+        } catch (final IOException e) {
+            Log.w(Config.LOGTAG, "unable to set lastAccessTime for " + file);
+        }
+
+        return file;
     }
 
     public List<Attachment> convertToAttachments(List<DatabaseBackend.FilePath> relativeFilePaths) {
@@ -1026,7 +1038,7 @@ public class FileBackend {
     }
 
     public void setupRelativeFilePath(final Message message, final InputStream is, final String extension) throws IOException, XmppConnectionService.BlockedMediaException {
-        message.setRelativeFilePath(getStorageLocation(is, extension).getAbsolutePath());
+        message.setRelativeFilePath(getStorageLocation(message, is, extension).getAbsolutePath());
     }
 
     public void setupRelativeFilePath(final Message message, final String filename) {
@@ -1035,14 +1047,14 @@ public class FileBackend {
         setupRelativeFilePath(message, filename, mime);
     }
 
-    public File getStorageLocation(final InputStream is, final String extension) throws IOException, XmppConnectionService.BlockedMediaException {
+    public File getStorageLocation(final Message message, final InputStream is, final String extension) throws IOException, XmppConnectionService.BlockedMediaException {
         final String mime = MimeUtils.guessMimeTypeFromExtension(extension);
         Cid[] cids = calculateCids(is);
         String base = cids[0].toString();
 
         File file = null;
         while (file == null || (file.exists() && !file.canRead())) {
-            file = getStorageLocation(String.format("%s.%s", base, extension), mime);
+            file = getStorageLocation(message, String.format("%s.%s", base, extension), mime);
             base += "_";
         }
         for (int i = 0; i < cids.length; i++) {
@@ -1051,7 +1063,7 @@ public class FileBackend {
         return file;
     }
 
-    public File getStorageLocation(final String filename, final String mime) {
+    public File getStorageLocation(final Message message, final String filename, final String mime) {
         final File parentDirectory;
         if (Strings.isNullOrEmpty(mime)) {
             parentDirectory =
@@ -1071,7 +1083,12 @@ public class FileBackend {
         }
         final File appDirectory =
                 new File(parentDirectory, mXmppConnectionService.getString(R.string.app_name));
-        return new File(appDirectory, filename);
+        if (message == null || message.getStatus() == Message.STATUS_DUMMY) {
+            final var mediaCache = new File(mXmppConnectionService.getCacheDir(), "/media");
+            return new File(mediaCache, filename);
+        } else {
+            return new File(appDirectory, filename);
+        }
     }
 
     public static boolean inConversationsDirectory(final Context context, String path) {
@@ -1090,7 +1107,7 @@ public class FileBackend {
 
     public void setupRelativeFilePath(
             final Message message, final String filename, final String mime) {
-        final File file = getStorageLocation(filename, mime);
+        final File file = getStorageLocation(message, filename, mime);
         message.setRelativeFilePath(file.getAbsolutePath());
     }
 

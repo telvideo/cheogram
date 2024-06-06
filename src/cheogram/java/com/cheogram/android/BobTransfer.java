@@ -112,7 +112,7 @@ public class BobTransfer implements Transferable {
 					try {
 						final byte[] bytes = Base64.decode(data.getContent(), Base64.DEFAULT);
 
-						File file = xmppConnectionService.getFileBackend().getStorageLocation(new ByteArrayInputStream(bytes), fileExtension);
+						File file = xmppConnectionService.getFileBackend().getStorageLocation(null, new ByteArrayInputStream(bytes), fileExtension);
 						file.getParentFile().mkdirs();
 						if (!file.exists() && !file.createNewFile()) {
 							throw new IOException(file.getAbsolutePath());

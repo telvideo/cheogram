@@ -71,6 +71,7 @@ public class Message extends AbstractEntity implements AvatarService.Avatarable 
 
     public static final String TABLENAME = "messages";
 
+    public static final int STATUS_DUMMY = -1;
     public static final int STATUS_RECEIVED = 0;
     public static final int STATUS_UNSEND = 1;
     public static final int STATUS_SEND = 2;

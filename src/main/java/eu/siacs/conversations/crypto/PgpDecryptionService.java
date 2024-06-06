@@ -196,7 +196,7 @@ public class PgpDecryptionService {
 								Log.d(Config.LOGTAG,"detected original filename during pgp decryption");
 								final String mime = MimeUtils.guessMimeTypeFromExtension(originalExtension);
 								final String filename = outputFile.getName()+"."+originalExtension;
-								final File fixedFile = mXmppConnectionService.getFileBackend().getStorageLocation(filename,mime);
+								final File fixedFile = mXmppConnectionService.getFileBackend().getStorageLocation(message,filename,mime);
 								if (fixedFile.getParentFile().mkdirs()) {
 									Log.d(Config.LOGTAG,"created parent directories for "+fixedFile.getAbsolutePath());
 								}
