@@ -1125,6 +1125,14 @@ public class MessageAdapter extends ArrayAdapter<Message> {
             }
         }
 
+        if (viewHolder.time != null) {
+            if (message.isAttention()) {
+                viewHolder.time.setTypeface(null, Typeface.BOLD);
+            } else {
+                viewHolder.time.setTypeface(null, Typeface.NORMAL);
+            }
+        }
+
         final var black = MaterialColors.getColor(view, com.google.android.material.R.attr.colorSecondaryContainer) == view.getContext().getColor(android.R.color.black);
         final boolean colorfulBackground = this.bubbleDesign.colorfulChatBubbles;
         final BubbleColor bubbleColor;
