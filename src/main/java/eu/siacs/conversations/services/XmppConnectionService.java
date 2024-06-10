@@ -822,7 +822,9 @@ public class XmppConnectionService extends Service {
                             for (Cid cid : cids) {
                                 saveCid(cid, file);
                             }
-                            emojiSearch.addEmoji(new EmojiSearch.CustomEmoji(filename, cids[0].toString(), icon, file.getParentFile().getName()));
+                            if (file.length() < 129000) {
+                                emojiSearch.addEmoji(new EmojiSearch.CustomEmoji(filename, cids[0].toString(), icon, file.getParentFile().getName()));
+                            }
                         }
                     } catch (final Exception e) {
                         Log.w(Config.LOGTAG, "rescanStickers: " + e);
