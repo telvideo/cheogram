@@ -1117,8 +1117,8 @@ public class Message extends AbstractEntity implements AvatarService.Avatarable 
             final var quote = getInReplyTo().getSpannableBody(thumbnailer, fallbackImg);
             if ((getInReplyTo().isFileOrImage() || getInReplyTo().isOOb()) && getInReplyTo().getFileParams() != null) {
                 quote.insert(0, "🖼️");
-                final var cid = getInReplyTo().getFileParams().getCids().get(0);
-                Drawable thumbnail = thumbnailer == null ? null : thumbnailer.getThumbnail(cid);
+                final var cid = getInReplyTo().getFileParams().getCids().size() < 1 ? null : getInReplyTo().getFileParams().getCids().get(0);
+                Drawable thumbnail = thumbnailer == null || cid == null ? null : thumbnailer.getThumbnail(cid);
                 if (thumbnail == null) thumbnail = fallbackImg;
                 if (thumbnail != null) {
                     quote.setSpan(new InlineImageSpan(thumbnail, cid.toString()), 0, 2, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
