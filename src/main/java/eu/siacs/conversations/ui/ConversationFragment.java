@@ -962,6 +962,18 @@ public class ConversationFragment extends XmppFragment
                 body.delete(0, 6);
                 while (body.length() > 0 && Character.isWhitespace(body.charAt(0))) body.delete(0, 1);
             }
+            if (Pattern.compile("\\A@mods\\s.*").matcher(body).find()) {
+                body.delete(0, 5);
+                final var mods = new StringBuffer();
+                for (final var user : conversation.getMucOptions().getUsers()) {
+                    if (user.getRole().ranks(MucOptions.Role.MODERATOR)) {
+                        if (mods.length() > 0) mods.append(", ");
+                        mods.append(user.getNick());
+                    }
+                }
+                mods.append(":");
+                body.insert(0, mods.toString());
+            }
             if (conversation.getReplyTo() != null) {
                 if (Emoticons.isEmoji(body.toString().replaceAll("\\s", ""))) {
                     message = conversation.getReplyTo().react(body.toString().replaceAll("\\s", ""));
