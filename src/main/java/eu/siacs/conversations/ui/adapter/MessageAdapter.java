@@ -712,11 +712,13 @@ public class MessageAdapter extends ArrayAdapter<Message> {
                 }
             }
             for (final var emoji : EmojiManager.extractEmojisInOrderWithIndex(body.toString())) {
-                    body.setSpan(
-                            new RelativeSizeSpan(1.2f),
-                            emoji.getCharIndex(),
-                            emoji.getCharIndex() + emoji.getEmoji().getEmoji().length(),
-                            Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+                var end = emoji.getCharIndex() + emoji.getEmoji().getEmoji().length();
+                if (body.length() > end) end++; // This fixes double-showing for skin tone emoji
+                body.setSpan(
+                        new RelativeSizeSpan(1.2f),
+                        emoji.getCharIndex(),
+                        end,
+                        Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
             }
 
             if (processMarkup) StylingHelper.format(body, viewHolder.messageBody.getCurrentTextColor());
