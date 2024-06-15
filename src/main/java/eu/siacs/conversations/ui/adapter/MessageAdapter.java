@@ -713,7 +713,7 @@ public class MessageAdapter extends ArrayAdapter<Message> {
             }
             for (final var emoji : EmojiManager.extractEmojisInOrderWithIndex(body.toString())) {
                 var end = emoji.getCharIndex() + emoji.getEmoji().getEmoji().length();
-                if (body.length() > end) end++; // This fixes double-showing for skin tone emoji
+                if (body.length() > end && body.charAt(end) == '\uFE0F') end++;
                 body.setSpan(
                         new RelativeSizeSpan(1.2f),
                         emoji.getCharIndex(),
