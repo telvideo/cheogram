@@ -62,7 +62,7 @@ public class WebRTCWrapper {
     private final ExecutorService localDescriptionExecutorService =
             Executors.newSingleThreadExecutor();
 
-    private static final int TONE_DURATION = 500;
+    private static final int TONE_DURATION = 400;
     private static final int DEFAULT_TONE_VOLUME = 60;
     private static final Map<String,Integer> TONE_CODES;
     static {
@@ -718,9 +718,12 @@ public class WebRTCWrapper {
 
     public boolean applyDtmfTone(String tone) {
         localAudioTrack.rtpSender.dtmf().insertDtmf(tone, TONE_DURATION, 100);
-        final var toneGenerator =
-                new ToneGenerator(AudioManager.STREAM_VOICE_CALL, DEFAULT_TONE_VOLUME);
-        toneGenerator.startTone(TONE_CODES.get(tone), TONE_DURATION);
+        final var handler = new android.os.Handler(android.os.Looper.getMainLooper());
+        handler.post(() -> {
+            final var toneGenerator = new ToneGenerator(AudioManager.STREAM_VOICE_CALL, DEFAULT_TONE_VOLUME);
+            toneGenerator.startTone(TONE_CODES.get(tone), TONE_DURATION);
+        });
+
         return true;
     }
 
