@@ -104,7 +104,7 @@ public class ThemeHelper {
 			colors.put(R.color.md_theme_dark_primary, colorMatch ? base : roles.getAccent());
 			colors.put(R.color.md_theme_dark_onPrimary, roles.getOnAccent());
 			colors.put(R.color.md_theme_dark_primaryContainer, colorMatch ? base : roles.getAccentContainer());
-			colors.put(R.color.md_theme_dark_onPrimaryContainer, roles.getOnAccentContainer());
+			colors.put(R.color.md_theme_dark_onPrimaryContainer, colorMatch && MaterialColors.isColorLight(base) ? roles.getOnAccent() : roles.getOnAccentContainer());
 		}
 		if (sharedPreferences.contains("custom_dark_theme_primary_dark")) {
 			final var base = sharedPreferences.getInt("custom_dark_theme_primary_dark", 0);
@@ -112,7 +112,7 @@ public class ThemeHelper {
 			colors.put(R.color.md_theme_dark_secondary, colorMatch ? base : roles.getAccent());
 			colors.put(R.color.md_theme_dark_onSecondary, roles.getOnAccent());
 			colors.put(R.color.md_theme_dark_secondaryContainer, colorMatch ? base : roles.getAccentContainer());
-			colors.put(R.color.md_theme_dark_onSecondaryContainer, roles.getOnAccentContainer());
+			colors.put(R.color.md_theme_dark_onSecondaryContainer, colorMatch && MaterialColors.isColorLight(base) ? roles.getOnAccent() : roles.getOnAccentContainer());
 		}
 		if (sharedPreferences.contains("custom_dark_theme_accent")) {
 			final var base = sharedPreferences.getInt("custom_dark_theme_accent", 0);
@@ -120,7 +120,7 @@ public class ThemeHelper {
 			colors.put(R.color.md_theme_dark_tertiary, colorMatch ? base : roles.getAccent());
 			colors.put(R.color.md_theme_dark_onTertiary, roles.getOnAccent());
 			colors.put(R.color.md_theme_dark_tertiaryContainer, colorMatch ? base : roles.getAccentContainer());
-			colors.put(R.color.md_theme_dark_onTertiaryContainer, roles.getOnAccentContainer());
+			colors.put(R.color.md_theme_dark_onTertiaryContainer, colorMatch && MaterialColors.isColorLight(base) ? roles.getOnAccent() : roles.getOnAccentContainer());
 		}
 		if (sharedPreferences.contains("custom_dark_theme_background_primary")) {
 			int background_primary = sharedPreferences.getInt("custom_dark_theme_background_primary", 0);
