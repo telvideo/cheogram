@@ -97,7 +97,7 @@ public class FixedURLSpan extends URLSpan {
 			}
 		}
 
-		if (uri.getScheme().equals("http") || uri.getScheme().equals("https")) {
+		if ("http".equals(uri.getScheme()) || "https".equals(uri.getScheme())) {
 			widget.playSoundEffect(SoundEffectConstants.CLICK);
 			BrowserHelper.launchUri(context, uri);
 			return;
