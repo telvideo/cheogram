@@ -720,6 +720,14 @@ public class MessageAdapter extends ArrayAdapter<Message> {
                         end,
                         Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
             }
+            // Make custom emoji bigger too, to match emoji
+            for (final var span : body.getSpans(0, body.length(), com.cheogram.android.InlineImageSpan.class)) {
+                body.setSpan(
+                        new RelativeSizeSpan(1.2f),
+                        body.getSpanStart(span),
+                        body.getSpanEnd(span),
+                        Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+            }
 
             if (processMarkup) StylingHelper.format(body, viewHolder.messageBody.getCurrentTextColor());
             MyLinkify.addLinks(body, message.getConversation().getAccount(), message.getConversation().getJid());
