@@ -1121,7 +1121,7 @@ public class Message extends AbstractEntity implements AvatarService.Avatarable 
                 Drawable thumbnail = thumbnailer == null || cid == null ? null : thumbnailer.getThumbnail(cid);
                 if (thumbnail == null) thumbnail = fallbackImg;
                 if (thumbnail != null) {
-                    quote.setSpan(new InlineImageSpan(thumbnail, cid.toString()), 0, 2, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                    quote.setSpan(new InlineImageSpan(thumbnail, cid == null ? null : cid.toString()), 0, 2, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
                 }
             }
             quote.setSpan(new android.text.style.QuoteSpan(), 0, quote.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
