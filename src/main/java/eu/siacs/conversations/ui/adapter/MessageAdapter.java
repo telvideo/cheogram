@@ -1074,6 +1074,8 @@ public class MessageAdapter extends ArrayAdapter<Message> {
                     viewHolder.messageBody = view.findViewById(R.id.message_body);
                     viewHolder.time = view.findViewById(R.id.message_time);
                     viewHolder.subject = view.findViewById(R.id.message_subject);
+                    viewHolder.inReplyTo = view.findViewById(R.id.in_reply_to);
+                    viewHolder.inReplyToBox = view.findViewById(R.id.in_reply_to_box);
                     viewHolder.indicatorReceived = view.findViewById(R.id.indicator_received);
                     viewHolder.audioPlayer = view.findViewById(R.id.audio_player);
                     viewHolder.thread_identicon = view.findViewById(R.id.thread_identicon);
@@ -1091,6 +1093,8 @@ public class MessageAdapter extends ArrayAdapter<Message> {
                     viewHolder.messageBody = view.findViewById(R.id.message_body);
                     viewHolder.time = view.findViewById(R.id.message_time);
                     viewHolder.subject = view.findViewById(R.id.message_subject);
+                    viewHolder.inReplyTo = view.findViewById(R.id.in_reply_to);
+                    viewHolder.inReplyToBox = view.findViewById(R.id.in_reply_to_box);
                     viewHolder.indicatorReceived = view.findViewById(R.id.indicator_received);
                     viewHolder.encryption = view.findViewById(R.id.message_encryption);
                     viewHolder.audioPlayer = view.findViewById(R.id.audio_player);
@@ -1468,6 +1472,15 @@ public class MessageAdapter extends ArrayAdapter<Message> {
                 viewHolder.subject.setVisibility(View.VISIBLE);
                 viewHolder.subject.setText(subject);
             }
+
+            if (message.getInReplyTo() == null) {
+                viewHolder.inReplyToBox.setVisibility(View.GONE);
+            } else {
+                viewHolder.inReplyToBox.setVisibility(View.VISIBLE);
+                viewHolder.inReplyTo.setText(UIHelper.getMessageDisplayName(message.getInReplyTo()));
+                viewHolder.inReplyTo.setOnClickListener((v) -> mConversationFragment.jumpTo(message.getInReplyTo()));
+                setTextColor(viewHolder.inReplyTo, bubbleColor);
+            }
         }
 
         displayStatus(viewHolder, message, type, bubbleColor);
@@ -1687,6 +1700,8 @@ public class MessageAdapter extends ArrayAdapter<Message> {
         protected ImageView indicatorReceived;
         protected TextView time;
         protected TextView subject;
+        protected TextView inReplyTo;
+        protected LinearLayout inReplyToBox;
         protected TextView messageBody;
         protected ImageView contact_picture;
         protected TextView status_message;

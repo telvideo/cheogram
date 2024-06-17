@@ -21,6 +21,32 @@
                 app:shapeAppearance="@style/ShapeAppearanceOverlay.MessageImage" />
         </LinearLayout>
 
+        <LinearLayout
+            android:id="@+id/in_reply_to_box"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:visibility="gone">
+
+            <ImageView
+                android:src="@drawable/ic_reply_24dp"
+                android:layout_width="14sp"
+                android:layout_height="14sp"
+                android:layout_gravity="center_vertical"
+                android:layout_marginStart="5dp"
+                android:layout_marginEnd="2dp"
+                android:contentDescription="in reply to" />
+
+            <TextView
+                android:id="@+id/in_reply_to"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="10dp"
+                android:textStyle="bold|italic"
+                android:longClickable="false"
+                android:textAppearance="?textAppearanceBodyMedium" />
+        </LinearLayout>
+
         <TextView
             android:id="@+id/message_body"
             android:layout_width="wrap_content"
