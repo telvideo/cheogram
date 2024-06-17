@@ -212,7 +212,7 @@ public class Element implements Node {
 				final var uriIdx = attr.getKey().indexOf('}');
 				final var uri = attr.getKey().substring(1, uriIdx - 1);
 				if (!ns.containsKey(uri)) {
-					result.put("ns" + ns.size() + ":xmlns", uri);
+					result.put("xmlns:ns" + ns.size(), uri);
 					ns.put(uri, "ns" + ns.size());
 				}
 				result.put(ns.get(uri) + ":" + attr.getKey().substring(uriIdx + 1), attr.getValue());
