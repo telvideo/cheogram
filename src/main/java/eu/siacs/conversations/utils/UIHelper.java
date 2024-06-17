@@ -259,7 +259,7 @@ public class UIHelper {
                 for (final android.text.style.QuoteSpan quote : Lists.reverse(Lists.newArrayList(styledBody.getSpans(0, styledBody.length(), android.text.style.QuoteSpan.class)))) {
                     int start = styledBody.getSpanStart(quote);
                     int end = styledBody.getSpanEnd(quote);
-                    if (start == 0 && end == styledBody.length()) continue;
+                    if (start < 0 || end < 0 || (start == 0 && end == styledBody.length())) continue;
                     styledBody.delete(start, end);
                     styledBody.removeSpan(quote);
                 }
