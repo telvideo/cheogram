@@ -1110,7 +1110,7 @@ public class Message extends AbstractEntity implements AvatarService.Avatarable 
             spannableBody = (SpannableStringBuilder) spannable.subSequence(0, i+1);
         }
 
-        if (getInReplyTo() != null) {
+        if (getInReplyTo() != null && getModerated() == null) {
             // Don't show quote if it's the message right before us
             if (prev() != null && prev().getUuid().equals(getInReplyTo().getUuid())) return spannableBody;
 
