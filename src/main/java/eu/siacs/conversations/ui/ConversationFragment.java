@@ -1883,7 +1883,7 @@ public class ConversationFragment extends XmppFragment
                         message = message.mergeable(message.next()) ? message.next() : null;
                     } while (message != null);
                     return null;
-                }, R.string.moderate_reason, false, false, true);
+                }, R.string.moderate_reason, false, false, true, true);
                 return true;
             case R.id.copy_message:
                 ShareUtil.copyToClipboard(activity, selectedMessage);
