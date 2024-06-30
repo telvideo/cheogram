@@ -403,7 +403,7 @@ public class MemorizingTrustManager {
         try {
             LOGGER.log(Level.FINE, "checkCertTrusted: trying appTrustManager");
             if (isServer) {
-                if (verifiedHostname != null) {
+                if (verifiedHostname != null && !eu.siacs.conversations.utils.IP.matches(verifiedHostname)) {
                     try {
                         if (daneVerifier.verifyCertificateChain(chain, verifiedHostname, port)) {
                             if (daneCb != null) daneCb.accept(true);
