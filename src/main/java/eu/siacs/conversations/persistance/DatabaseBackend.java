@@ -1197,7 +1197,7 @@ public class DatabaseBackend extends SQLiteOpenHelper {
             try {
                 final var m = Message.fromCursor(cursor, conversation);
                 final var reply = m.getReply();
-                if (reply != null) {
+                if (reply != null && reply.getAttribute("id") != null) { // Guard against busted replies
                     replyIds.add(reply.getAttribute("id"));
                     waitingForReplies.put(reply.getAttribute("id"), m);
                 }
