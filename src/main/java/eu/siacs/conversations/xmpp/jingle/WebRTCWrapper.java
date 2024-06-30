@@ -717,6 +717,8 @@ public class WebRTCWrapper {
     }
 
     public boolean applyDtmfTone(String tone) {
+        if (localAudioTrack == null || localAudioTrack.rtpSender == null) return false;
+
         localAudioTrack.rtpSender.dtmf().insertDtmf(tone, TONE_DURATION, 100);
         final var handler = new android.os.Handler(android.os.Looper.getMainLooper());
         handler.post(() -> {
