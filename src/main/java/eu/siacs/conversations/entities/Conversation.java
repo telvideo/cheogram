@@ -2881,7 +2881,7 @@ public class Conversation extends AbstractEntity implements Blockable, Comparabl
                 mTitle = title;
                 mNode = node;
                 this.xmppConnectionService = xmppConnectionService;
-                if (mPager != null) setupLayoutManager();
+                if (mPager != null) setupLayoutManager(mPager.getContext());
             }
 
             public String getTitle() {
@@ -2948,7 +2948,7 @@ public class Conversation extends AbstractEntity implements Blockable, Comparabl
                             if ("result".equals(el.getAttribute("type")) || "form".equals(el.getAttribute("type"))) {
                                 this.responseElement = el;
                                 setupReported(el.findChild("reported", "jabber:x:data"));
-                                if (mBinding != null) mBinding.form.setLayoutManager(setupLayoutManager());
+                                if (mBinding != null) mBinding.form.setLayoutManager(setupLayoutManager(mBinding.getRoot().getContext()));
                             }
 
                             eu.siacs.conversations.xmpp.forms.Field actionList = form.getFieldByName("http://jabber.org/protocol/commands#actions");
@@ -3381,10 +3381,9 @@ public class Conversation extends AbstractEntity implements Blockable, Comparabl
                 } catch (final IllegalStateException e) { }
             }
 
-            protected GridLayoutManager setupLayoutManager() {
+            protected GridLayoutManager setupLayoutManager(final Context ctx) {
                 int spanCount = 1;
 
-                Context ctx = mPager == null ? getView().getContext() : mPager.getContext();
                 if (reported != null) {
                     float screenWidth = ctx.getResources().getDisplayMetrics().widthPixels;
                     TextPaint paint = ((TextView) LayoutInflater.from(mPager.getContext()).inflate(R.layout.command_result_cell, null)).getPaint();
@@ -3448,7 +3447,7 @@ public class Conversation extends AbstractEntity implements Blockable, Comparabl
                     @Override
                     public void onTouchEvent(RecyclerView rv, MotionEvent e) { }
                 });
-                mBinding.form.setLayoutManager(setupLayoutManager());
+                mBinding.form.setLayoutManager(setupLayoutManager(mBinding.getRoot().getContext()));
                 mBinding.form.setAdapter(this);
 
                 if (actionsAdapter == null) {
@@ -3577,7 +3576,7 @@ public class Conversation extends AbstractEntity implements Blockable, Comparabl
 
                     this.responseElement = form;
                     setupReported(form.findChild("reported", "jabber:x:data"));
-                    if (mBinding != null) mBinding.form.setLayoutManager(setupLayoutManager());
+                    if (mBinding != null) mBinding.form.setLayoutManager(setupLayoutManager(mBinding.getRoot().getContext()));
 
                     if (actionsAdapter.countExceptCancel() < 1) {
                         actionsAdapter.add(Pair.create("save", "Save"));
