@@ -424,6 +424,8 @@ public class Message extends AbstractEntity implements AvatarService.Avatarable 
         clearReplyReact();
 
         if (body == null) body = new SpannableStringBuilder(getBody(true));
+        final Element html = getOrMakeHtml();
+        html.clearChildren();
         setBody(QuoteHelper.quote(MessageUtils.prepareQuote(replyTo)) + "\n");
 
         final String replyId = replyTo.replyId();
