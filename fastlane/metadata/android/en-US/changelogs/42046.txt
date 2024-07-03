@@ -1,1 +1,10 @@
-* Integrate UnifiedPush Distributor to facilitate push messages to other UnifiedPush enabled apps like Tusky and Fedilab
+* Fix link preview send hangs
+* Fix saving decrypted files
+* Send nice filenames more often
+* Show commands on MUC when present
+* Fix showing MUC whispered images as whispers
+* Show thread selector when starting a mention
+* Support urn:ietf:rfc:3264 (should improve call connection stability with JMP)
+* Fix destroy-before-initialize lifecycle crash
+* Merge calling improvements from upstream
+* Many small and crashing bug fixes

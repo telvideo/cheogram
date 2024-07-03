@@ -1,0 +1,11 @@
+* Animated custom emoji
+* Rich replies, including small image preview and jump-to-parent
+* Hide reply quote if it's just the exact previous message
+* Optional rich text mode
+* Option to auto-download any size on unmetered networks
+* Ignore archived messages from blocked users
+* Menu to delete files from media browser
+* Bold timestamp on attention messages
+* Start a message with @mods to ping active moderators in a channel
+* Fix password change
+* Fix unbanning users in channel

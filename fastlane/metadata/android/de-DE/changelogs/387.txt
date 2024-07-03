@@ -1,2 +1,0 @@
-* Überarbeitung der UI für die Anmeldung mit Zertifikat
-* Integration der Möglichkeit, Chats ganz oben anzuheften (zu den Favoriten hinzufügen)

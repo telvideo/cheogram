@@ -1,2 +1,8 @@
-* Minor bug fixes
-* Restore ability to call out via JMP and other services (Playstore version)
+* WebXDC prototype
+* Conversation-style notifications, for per-conversation priority and sound
+* @here triggers XEP-0224, which notifies as if mentioned
+* Phone number and date formatting in Command UI
+* Allow message correction to affect subject and thread
+* New "Cleanup Conversations" option to save RAM for busy users
+* Try to get list of commands from any domain-only Jabber ID, without presence
+* Allow manual command feature discovery for Jabber ID with no presence
