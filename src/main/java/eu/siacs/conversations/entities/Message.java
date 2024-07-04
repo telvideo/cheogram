@@ -424,8 +424,6 @@ public class Message extends AbstractEntity implements AvatarService.Avatarable 
         clearReplyReact();
 
         if (body == null) body = new SpannableStringBuilder(getBody(true));
-        final Element html = getOrMakeHtml();
-        html.clearChildren();
         setBody(QuoteHelper.quote(MessageUtils.prepareQuote(replyTo)) + "\n");
 
         final String replyId = replyTo.replyId();
@@ -620,7 +618,8 @@ public class Message extends AbstractEntity implements AvatarService.Avatarable 
     }
 
     public synchronized void setBody(Spanned span) {
-        setBody(span == null ? null : span.toString());
+        // Don't bother removing, we'll edit below
+        setBodyPreserveXHTML(span == null ? null : span.toString());
         if (span == null || SpannedToXHTML.isPlainText(span)) {
             this.payloads.remove(getHtml(true));
         } else {
@@ -636,11 +635,16 @@ public class Message extends AbstractEntity implements AvatarService.Avatarable 
         if (html != null) addPayload(html);
     }
 
-    public synchronized void setBody(String body) {
+    private synchronized void setBodyPreserveXHTML(String body) {
         this.body = body;
         this.isGeoUri = null;
         this.isEmojisOnly = null;
         this.treatAsDownloadable = null;
+    }
+
+    public synchronized void setBody(String body) {
+        setBodyPreserveXHTML(body);
+        this.payloads.remove(getHtml(true));
     }
 
     public synchronized void appendBody(Spanned append) {
