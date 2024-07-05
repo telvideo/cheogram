@@ -446,7 +446,15 @@ public class Message extends AbstractEntity implements AvatarService.Avatarable 
 
     public Message react(String emoji) {
         final var m = reply();
-        m.updateReaction(this, emoji);
+        if (getReactions() == null) {
+            m.updateReaction(this, emoji);
+        } else if (mInReplyTo != null) {
+            // Try to send react-to-reaction to parent
+            m.updateReaction(mInReplyTo, emoji);
+        } else {
+            // Do not send react-to-reaction
+            m.updateReplyTo(this, new SpannableStringBuilder(emoji));
+        }
         return m;
     }
 
