@@ -4995,8 +4995,7 @@ public class XmppConnectionService extends Service {
                     message.setServerMsgId(serverMessageId);
                 }
                 if (message.getEncryption() == Message.ENCRYPTION_NONE
-                        && message.isTypeText()
-                        && isBodyModified(message, body)) {
+                        && message.isTypeText() && (body != null || html != null)) {
                     message.setBody(body.content);
                     message.setHtml(html);
                     if (body.count > 1) {
@@ -5011,13 +5010,6 @@ public class XmppConnectionService extends Service {
                 return false;
             }
         }
-    }
-
-    private static boolean isBodyModified(final Message message, final LocalizedContent body) {
-        if (body == null || body.content == null) {
-            return false;
-        }
-        return !body.content.equals(message.getBody());
     }
 
     public void markMessage(Message message, int status) {
