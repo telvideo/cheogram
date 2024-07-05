@@ -29,6 +29,10 @@
         android:title="@string/send_private_message"
         android:visible="false" />
     <item
+        android:id="@+id/share_contact_details"
+        android:title="Invite to start chat"
+        android:visible="false" />
+    <item
         android:id="@+id/manage_permissions"
         android:title="@string/manage_permission"
         android:visible="false" />

@@ -36,7 +36,7 @@ import eu.siacs.conversations.ui.MucUsersActivity;
 import eu.siacs.conversations.ui.XmppActivity;
 import eu.siacs.conversations.utils.UIHelper;
 import eu.siacs.conversations.xmpp.Jid;
-
+import eu.siacs.conversations.xml.Element;
 
 public final class MucDetailsContextMenuHelper {
     private static final int ACTION_BAN = 0;
@@ -113,6 +113,7 @@ public final class MucDetailsContextMenuHelper {
         final boolean advancedMode = PreferenceManager.getDefaultSharedPreferences(activity).getBoolean("advanced_muc_mode", false);
         final boolean isGroupChat = mucOptions.isPrivateAndNonAnonymous();
         MenuItem sendPrivateMessage = menu.findItem(R.id.send_private_message);
+        MenuItem shareContactDetails = menu.findItem(R.id.share_contact_details);
 
         MenuItem blockAvatar = menu.findItem(R.id.action_block_avatar);
         if (user != null && user.getAvatar() != null) {
@@ -170,9 +171,11 @@ public final class MucDetailsContextMenuHelper {
             }
             managePermissions.setVisible(managePermissionsVisible);
             sendPrivateMessage.setVisible(user.isOnline() && !isGroupChat && mucOptions.allowPm() && user.getRole().ranks(MucOptions.Role.VISITOR));
+            shareContactDetails.setVisible(user.isOnline() && !isGroupChat && mucOptions.allowPm() && user.getRole().ranks(MucOptions.Role.VISITOR));
         } else {
             sendPrivateMessage.setVisible(user != null && user.isOnline());
             sendPrivateMessage.setEnabled(user != null && mucOptions.allowPm() && user.getRole().ranks(MucOptions.Role.VISITOR));
+            shareContactDetails.setVisible(user != null && user.isOnline() && mucOptions.allowPm() && user.getRole().ranks(MucOptions.Role.VISITOR));
         }
     }
 
@@ -290,6 +293,18 @@ public final class MucDetailsContextMenuHelper {
                     }
                 }
                 activity.privateMsgInMuc(conversation, user.getName());
+                return true;
+            case R.id.share_contact_details:
+                final var message = new Message(conversation, "/me invites you to chat " + conversation.getAccount().getShareableUri(), conversation.getNextEncryption());
+                Message.configurePrivateMessage(message, user.getFullJid());
+                /* This triggers a gajim bug right now https://dev.gajim.org/gajim/gajim/-/issues/11900
+                final var rosterx = new Element("x", "http://jabber.org/protocol/rosterx");
+                final var ritem = rosterx.addChild("item");
+                ritem.setAttribute("action", "add");
+                ritem.setAttribute("name", conversation.getMucOptions().getSelf().getNick());
+                ritem.setAttribute("jid", conversation.getAccount().getJid().asBareJid().toEscapedString());
+                message.addPayload(rosterx);*/
+                activity.xmppConnectionService.sendMessage(message);
                 return true;
             case R.id.invite:
                 if (user.getAffiliation().ranks(MucOptions.Affiliation.MEMBER)) {

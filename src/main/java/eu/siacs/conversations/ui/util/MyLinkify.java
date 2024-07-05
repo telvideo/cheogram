@@ -158,7 +158,7 @@ public class MyLinkify {
                     } else {
                         ListItem item = account.getBookmark(jid);
                         if (item == null) item = roster.getContact(jid);
-                        display = item.getDisplayName() + xmppUri.parameterString();
+                        display = item.getDisplayName() + xmppUri.displayParameterString();
                     }
                     body.replace(
                         body.getSpanStart(urlspan),

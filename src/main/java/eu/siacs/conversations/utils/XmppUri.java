@@ -245,6 +245,20 @@ public class XmppUri {
         return s.toString();
     }
 
+    public String displayParameterString() {
+        final StringBuilder s = new StringBuilder();
+        for (Map.Entry<String, String> param : parameters.entrySet()) {
+            if (param.getValue() == null || param.getValue().isEmpty()) continue;
+            if (param.getKey().startsWith(OMEMO_URI_PARAM)) continue;
+
+            s.append(";");
+            s.append(param.getKey());
+            s.append("=");
+            s.append(param.getValue());
+        }
+        return s.toString();
+    }
+
     public List<Fingerprint> getFingerprints() {
         return this.fingerprints;
     }
