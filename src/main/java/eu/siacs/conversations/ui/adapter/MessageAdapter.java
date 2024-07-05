@@ -632,13 +632,15 @@ public class MessageAdapter extends ArrayAdapter<Message> {
                 int end = body.getSpanEnd(mergeSeparator);
                 body.setSpan(new DividerSpan(true), start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
             }
+            boolean startsWithQuote = false;
             for (final android.text.style.QuoteSpan quote : body.getSpans(0, body.length(), android.text.style.QuoteSpan.class)) {
                 int start = body.getSpanStart(quote);
                 int end = body.getSpanEnd(quote);
+                if (start == 0) startsWithQuote = true;
                 body.removeSpan(quote);
                 applyQuoteSpan(viewHolder.messageBody, body, start, end, bubbleColor, true);
             }
-            boolean startsWithQuote = processMarkup ? handleTextQuotes(viewHolder.messageBody, body, bubbleColor, true) : false;
+            startsWithQuote = (processMarkup ? handleTextQuotes(viewHolder.messageBody, body, bubbleColor, true) : false) || startsWithQuote;
             if (!message.isPrivateMessage()) {
                 if (hasMeCommand) {
                     body.setSpan(
