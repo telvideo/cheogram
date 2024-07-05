@@ -4982,10 +4982,10 @@ public class XmppConnectionService extends Service {
     }
 
     public boolean markMessage(final Conversation conversation, final String uuid, final int status, final String serverMessageId) {
-        return markMessage(conversation, uuid, status, serverMessageId, null, null);
+        return markMessage(conversation, uuid, status, serverMessageId, null, null, null, null, null);
     }
 
-    public boolean markMessage(final Conversation conversation, final String uuid, final int status, final String serverMessageId, final LocalizedContent body, final Element html) {
+    public boolean markMessage(final Conversation conversation, final String uuid, final int status, final String serverMessageId, final LocalizedContent body, final Element html, final String subject, final Element thread, final Set<Message.FileParams> attachments) {
         if (uuid == null) {
             return false;
         } else {
@@ -4994,12 +4994,17 @@ public class XmppConnectionService extends Service {
                 if (message.getServerMsgId() == null) {
                     message.setServerMsgId(serverMessageId);
                 }
-                if (message.getEncryption() == Message.ENCRYPTION_NONE
-                        && message.isTypeText() && (body != null || html != null)) {
+                if (message.getEncryption() == Message.ENCRYPTION_NONE && (body != null || html != null || subject != null || thread != null || attachments != null)) {
                     message.setBody(body.content);
-                    message.setHtml(html);
                     if (body.count > 1) {
                         message.setBodyLanguage(body.language);
+                    }
+                    message.setHtml(html);
+                    message.setSubject(subject);
+                    message.setThread(thread);
+                    if (attachments != null && attachments.isEmpty()) {
+                        message.setFileParams(null);
+                        message.setRelativeFilePath(null);
                     }
                     markMessage(message, status, null, true);
                 } else {

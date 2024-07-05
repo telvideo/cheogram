@@ -633,7 +633,7 @@ public class MessageParser extends AbstractParser implements OnMessagePacketRece
                 if (conversation.getMucOptions().isSelf(counterpart)) {
                     status = Message.STATUS_SEND_RECEIVED;
                     isCarbon = true; //not really carbon but received from another resource
-                    if (mXmppConnectionService.markMessage(conversation, remoteMsgId, status, serverMsgId, body, html)) {
+                    if (mXmppConnectionService.markMessage(conversation, remoteMsgId, status, serverMsgId, body, html, packet.findChildContent("subject"), packet.findChild("thread"), attachments)) {
                         return;
                     } else if (remoteMsgId == null || Config.IGNORE_ID_REWRITE_IN_MUC) {
                         if (body != null) {
