@@ -2678,7 +2678,7 @@ public class XmppConnectionService extends Service {
             }
             Log.d(Config.LOGTAG, "finished merging phone contacts");
             mShortcutService.refresh(mInitialAddressbookSyncCompleted.compareAndSet(false, true));
-            updateRosterUi();
+            updateRosterUi(UpdateRosterReason.INIT);
             mQuickConversationsService.considerSync();
         });
     }
@@ -4715,7 +4715,7 @@ public class XmppConnectionService extends Service {
                             syncRoster(account);
                             getAvatarService().clear(contact);
                             updateConversationUi();
-                            updateRosterUi();
+                            updateRosterUi(UpdateRosterReason.AVATAR);
                         }
                         if (callback != null) {
                             callback.success(avatar);
@@ -4774,7 +4774,7 @@ public class XmppConnectionService extends Service {
                                     contact.setAvatar(avatar, previouslyOmittedPepFetch);
                                     syncRoster(account);
                                     getAvatarService().clear(contact);
-                                    updateRosterUi();
+                                    updateRosterUi(UpdateRosterReason.AVATAR);
                                 }
                                 updateConversationUi();
                             } else {
@@ -4792,7 +4792,7 @@ public class XmppConnectionService extends Service {
                                             contact.setAvatar(avatar);
                                             syncRoster(account);
                                             getAvatarService().clear(contact);
-                                            updateRosterUi();
+                                            updateRosterUi(UpdateRosterReason.AVATAR);
                                         }
                                     }
                                 }
@@ -5138,9 +5138,14 @@ public class XmppConnectionService extends Service {
         }
     }
 
-    public void updateRosterUi() {
+    public void updateRosterUi(final UpdateRosterReason reason) {
+        if (reason == UpdateRosterReason.PRESENCE) throw new IllegalArgumentException("PRESENCE must also come with a contact");
+        updateRosterUi(reason, null);
+    }
+
+    public void updateRosterUi(final UpdateRosterReason reason, final Contact contact) {
         for (OnRosterUpdate listener : threadSafeList(this.mOnRosterUpdates)) {
-            listener.onRosterUpdate();
+            listener.onRosterUpdate(reason, contact);
         }
     }
 
@@ -5983,7 +5988,7 @@ public class XmppConnectionService extends Service {
     }
 
     public interface OnRosterUpdate {
-        void onRosterUpdate();
+        void onRosterUpdate(final UpdateRosterReason reason, final Contact contact);
     }
 
     public interface OnMucRosterUpdate {
@@ -6083,4 +6088,11 @@ public class XmppConnectionService extends Service {
     }
 
     public static class BlockedMediaException extends Exception { }
+
+    public static enum UpdateRosterReason {
+        INIT,
+        AVATAR,
+        PUSH,
+        PRESENCE
+    }
 }

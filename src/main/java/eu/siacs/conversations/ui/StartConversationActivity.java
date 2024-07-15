@@ -287,7 +287,7 @@ public class StartConversationActivity extends XmppActivity implements XmppConne
     }
 
     @Override
-    public void onRosterUpdate() {
+    public void onRosterUpdate(final XmppConnectionService.UpdateRosterReason reason, final Contact contact) {
         this.refreshUi();
     }
 

@@ -144,6 +144,7 @@ public class ConversationsActivity extends XmppActivity implements OnConversatio
     private boolean mActivityPaused = true;
     private final AtomicBoolean mRedirectInProcess = new AtomicBoolean(false);
     private boolean refreshForNewCaps = false;
+    private Set<Jid> newCapsJids = new HashSet<>();
     private int mRequestCode = -1;
 
     private static boolean isViewOrShareIntent(Intent i) {
@@ -165,6 +166,7 @@ public class ConversationsActivity extends XmppActivity implements OnConversatio
             refreshFragment(id);
         }
         refreshForNewCaps = false;
+        newCapsJids.clear();
     }
 
     @Override
@@ -367,7 +369,7 @@ public class ConversationsActivity extends XmppActivity implements OnConversatio
         final Fragment fragment = getFragmentManager().findFragmentById(id);
         if (fragment instanceof XmppFragment) {
             ((XmppFragment) fragment).refresh();
-            if (refreshForNewCaps) ((XmppFragment) fragment).refreshForNewCaps();
+            if (refreshForNewCaps) ((XmppFragment) fragment).refreshForNewCaps(newCapsJids);
         }
     }
 
@@ -911,8 +913,11 @@ public class ConversationsActivity extends XmppActivity implements OnConversatio
     }
 
     @Override
-    public void onRosterUpdate() {
-        refreshForNewCaps = true;
+    public void onRosterUpdate(final XmppConnectionService.UpdateRosterReason reason, final Contact contact) {
+        if (reason != XmppConnectionService.UpdateRosterReason.AVATAR) {
+            refreshForNewCaps = true;
+            if (contact != null) newCapsJids.add(contact.getJid().asBareJid());
+        }
         this.refreshUi();
     }
 

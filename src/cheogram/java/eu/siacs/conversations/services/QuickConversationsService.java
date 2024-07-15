@@ -54,7 +54,7 @@ public class QuickConversationsService extends AbstractQuickConversationsService
         mSerialSingleThreadExecutor.execute(() -> {
             considerSync(force);
             if (mRunningSyncJobs.decrementAndGet() == 0) {
-                service.updateRosterUi();
+                service.updateRosterUi(XmppConnectionService.UpdateRosterReason.INIT);
             }
         });
     }
@@ -152,7 +152,7 @@ public class QuickConversationsService extends AbstractQuickConversationsService
 
         mRunningSyncJobs.decrementAndGet();
         service.syncRoster(account);
-        service.updateRosterUi();
+        service.updateRosterUi(XmppConnectionService.UpdateRosterReason.INIT);
         return true;
     }
 

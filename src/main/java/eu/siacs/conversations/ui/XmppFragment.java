@@ -36,14 +36,17 @@ import androidx.lifecycle.Lifecycle;
 import androidx.lifecycle.LifecycleRegistry;
 import androidx.lifecycle.LifecycleOwner;
 
+import java.util.Set;
+
 import eu.siacs.conversations.ui.interfaces.OnBackendConnected;
+import eu.siacs.conversations.xmpp.Jid;
 
 public abstract class XmppFragment extends Fragment implements OnBackendConnected, LifecycleOwner {
 
 	protected LifecycleRegistry lifecycle = new LifecycleRegistry(this);
 
 	abstract void refresh();
-	public void refreshForNewCaps() { }
+	public void refreshForNewCaps(final Set<Jid> newCapsJids) { }
 
 	protected void runOnUiThread(Runnable runnable) {
 		final Activity activity = getActivity();

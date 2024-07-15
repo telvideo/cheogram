@@ -139,7 +139,7 @@ public class IqParser extends AbstractParser implements OnIqPacketReceived {
             }
         }
         mXmppConnectionService.updateConversationUi();
-        mXmppConnectionService.updateRosterUi();
+        mXmppConnectionService.updateRosterUi(XmppConnectionService.UpdateRosterReason.PUSH);
         mXmppConnectionService.getShortcutService().refresh();
         mXmppConnectionService.syncRoster(account);
     }
