@@ -724,6 +724,7 @@ public class WebRTCWrapper {
         handler.post(() -> {
             final var toneGenerator = new ToneGenerator(AudioManager.STREAM_VOICE_CALL, DEFAULT_TONE_VOLUME);
             toneGenerator.startTone(TONE_CODES.get(tone), TONE_DURATION);
+            handler.postDelayed(() -> toneGenerator.release(), TONE_DURATION+2);
         });
 
         return true;
