@@ -124,7 +124,7 @@ public final class Config {
 
     public static final boolean JINGLE_MESSAGE_INIT_STRICT_OFFLINE_CHECK = false;
     public static final boolean DISABLE_HTTP_UPLOAD = false;
-    public static final boolean EXTENDED_SM_LOGGING = false; // log stanza counts
+    public static final boolean EXTENDED_SM_LOGGING = true; // log stanza counts
     public static final boolean BACKGROUND_STANZA_LOGGING =
             false; // log all stanzas that were received while the app is in background
     public static final boolean RESET_ATTEMPT_COUNT_ON_NETWORK_CHANGE =
