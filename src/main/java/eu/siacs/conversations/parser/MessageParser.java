@@ -433,8 +433,8 @@ public class MessageParser extends AbstractParser implements OnMessagePacketRece
             if (handleErrorMessage(account, packet)) {
                 return;
             }
-            final var contact = account.getRoster().getContact(packet.getFrom());
-            if (contact.isBlocked()) {
+            final var contact = packet.getFrom() == null ? null : account.getRoster().getContact(packet.getFrom());
+            if (contact != null && contact.isBlocked()) {
                 Log.d(Config.LOGTAG, "Got MAM result from blocked contact, ignoring...");
                 return;
             }
