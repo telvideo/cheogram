@@ -118,18 +118,21 @@ public class MessageGenerator extends AbstractGenerator {
             if (message.getFallbacks(Namespace.OOB).isEmpty()) {
                 if (message.getBody().equals("")) {
                     message.setBody(fileParams.url);
-                    packet.addChild("fallback", "urn:xmpp:fallback:0").setAttribute("for", Namespace.OOB)
-                        .addChild("body", "urn:xmpp:fallback:0");
+                    final var fallback = new Element("fallback", "urn:xmpp:fallback:0").setAttribute("for", Namespace.OOB);
+                    fallback.addChild("body", "urn:xmpp:fallback:0");
+                    message.addPayload(fallback);
                 } else {
                     long start = message.getRawBody().codePointCount(0, message.getRawBody().length());
                     message.appendBody(fileParams.url);
-                    packet.addChild("fallback", "urn:xmpp:fallback:0").setAttribute("for", Namespace.OOB)
-                        .addChild("body", "urn:xmpp:fallback:0")
-                            .setAttribute("start", String.valueOf(start))
-                            .setAttribute("end", String.valueOf(start + fileParams.url.length()));
+                    final var fallback = new Element("fallback", "urn:xmpp:fallback:0").setAttribute("for", Namespace.OOB);
+                    fallback.addChild("body", "urn:xmpp:fallback:0")
+                        .setAttribute("start", String.valueOf(start))
+                        .setAttribute("end", String.valueOf(start + fileParams.url.length()));
+                    message.addPayload(fallback);
                 }
             }
 
+            packet = preparePacket(message, false);
             packet.addChild("x", Namespace.OOB).addChild("url").setContent(fileParams.url);
         }
         if (message.getRawBody() != null) packet.setBody(message.getRawBody());
