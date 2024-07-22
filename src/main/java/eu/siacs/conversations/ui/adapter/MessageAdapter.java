@@ -598,6 +598,7 @@ public class MessageAdapter extends ArrayAdapter<Message> {
 
     private void displayTextMessage(
             final ViewHolder viewHolder, final Message message, final BubbleColor bubbleColor, final int type) {
+        viewHolder.inReplyToQuote.setVisibility(View.GONE);
         viewHolder.download_button.setVisibility(View.GONE);
         viewHolder.image.setVisibility(View.GONE);
         viewHolder.audioPlayer.setVisibility(View.GONE);
@@ -608,6 +609,10 @@ public class MessageAdapter extends ArrayAdapter<Message> {
         final ViewGroup.LayoutParams layoutParams = viewHolder.messageBody.getLayoutParams();
         layoutParams.width = ViewGroup.LayoutParams.WRAP_CONTENT;
         viewHolder.messageBody.setLayoutParams(layoutParams);
+
+        final ViewGroup.LayoutParams qlayoutParams = viewHolder.inReplyToQuote.getLayoutParams();
+        qlayoutParams.width = ViewGroup.LayoutParams.WRAP_CONTENT;
+        viewHolder.messageBody.setLayoutParams(qlayoutParams);
 
         viewHolder.messageBody.setTypeface(null, Typeface.NORMAL);
 
@@ -636,9 +641,19 @@ public class MessageAdapter extends ArrayAdapter<Message> {
             for (final android.text.style.QuoteSpan quote : body.getSpans(0, body.length(), android.text.style.QuoteSpan.class)) {
                 int start = body.getSpanStart(quote);
                 int end = body.getSpanEnd(quote);
-                if (start == 0) startsWithQuote = true;
                 body.removeSpan(quote);
                 applyQuoteSpan(viewHolder.messageBody, body, start, end, bubbleColor, true);
+                if (start == 0) {
+                    if (message.getInReplyTo() == null) {
+                        startsWithQuote = true;
+                    } else {
+                        viewHolder.inReplyToQuote.setText(body.subSequence(start, end));
+                        viewHolder.inReplyToQuote.setVisibility(View.VISIBLE);
+                        body.delete(start, end);
+                        while (body.length() > start && body.charAt(start) == '\n') body.delete(start, 1); // Newlines after quote
+                        continue;
+                    }
+                }
             }
             startsWithQuote = (processMarkup ? handleTextQuotes(viewHolder.messageBody, body, bubbleColor, true) : false) || startsWithQuote;
             if (!message.isPrivateMessage()) {
@@ -739,6 +754,7 @@ public class MessageAdapter extends ArrayAdapter<Message> {
 
             viewHolder.messageBody.setAutoLinkMask(0);
             viewHolder.messageBody.setText(body);
+            if (body.length() <= 0) viewHolder.messageBody.setVisibility(View.GONE);
             BetterLinkMovementMethod method = new BetterLinkMovementMethod() {
                 @Override
                 protected void dispatchUrlLongClick(TextView tv, ClickableSpan span) {
@@ -813,7 +829,7 @@ public class MessageAdapter extends ArrayAdapter<Message> {
                 if (height < 1) height = 1080;
 
                 viewHolder.image.setVisibility(View.VISIBLE);
-                imagePreviewLayout(width, height, viewHolder.image, true, type, viewHolder);
+                imagePreviewLayout(width, height, viewHolder.image, message.getInReplyTo() != null, true, type, viewHolder);
                 activity.loadBitmap(message, viewHolder.image);
                 viewHolder.image.setOnClickListener(v -> ConversationFragment.downloadFile(activity, message));
 
@@ -928,12 +944,12 @@ public class MessageAdapter extends ArrayAdapter<Message> {
         viewHolder.audioPlayer.setVisibility(View.GONE);
         viewHolder.image.setVisibility(View.VISIBLE);
         final FileParams params = message.getFileParams();
-        imagePreviewLayout(params.width, params.height, viewHolder.image, viewHolder.messageBody.getVisibility() != View.GONE, type, viewHolder);
+        imagePreviewLayout(params.width, params.height, viewHolder.image, message.getInReplyTo() != null, viewHolder.messageBody.getVisibility() != View.GONE, type, viewHolder);
         activity.loadBitmap(message, viewHolder.image);
         viewHolder.image.setOnClickListener(v -> openDownloadable(message));
     }
 
-    private void imagePreviewLayout(int w, int h, ShapeableImageView image, boolean withOther, int type, ViewHolder viewHolder) {
+    private void imagePreviewLayout(int w, int h, ShapeableImageView image, boolean otherAbove, boolean otherBelow, int type, ViewHolder viewHolder) {
         final float target = activity.getResources().getDimension(R.dimen.image_preview_width);
         final int scaledW;
         final int scaledH;
@@ -950,15 +966,22 @@ public class MessageAdapter extends ArrayAdapter<Message> {
             scaledW = (int) target;
             scaledH = (int) (h / ((double) w / target));
         }
-        final var small = withOther ? scaledW < target : scaledW < 110 * metrics.density;
+        final var bodyWidth = Math.max(viewHolder.messageBody.getWidth(), viewHolder.download_button.getWidth());
+        var targetImageWidth = 200 * metrics.density;
+        if (!otherBelow) targetImageWidth = 110 * metrics.density;
+        if (bodyWidth > 0 && bodyWidth < targetImageWidth) targetImageWidth = bodyWidth;
+        final var small = scaledW < targetImageWidth;
         final LinearLayout.LayoutParams layoutParams =
                 new LinearLayout.LayoutParams(scaledW, scaledH);
         image.setLayoutParams(layoutParams);
 
         final var bubbleRadius = activity.getResources().getDimension(R.dimen.bubble_radius);
-        var shape = new ShapeAppearanceModel.Builder().setTopRightCorner(CornerFamily.ROUNDED, bubbleRadius);
-        if (type == SENT) {
-            shape = shape.setTopLeftCorner(CornerFamily.ROUNDED, bubbleRadius);
+        var shape = new ShapeAppearanceModel.Builder();
+        if (!otherAbove) {
+            shape = shape.setTopRightCorner(CornerFamily.ROUNDED, bubbleRadius);
+            if (type == SENT) {
+                shape = shape.setTopLeftCorner(CornerFamily.ROUNDED, bubbleRadius);
+            }
         }
         if (small) {
             final var imageRadius = activity.getResources().getDimension(R.dimen.image_radius);
@@ -971,8 +994,12 @@ public class MessageAdapter extends ArrayAdapter<Message> {
 
         if (!small) {
             final ViewGroup.LayoutParams blayoutParams = viewHolder.messageBody.getLayoutParams();
-            blayoutParams.width = (int) (target - (22 * metrics.density));
+            blayoutParams.width = (int) (scaledW - (22 * metrics.density));
             viewHolder.messageBody.setLayoutParams(blayoutParams);
+
+            final ViewGroup.LayoutParams qlayoutParams = viewHolder.inReplyToQuote.getLayoutParams();
+            qlayoutParams.width = (int) (scaledW - (22 * metrics.density));
+            viewHolder.messageBody.setLayoutParams(qlayoutParams);
         }
     }
 
@@ -1078,6 +1105,7 @@ public class MessageAdapter extends ArrayAdapter<Message> {
                     viewHolder.subject = view.findViewById(R.id.message_subject);
                     viewHolder.inReplyTo = view.findViewById(R.id.in_reply_to);
                     viewHolder.inReplyToBox = view.findViewById(R.id.in_reply_to_box);
+                    viewHolder.inReplyToQuote = view.findViewById(R.id.in_reply_to_quote);
                     viewHolder.indicatorReceived = view.findViewById(R.id.indicator_received);
                     viewHolder.audioPlayer = view.findViewById(R.id.audio_player);
                     viewHolder.thread_identicon = view.findViewById(R.id.thread_identicon);
@@ -1096,6 +1124,7 @@ public class MessageAdapter extends ArrayAdapter<Message> {
                     viewHolder.time = view.findViewById(R.id.message_time);
                     viewHolder.subject = view.findViewById(R.id.message_subject);
                     viewHolder.inReplyTo = view.findViewById(R.id.in_reply_to);
+                    viewHolder.inReplyToQuote = view.findViewById(R.id.in_reply_to_quote);
                     viewHolder.inReplyToBox = view.findViewById(R.id.in_reply_to_box);
                     viewHolder.indicatorReceived = view.findViewById(R.id.indicator_received);
                     viewHolder.encryption = view.findViewById(R.id.message_encryption);
@@ -1481,6 +1510,7 @@ public class MessageAdapter extends ArrayAdapter<Message> {
                 viewHolder.inReplyToBox.setVisibility(View.VISIBLE);
                 viewHolder.inReplyTo.setText(UIHelper.getMessageDisplayName(message.getInReplyTo()));
                 viewHolder.inReplyTo.setOnClickListener((v) -> mConversationFragment.jumpTo(message.getInReplyTo()));
+                viewHolder.inReplyToQuote.setOnClickListener((v) -> mConversationFragment.jumpTo(message.getInReplyTo()));
                 setTextColor(viewHolder.inReplyTo, bubbleColor);
             }
         }
@@ -1703,6 +1733,7 @@ public class MessageAdapter extends ArrayAdapter<Message> {
         protected TextView time;
         protected TextView subject;
         protected TextView inReplyTo;
+        protected TextView inReplyToQuote;
         protected LinearLayout inReplyToBox;
         protected TextView messageBody;
         protected ImageView contact_picture;

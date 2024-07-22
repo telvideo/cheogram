@@ -5,23 +5,6 @@
     <merge>
 
         <LinearLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center_horizontal"
-            android:orientation="horizontal">
-
-            <com.google.android.material.imageview.ShapeableImageView
-                android:id="@+id/message_image"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:adjustViewBounds="true"
-                android:background="@color/gray_800"
-                android:longClickable="true"
-                android:scaleType="centerCrop"
-                app:shapeAppearance="@style/ShapeAppearanceOverlay.MessageImage" />
-        </LinearLayout>
-
-        <LinearLayout
             android:id="@+id/in_reply_to_box"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -45,6 +28,33 @@
                 android:textStyle="bold|italic"
                 android:longClickable="false"
                 android:textAppearance="?textAppearanceBodyMedium" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/in_reply_to_quote"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="10dp"
+            android:layout_marginBottom="4sp"
+            android:longClickable="false"
+            android:visibility="gone"
+            android:textAppearance="?textAppearanceBodyMedium" />
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:orientation="horizontal">
+
+            <com.google.android.material.imageview.ShapeableImageView
+                android:id="@+id/message_image"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:adjustViewBounds="true"
+                android:background="@color/gray_800"
+                android:longClickable="true"
+                android:scaleType="centerCrop"
+                app:shapeAppearance="@style/ShapeAppearanceOverlay.MessageImage" />
         </LinearLayout>
 
         <TextView
