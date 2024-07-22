@@ -1071,30 +1071,24 @@ public class Message extends AbstractEntity implements AvatarService.Avatarable 
             spannableBody = new SpannableStringBuilder(MessageUtils.filterLtrRtl(getBody(getInReplyTo() != null)).trim());
             spannableBody.setSpan(PLAIN_TEXT_SPAN, 0, spannableBody.length(), 0); // Let adapter know it can do more formatting
         } else {
-            boolean[] anyfallbackimg = new boolean[]{ false };
-
             SpannableStringBuilder spannable = new SpannableStringBuilder(Html.fromHtml(
                 MessageUtils.filterLtrRtl(html.toString()).trim(),
                 Html.FROM_HTML_MODE_COMPACT,
                 (source) -> {
                    try {
                        if (thumbnailer == null || source == null) {
-                           anyfallbackimg[0] = true;
                            return fallbackImg;
                        }
                        Cid cid = BobTransfer.cid(new URI(source));
                        if (cid == null) {
-                           anyfallbackimg[0] = true;
                            return fallbackImg;
                        }
                        Drawable thumbnail = thumbnailer.getThumbnail(cid);
                        if (thumbnail == null) {
-                           anyfallbackimg[0] = true;
                            return fallbackImg;
                        }
                        return thumbnail;
                    } catch (final URISyntaxException e) {
-                       anyfallbackimg[0] = true;
                        return fallbackImg;
                    }
                 },
@@ -1120,7 +1114,6 @@ public class Message extends AbstractEntity implements AvatarService.Avatarable 
             // https://stackoverflow.com/a/10187511/8611
             int i = spannable.length();
             while(--i >= 0 && Character.isWhitespace(spannable.charAt(i))) { }
-            if (anyfallbackimg[0]) return (SpannableStringBuilder) spannable.subSequence(0, i+1);
             spannableBody = (SpannableStringBuilder) spannable.subSequence(0, i+1);
         }
 
