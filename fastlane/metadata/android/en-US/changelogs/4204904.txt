@@ -1,0 +1,10 @@
+* Allow locally muting channel participants
+* Allow setting subject on messages
+* Subject-only message sets thread subject/topic/name
+* Display list of recent threads
+* Support full channel configuration form for owners
+* Register with channel when joining, deregister when leaving (where supported)
+* Fix sending files again from Cheogram's own downloaded files
+* Process channel password if present in XMPP URI
+* Expert setting to choose voice message codec
+* Visual Tweaks

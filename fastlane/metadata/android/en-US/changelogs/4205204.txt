@@ -1,0 +1,8 @@
+* Option to invite any channel participant to chat with you
+* Improve image layout, especially for reply-with-image
+* Limit name in call screen to 3 lines, to leave space for DTMF
+* Fix direct reply from notification tray
+* Fix rendering quotes in whispers
+* Show what the MUC actually sent more often
+* Fix Google Play contacts integration
+* Fix several crashing bugs

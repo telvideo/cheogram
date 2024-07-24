@@ -1,0 +1,8 @@
+* Major visual refresh, including optional Material You
+* Better audio routing for calls
+* More customizable custom colour theme
+* Conversation read-status sync with other supporting apps
+* Don't compress animated images
+* Do not default to the network country when there is no SIM (for phone number format)
+* Delayed-send messages
+* Message loading performance improvements

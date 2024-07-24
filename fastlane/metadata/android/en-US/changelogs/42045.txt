@@ -1,0 +1,10 @@
+* WebXDC importFiles and sendToChat
+* Optionally allow notifications for replies
+* Double-tap to select text, option to quote selection
+* Manage channel permissions with a dialog instead of submenu
+* Offer to moderate recent messages when banning someone
+* Show a large streak of moderated messages as only one
+* Fix editing with custom emoji on some platforms
+* tel and sms URIs are links
+* Expert setting to disable emoji autocomplete
+* Preserve filenames more often

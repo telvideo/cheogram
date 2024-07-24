@@ -1,1 +1,0 @@
-* Audio-/Videoanrufe (erfordert Serverunterstützung in Form von STUN- und TURN-Servern, die über XEP-0215 ermittelt werden können)
