@@ -160,7 +160,7 @@ public class UriHandlerActivity extends BaseActivity {
 
         if (uri == null) return true;
 
-        if ("sgnl".equals(uri.getScheme())) {
+        if ("sgnl".equals(uri.getScheme()) && uri.getQueryParameter("pack_id") != null) {
             stickers = Uri.parse("https://stickers.cheogram.com/signal/" + uri.getQueryParameter("pack_id") + "," + uri.getQueryParameter("pack_key"));
             if (hasStoragePermission(1)) downloadStickers();
             return false;
